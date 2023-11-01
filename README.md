@@ -1,70 +1,51 @@
-# Ronin DPoS Contracts
+# ronin-bridge-contracts
 
-The collections of smart contracts that power the Ronin Delegated Proof of Stake (DPoS) network.
+The collections of smart contracts that power the Ronin Bridge.
 
 ## Development
 
 ### Requirement
 
-- Node@>=14 + Solc@^0.8.0
+- [Foundry forge@^0.2.0](https://book.getfoundry.sh/)
 
-### Compile & test
-
-- Add Github NPM token to install packages, and then replace `{YOUR_TOKEN}` in `.npmrc` file by any arbitrary Github token with `read:packages` permission.
-
-  > **Note**: To create a new token, please refer to [this article](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token). The token must have `read:packages` permission.
-
-  ```shell
-  cp .npmrc.example .npmrc && vim .npmrc
-  ```
+### Build & Test
 
 - Install packages
 
-  ```shell
-  $ yarn --frozen-lockfile
-  ```
+```shell
+$ forge install
+```
 
-- Install foundry libs
+- Build contracts
 
-    ```
-    $ git submodule add -b release-v0 https://github.com/PaulRBerg/prb-test lib/prb-test
-    $ git submodule add -b release-v4 https://github.com/PaulRBerg/prb-math lib/prb-math
-    ```
-
-- Compile contracts
-
-  ```shell
-  $ yarn compile
-  ```
+```shell
+$ forge build
+```
 
 - Run test
 
-  ```shell
-  $ yarn test
-  ```
+```shell
+$ forge test
+```
 
-- Extract storage layout
-  ```shell
-  $ yarn plugin:storage-layout [--destination <output-path>] [--override <true|false>]
-  ```
-  - `<output-path>` (optional): The path to store generated storage layout file. If not provided, the default path is `layout/storage.txt`.
-  - `--override` (optional): Indicates whether to override the destination file at `<output-path>` if it already exists. By default, it is set to `false`.
+### Deploy
 
-### Target chain to deploy
+```shell
+$ forge script <path/to/file.s.sol> -f --private-key <your_private_key>
+```
+
+## Target chain to deploy
 
 This repo contains source code of contracts that will be either deployed on the mainchains, or on Ronin chain.
 
 - On mainchains:
   - Governance contract: `MainchainGovernanceAdmin`
   - Bridge contract: `MainchainGatewayV3`
-  - Trusted orgs contract: `RoninTrustedOrganization`
 - On Ronin chain:
   - Governance contract: `RoninGovernanceAdmin`
   - Bridge operation: `RoninGatewayV3`
-  - Trusted orgs contract: `RoninTrustedOrganization`
-  - DPoS contracts
 
-### Upgradeability & Governance mechanism
+## Upgradeability & Governance mechanism
 
 Except for the governance contracts and vault forwarder contracts, all other contracts are deployed following the proxy pattern for upgradeability. The [`TransparentUpgradeableProxyV2`](./contracts/extensions/TransparentUpgradeableProxyV2.sol), an extended version of [OpenZeppelin's](https://docs.openzeppelin.com/contracts/3.x/api/proxy#TransparentUpgradeableProxy), is used for deploying the proxies.
 
