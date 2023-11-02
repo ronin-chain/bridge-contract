@@ -14,7 +14,12 @@ forge build --sizes 2>&1 | sed -n '/Contract/,$p' > logs/contract-code-sizes.log
 .husky/generate-layout.sh
 
 git add logs
-git commit -m "chore: storage layout" logs
+
+output=$(git status -s)
+line_count=$(echo "$output" | wc -l)
+if [ "$line_count" -gt 1 ]; then
+  git commit -m "chore: storage layout"
+fi
 
 if $stashed; then
   git stash pop 
