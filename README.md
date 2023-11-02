@@ -51,22 +51,6 @@ Except for the governance contracts and vault forwarder contracts, all other con
 
 To comply with the [governance process](./docs/README.md#governance), in which requires all modifications to a contract must be approved by a set of governors, the admin role of all proxies must be granted for the governance contract address.
 
-### Deployment steps
-
-- Init the environment variables
-
-  ```shell
-  $ cp .env.example .env && vim .env
-  ```
-
-- Update the contract configuration in [`config.ts`](./src/config.ts) file
-
-- Deploy the contracts
-
-  ```shell
-  $ yarn hardhat deploy --network <local|ronin-devnet|ronin-mainnet|ronin-testnet>
-  ```
-
 ## Documentation
 
 See [docs/README.md](./docs/README.md) for the documentation of the contracts.
