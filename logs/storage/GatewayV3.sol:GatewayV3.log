@@ -1,0 +1,7 @@
+src/extensions/GatewayV3.sol:GatewayV3:_paused (storage_slot: 0) (offset: 0) (type: bool) (numberOfBytes: 1)
+src/extensions/GatewayV3.sol:GatewayV3:_num (storage_slot: 1) (offset: 0) (type: uint256) (numberOfBytes: 32)
+src/extensions/GatewayV3.sol:GatewayV3:_denom (storage_slot: 2) (offset: 0) (type: uint256) (numberOfBytes: 32)
+src/extensions/GatewayV3.sol:GatewayV3:______deprecated (storage_slot: 3) (offset: 0) (type: address) (numberOfBytes: 20)
+src/extensions/GatewayV3.sol:GatewayV3:nonce (storage_slot: 4) (offset: 0) (type: uint256) (numberOfBytes: 32)
+src/extensions/GatewayV3.sol:GatewayV3:emergencyPauser (storage_slot: 5) (offset: 0) (type: address) (numberOfBytes: 20)
+src/extensions/GatewayV3.sol:GatewayV3:______gap (storage_slot: 6) (offset: 0) (type: uint256[49]) (numberOfBytes: 1568)

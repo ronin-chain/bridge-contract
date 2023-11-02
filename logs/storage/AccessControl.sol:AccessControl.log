@@ -1,0 +1,1 @@
+lib/openzeppelin-contracts/contracts/access/AccessControl.sol:AccessControl:_roles (storage_slot: 0) (offset: 0) (type: mapping(bytes32 => struct AccessControl.RoleData)) (numberOfBytes: 32)

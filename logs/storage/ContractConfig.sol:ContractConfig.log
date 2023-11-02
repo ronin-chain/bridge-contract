@@ -1,0 +1,2 @@
+script/configs/ContractConfig.sol:ContractConfig:_contractNameMap (storage_slot: 0) (offset: 0) (type: mapping(enum ContractKey => string)) (numberOfBytes: 32)
+script/configs/ContractConfig.sol:ContractConfig:_contractAddrMap (storage_slot: 1) (offset: 0) (type: mapping(uint256 => mapping(string => address))) (numberOfBytes: 32)

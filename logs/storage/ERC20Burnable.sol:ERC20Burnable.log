@@ -1,0 +1,5 @@
+lib/openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Burnable.sol:ERC20Burnable:_balances (storage_slot: 0) (offset: 0) (type: mapping(address => uint256)) (numberOfBytes: 32)
+lib/openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Burnable.sol:ERC20Burnable:_allowances (storage_slot: 1) (offset: 0) (type: mapping(address => mapping(address => uint256))) (numberOfBytes: 32)
+lib/openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Burnable.sol:ERC20Burnable:_totalSupply (storage_slot: 2) (offset: 0) (type: uint256) (numberOfBytes: 32)
+lib/openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Burnable.sol:ERC20Burnable:_name (storage_slot: 3) (offset: 0) (type: string) (numberOfBytes: 32)
+lib/openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Burnable.sol:ERC20Burnable:_symbol (storage_slot: 4) (offset: 0) (type: string) (numberOfBytes: 32)
