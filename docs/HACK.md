@@ -1,9 +1,7 @@
-# Code structure of the Ronin DPoS contracts repo
-
-The structure of the repo is as follows.
+# Code structure of the repository
 
 ```
-├── contracts
+├── src
 │   ├── extensions              <-- helpers and shared contracts
 │   ├── interfaces              <-- interfaces
 │   ├── libraries               <-- libraries
@@ -12,13 +10,10 @@ The structure of the repo is as follows.
 │   ├── multi-chains            <-- Ronin trusted orgs contracts
 │   ├── precompile-usages       <-- wrapper for precompiled calls
 │   └── ronin                       <-- contracts should only deployed on Ronin chain
-│       ├── slash-indicator             <-- slashing and credit score contracts
-│       ├── staking                     <-- pool and staking contracts
-│       ├── validator                   <-- validator set contracts
+│       ├── bridge-tracking             <-- slashing and credit score contracts
+│       ├── gateway                     <-- gateway contracts
 |       └── ...                         <-- other single file contracts
 ├── docs                        <-- documentation
-├── src                         <-- deployment scripts
-│   ├── deploy                      <-- hardhat-deploy scripts
-│   └── script                      <-- helpers for deploy scripts
+├── scripts                     <-- Foundry scripts
 └── test                        <-- tests
 ```

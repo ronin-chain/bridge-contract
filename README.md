@@ -73,6 +73,4 @@ See [docs/README.md](./docs/README.md) for the documentation of the contracts.
 
 See [docs/HACK.md](./docs/HACK.md) for the structure of the repo.
 
-For the contract interaction flow, please refer to [DPoS Contract: Interaction Flow](https://skymavis.notion.site/DPoS-Contract-Interaction-Flow-3a535cf9048f46f69dd9a45958ad9b85).
-
 For the whitepaper, please refer to [Ronin Whitepaper](https://www.notion.so/skymavis/Ronin-Whitepaper-deec289d6cec49d38dc6e904669331a5).

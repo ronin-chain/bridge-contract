@@ -1,19 +1,5 @@
-# Documentation of the DPoS contracts
+# Documentation of the Bridge contracts
 
-- [Staking](#staking)
-  - [Validator Candidate](#validator-candidate)
-  - [Delegator](#delegator)
-  - [Reward Calculation](#reward-calculation)
-- [Validator Contract & Rewarding](#validator-contract--rewarding)
-  - [Block reward submission](#block-reward-submission)
-  - [Wrapping up epoch/period](#wrapping-up-epochperiod)
-- [Slashing](#slashing)
-  - [Unavailability block producer](#unavailability-block-producer)
-  - [Double-sign block producer](#double-sign-block-producer)
-  - [Bridge Relayers](#bridge-relayers)
-  - [Bridge Voters (Ronin Trusted Organizations)](#bridge-voters-ronin-trusted-organizations)
-  - [Credit score](#credit-score)
-- [Maintenance](#maintenance)
 - [Bridges](#bridges)
   - [Deposits](#deposits)
   - [Withdrawals](#withdrawals)
@@ -21,130 +7,6 @@
   - [Ronin Trusted Organization](#ronin-trusted-organization)
   - [Bridge Operators Ballot](#bridge-operators-ballot)
   - [Proposals](#proposals)
-- [Vault Forwarder](#vault-forwarder)
-
-## Staking
-
-The users can propose themselves to be validator candidates by staking their RON. Other users are allowed to register as delegators by staking any amount of RON to the staking contract, (s)he can choose a candidate to stake their coins.
-
-### Validator Candidate
-
-**Applying to be a candidate**
-
-| Params                       | Explanation                                                                                                                                         |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `address candidateAdmin`     | The candidate admin will be stored in the validator contract, used for calling function that affects to its candidate, e.g. scheduling maintenance. |
-| `address consensusAddr`      | Address to produce block                                                                                                                            |
-| `address treasuryAddr`       | Address to receive block reward                                                                                                                     |
-| `address bridgeOperatorAddr` | Address of the bridge operator                                                                                                                      |
-| `uint256 commissionRate`     | The rate to share for the validator. Values in range [0; 100_00] stands for [0; 100%]                                                               |
-| `msg.value`                  | The amount of RON to stake, require to be larger than or equal to the threshold `minValidatorStakingAmount()` to be validator                       |
-
-The validator candidates can deposit or withdraw their funds afterwards as long as the staking balance must be greater than the threshold `minValidatorStakingAmount()`.
-
-**Renouncing**
-
-The candidates can renounce and take back their deposited RON at the next period ending after waiting `waitingSecsToRevoke()` seconds.
-
-### Delegator
-
-The delegator can choose the validator to stake and receive the commission reward:
-
-| Methods                                                  | Explanation                                                                        |
-| -------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `delegate(consensusAddr)`                                | Stakes `msg.value` amount of RON for a validator `consensusAddr`                   |
-| `undelegate(consensusAddr, amount)`                      | Unstakes from a validator                                                          |
-| `redelegate(consensusAddrSrc, consensusAddrDst, amount)` | Unstakes `amount` RON from the `consensusAddrSrc` and stake for `consensusAddrDst` |
-| `getRewards(consensusAddrList)`                          | Returns all of the claimable rewards                                               |
-| `claimRewards(consensusAddrList)`                        | Claims all the reward from the validators                                          |
-| `delegateRewards(consensusAddrList, consensusAddr)`      | Claims all the reward and delegates them to the consensus address                  |
-
-The delegator has to wait at least `cooldownSecsToUndelegate()` seconds from the last timestamp (s)he delegated before undelegating.
-
-### Reward Calculation
-
-The reward is calculated based on the minimum staking amount in the current period of a specific delegator:
-
-- Read how the reward is calculated for delegator at [Staking Problem: Reward Calculation](https://skymavis.notion.site/Staking-Problem-Reward-Calculation-bd47bbcefde24bbd8e959bee45dfd4a5).
-- See [`RewardCalculation` contract](./contracts/ronin/staking/RewardCalculation.sol) for the implementation.
-
-## Validator Contract & Rewarding
-
-The top users with the highest amount of staked coins will be considered to be validators after prioritizing [the trusted organizations](#ronin-trusted-organization). The total number of validators do not larger than `maxValidatorNumber()`. Each validator will be a block producer and a bridge relayer, whenever a validator gets jailed its corresponding block producer will not be able to receive the block reward.
-
-### Block reward submission
-
-The block miners submit their block reward at the end of each block, and these amounts will be split for the block producers and their corresponding delegators at the end of the period (~1 day).
-
-### Wrapping up epoch/period
-
-![image](./assets/Validator%20Contract%20Overview.png)
-
-_Validator contract flow overview_
-
-1. The block producer calls the contract `RoninValidatorSet.wrapUpEpoch()` to filter jailed/maintaining block producers.
-
-At the end of each period, the contract:
-
-2. Distributes mining reward and bridge relaying reward for the current validators.
-3. Updates credit scores in the contract `SlashIndicator`.
-4. Syncs the new validator set by using to precompiled contract.
-
-## Slashing
-
-The validators will be slashed when they do not provide good service for Ronin network.
-
-### Unavailability block producer
-
-| Properties                                    | Explanation                                                                                                                                    |
-| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `unavailabilityTier1Threshold`                | The mining reward will be deprecated, if (s)he missed more than this threshold.                                                                |
-| `unavailabilityTier2Threshold`                | The mining reward will be deprecated, (s)he will be put in jailed, and will be deducted self-staking if (s)he misses more than this threshold. |
-| `slashAmountForUnavailabilityTier2Threshold`  | The amount of RON to deduct from self-staking of a block producer when (s)he is slashed tier-2.                                                |
-| `jailDurationForUnavailabilityTier2Threshold` | The number of blocks to jail a block producer when (s)he is slashed tier-2.                                                                    |
-
-### Double-sign block producer
-
-| Properties                    | Explanation                                                                               |
-| ----------------------------- | ----------------------------------------------------------------------------------------- |
-| `slashDoubleSignAmount`       | The amount of RON to slash double sign.                                                   |
-| `doubleSigningJailUntilBlock` | The block number that the punished validator will be jailed until, due to double signing. |
-
-### Bridge Relayers
-
-| Properties                              | Explanation                                                                                                                                           |
-| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `missingVotesRatioTier1`                | The bridge reward will be deprecated if (s)he missed more than this ratio.                                                                            |
-| `missingVotesRatioTier2`                | The bridge reward and mining reward will be deprecated and the corresponding block producer will be put in jail if (s)he misses more than this ratio. |
-| `jailDurationForMissingVotesRatioTier2` | The number of blocks to jail the corresponding block producer when its bridge operator is slashed tier-2.                                             |
-
-### Bridge Voters (Ronin Trusted Organizations)
-
-| Properties                | Explanation                                                                            |
-| ------------------------- | -------------------------------------------------------------------------------------- |
-| `bridgeVotingThreshold`   | The threshold to slash when a trusted organization does not vote for bridge operators. |
-| `bridgeVotingSlashAmount` | The amount of RON to slash bridge voting.                                              |
-
-### Credit score
-
-| Properties                     | Explanation                                                                                                          |
-| ------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| `gainCreditScore`              | The score to gain per period.                                                                                        |
-| `maxCreditScore`               | The max number of credit score that a validator can hold.                                                            |
-| `bailOutCostMultiplier`        | The number that will be multiplied with the remaining jailed time to get the cost of bailing out.                    |
-| `cutOffPercentageAfterBailout` | The percentage of reward that the block producer will be cut off from until the end of the period after bailing out. |
-
-## Maintenance
-
-The validators will be slashed in their absence (even when it is due to scheduled maintenance). We allow the validators scheduling to enter a maintenance mode:
-
-| Properties                      | Explanation                                                     |
-| ------------------------------- | --------------------------------------------------------------- |
-| `minMaintenanceDurationInBlock` | The min duration to maintenance in blocks.                      |
-| `maxMaintenanceDurationInBlock` | The max duration to maintenance in blocks.                      |
-| `minOffsetToStartSchedule`      | The offset to the min block number that the schedule can start. |
-| `maxOffsetToStartSchedule`      | The offset to the max block number that the schedule can start. |
-| `maxSchedules`                  | The max number of scheduled maintenances.                       |
 
 ## Bridges
 
@@ -234,10 +96,13 @@ const TYPE_HASH = 0x65526afa953b4e935ecd640e6905741252eedae157e79c37331ee8103c70
 
 **Global Proposal**
 
-The governance has 2 target options to call to globally:
+The governance has 4 target options to call to globally:
 
-- Option 0: `RoninTrustedOrganization` contract
-- Option 1: `Bridge` contract
+- Option 0: `BridgeManager` contract
+- Option 1: `GatewayContract` contract
+- Option 2: `BridgeReward` contract
+- Option 3: `BridgeSlash` contract
+- Option 4: `BridgeTracking` contract
 
 ```js
 // keccak256("GlobalProposalDetail(uint256 nonce,uint8[] targetOptions,uint256[] values,bytes[] calldatas,uint256[] gasAmounts)");
@@ -251,8 +116,3 @@ const TYPE_HASH = 0xdb316eb400de2ddff92ab4255c0cd3cba634cd5236b93386ed9328b7d822
 | `values`        | `uint256[]` | msg.value to send for targets |
 | `calldatas`     | `bytes[]`   | Data to call to the targets   |
 | `gasAmounts`    | `uint256[]` | Gas amount to call            |
-
-## Vault Forwarder
-
-The vaults are used in the Delegation Program, in which Ronin will lend each valid user a vault to have an affordable amount to become a validator. The users will interact with the DPoS contract via the vault. A set of target contracts that the vault can interact to are determined by the admin. The fund is locked in the vault and withdrawn only by the admin of the vault.
-
