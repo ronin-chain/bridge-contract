@@ -1,5 +1,6 @@
 #!/bin/sh
 
+rm -rf logs/storage/*
 dirOutputs=$(ls out | grep '^[^.]*\.sol$') # assuming the out dir is at 'out'
 while IFS= read -r contractDir; do
   innerdirOutputs=$(ls out/$contractDir)
