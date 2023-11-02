@@ -3,13 +3,11 @@ pragma solidity ^0.8.0;
 
 import { Test } from "forge-std/Test.sol";
 import { Randomizer } from "@ronin/test/helpers/Randomizer.t.sol";
-import { Sorting } from "@ronin/contracts/mocks/libraries/Sorting.sol";
 import { AddressArrayUtils } from "@ronin/contracts/libraries/AddressArrayUtils.sol";
 import { IBridgeManager } from "@ronin/contracts/interfaces/bridge/IBridgeManager.sol";
 import { IBridgeManagerEvents } from "@ronin/contracts/interfaces/bridge/events/IBridgeManagerEvents.sol";
 
 abstract contract BridgeManagerUtils is Randomizer {
-  using Sorting for uint256[];
   using AddressArrayUtils for address[];
 
   uint256 internal constant DEFAULT_R1 = 1;
@@ -215,17 +213,6 @@ abstract contract BridgeManagerUtils is Randomizer {
     _ensureNonDuplicated(governors.extend(bridgeOperators));
   }
 
-  function _sort(address[] memory inputs) internal pure returns (address[] memory outputs) {
-    uint256[] memory uintInputs;
-    assembly {
-      uintInputs := inputs
-    }
-    uint256[] memory uintOutputs = uintInputs.sort();
-    assembly {
-      outputs := uintOutputs
-    }
-  }
-
   function _ensureNonZero(uint256[] memory arr) internal pure {
     uint256 length = arr.length;
 
@@ -255,7 +242,6 @@ abstract contract BridgeManagerUtils is Randomizer {
     assertEq(bridgeOperators, bridgeManager.getBridgeOperators());
     assertEq(voteWeights, bridgeManager.getGovernorWeights(governors));
     assertEq(bridgeOperators.length, bridgeManager.totalBridgeOperator());
-    // assertEq(_sort(bridgeOperators), _sort(bridgeManager.getBridgeOperatorOf(governors)));
 
     uint256 totalWeight;
     for (uint256 i; i < voteWeights.length; ) {

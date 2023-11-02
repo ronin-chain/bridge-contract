@@ -1,7 +1,7 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity >=0.8.17 <0.9.0;
 
-contract MockValidatorContract {
+contract MockValidatorSet_ForFoundryTest {
   uint256 private _currentPeriod;
 
   function currentPeriod() external view returns (uint256) {

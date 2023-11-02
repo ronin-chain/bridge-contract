@@ -10,7 +10,6 @@ import "../../interfaces/IERC20Mintable.sol";
 import "../../interfaces/IERC721Mintable.sol";
 import "../../interfaces/bridge/IBridgeTracking.sol";
 import "../../interfaces/IRoninGatewayV3.sol";
-import "../../interfaces/IRoninTrustedOrganization.sol";
 import "../../interfaces/consumers/VoteStatusConsumer.sol";
 import "../../interfaces/validator/IRoninValidatorSet.sol";
 import "../../libraries/IsolatedGovernance.sol";

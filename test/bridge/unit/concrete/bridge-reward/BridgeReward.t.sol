@@ -14,7 +14,7 @@ import { BridgeReward } from "@ronin/contracts/ronin/gateway/BridgeReward.sol";
 import { MockBridgeTracking } from "@ronin/test/mocks/MockBridgeTracking.sol";
 import { MockBridgeManager } from "@ronin/test/mocks/MockBridgeManager.sol";
 import { MockBridgeSlash } from "@ronin/test/mocks/MockBridgeSlash.sol";
-import { MockValidatorSet } from "@ronin/test/mocks/MockValidatorSet.sol";
+import { MockValidatorSet_ForFoundryTest } from "@ronin/test/mocks/MockValidatorSet_ForFoundryTest.sol";
 import { Users } from "@ronin/test/utils/Types.sol";
 
 contract BridgeReward_Unit_Concrete_Test is Base_Test {
@@ -25,7 +25,7 @@ contract BridgeReward_Unit_Concrete_Test is Base_Test {
   IBridgeTracking internal _bridgeTracking;
   IBridgeManager internal _bridgeManager;
   IBridgeSlash internal _bridgeSlash;
-  MockValidatorSet internal _validatorSetContract;
+  MockValidatorSet_ForFoundryTest internal _validatorSetContract;
 
   Users internal _users;
 
@@ -47,9 +47,9 @@ contract BridgeReward_Unit_Concrete_Test is Base_Test {
     _bridgeTracking = new MockBridgeTracking();
     _bridgeManager = new MockBridgeManager();
     _bridgeSlash = new MockBridgeSlash();
-    _validatorSetContract = new MockValidatorSet();
+    _validatorSetContract = new MockValidatorSet_ForFoundryTest();
 
-    _validatorSetContract.setPeriod(1337);
+    _validatorSetContract.setCurrentPeriod(1337);
 
     // Initialize current on testing contract
     _bridgeReward.initialize({

@@ -6,7 +6,7 @@ import { Base_Test } from "@ronin/test/Base.t.sol";
 import { LibArrayUtils } from "@ronin/test/helpers/LibArrayUtils.t.sol";
 import { IBridgeRewardEvents } from "@ronin/contracts/interfaces/bridge/events/IBridgeRewardEvents.sol";
 import { IBridgeManager, BridgeManagerUtils } from "../utils/BridgeManagerUtils.t.sol";
-import { MockValidatorContract } from "@ronin/contracts/mocks/ronin/MockValidatorContract.sol";
+import { MockValidatorContract_OnlyTiming_ForHardhatTest } from "@ronin/contracts/mocks/ronin/MockValidatorContract_OnlyTiming_ForHardhatTest.sol";
 import { BridgeTracking } from "@ronin/contracts/ronin/gateway/BridgeTracking.sol";
 import { BridgeReward } from "@ronin/contracts/ronin/gateway/BridgeReward.sol";
 import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
@@ -212,7 +212,7 @@ contract BridgeRewardTest is Base_Test, IBridgeRewardEvents, BridgeManagerUtils 
   function _setUp() internal virtual {
     _admin = vm.addr(1);
 
-    _validatorContract = address(new MockValidatorContract());
+    _validatorContract = address(new MockValidatorContract_OnlyTiming_ForHardhatTest(200));
 
     (address[] memory bridgeOperators, address[] memory governors, uint96[] memory voteWeights) = getValidInputs(
       DEFAULT_R1,
@@ -233,7 +233,10 @@ contract BridgeRewardTest is Base_Test, IBridgeRewardEvents, BridgeManagerUtils 
       new TransparentUpgradeableProxy(
         _bridgeSlashLogic,
         _admin,
-        abi.encodeCall(BridgeSlash.initialize, (_validatorContract, _bridgeManagerContract, _bridgeTrackingContract, address(0)))
+        abi.encodeCall(
+          BridgeSlash.initialize,
+          (_validatorContract, _bridgeManagerContract, _bridgeTrackingContract, address(0))
+        )
       )
     );
 

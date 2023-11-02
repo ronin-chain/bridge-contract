@@ -6,7 +6,7 @@ import { Test } from "forge-std/Test.sol";
 import { LibArrayUtils } from "@ronin/test/helpers/LibArrayUtils.t.sol";
 import { TransparentUpgradeableProxyV2 } from "@ronin/contracts/extensions/TransparentUpgradeableProxyV2.sol";
 import { RoninGatewayV3 } from "@ronin/contracts/ronin/gateway/RoninGatewayV3.sol";
-import { MockValidatorContract } from "@ronin/contracts/mocks/ronin/MockValidatorContract.sol";
+import { MockValidatorSet_ForFoundryTest } from "../../../../mocks/MockValidatorSet_ForFoundryTest.sol";
 import { BridgeTracking } from "@ronin/contracts/ronin/gateway/BridgeTracking.sol";
 import { IBridgeSlash, MockBridgeSlash, BridgeSlash } from "@ronin/contracts/mocks/ronin/MockBridgeSlash.sol";
 import { IBridgeManager, BridgeManagerUtils } from "../utils/BridgeManagerUtils.t.sol";
@@ -119,7 +119,7 @@ contract BridgeSlashTest is IBridgeSlashEvents, BridgeManagerUtils {
     period = _bound(period, 1, type(uint64).max);
 
     // Set the current period in the mock validator contract
-    MockValidatorContract(payable(_validatorContract)).setCurrentPeriod(period);
+    MockValidatorSet_ForFoundryTest(payable(_validatorContract)).setCurrentPeriod(period);
 
     // Register the bridge slash contract as a callback
     vm.prank(_bridgeManagerContract, _bridgeManagerContract);
@@ -179,7 +179,7 @@ contract BridgeSlashTest is IBridgeSlashEvents, BridgeManagerUtils {
 
     for (uint256 i; i < duration; ) {
       // Set the current period in the mock validator contract
-      MockValidatorContract(payable(_validatorContract)).setCurrentPeriod(period);
+      MockValidatorSet_ForFoundryTest(payable(_validatorContract)).setCurrentPeriod(period);
       // Generate valid inputs for newly added operators
       uint256[] memory newlyAddedAtPeriods;
       address[] memory newlyAddedOperators;
@@ -258,7 +258,7 @@ contract BridgeSlashTest is IBridgeSlashEvents, BridgeManagerUtils {
     uint256[] memory ballots;
     uint256 totalBallotForPeriod;
     IBridgeSlash bridgeSlashContract = IBridgeSlash(_bridgeSlashContract);
-    MockValidatorContract validatorContract = MockValidatorContract(payable(_validatorContract));
+    MockValidatorSet_ForFoundryTest validatorContract = MockValidatorSet_ForFoundryTest(payable(_validatorContract));
     for (uint256 i; i < duration; ) {
       // Generate random ballots for bridge operators
       ballots = _createRandomNumbers(r1, bridgeOperators.length, 0, MAX_FUZZ_INPUTS);
@@ -289,7 +289,7 @@ contract BridgeSlashTest is IBridgeSlashEvents, BridgeManagerUtils {
 
   function _setUp() internal virtual {
     _admin = vm.addr(1);
-    _validatorContract = address(new MockValidatorContract());
+    _validatorContract = address(new MockValidatorSet_ForFoundryTest());
     (address[] memory bridgeOperators, address[] memory governors, uint96[] memory voteWeights) = getValidInputs(
       DEFAULT_R1,
       DEFAULT_R2,
@@ -312,7 +312,10 @@ contract BridgeSlashTest is IBridgeSlashEvents, BridgeManagerUtils {
       new TransparentUpgradeableProxyV2(
         _bridgeSlashLogic,
         _bridgeManagerContract,
-        abi.encodeCall(BridgeSlash.initialize, (_validatorContract, _bridgeManagerContract, _bridgeTrackingContract, address(0)))
+        abi.encodeCall(
+          BridgeSlash.initialize,
+          (_validatorContract, _bridgeManagerContract, _bridgeTrackingContract, address(0))
+        )
       )
     );
   }
