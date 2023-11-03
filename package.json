@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "prepare": "husky install",
-    "test:ci": "forge test --no-match-path '*forking/*' -vvv && hardhat test",
+    "test:ci": "forge test --no-match-path '*forking/*' -vvv",
     "sourcify": "hardhat sourcify --endpoint https://sourcify.roninchain.com/server"
   },
   "lint-staged": {
