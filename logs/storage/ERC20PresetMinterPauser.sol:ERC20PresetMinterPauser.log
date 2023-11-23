@@ -1,0 +1,8 @@
+lib/openzeppelin-contracts/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol:ERC20PresetMinterPauser:_roles (storage_slot: 0) (offset: 0) (type: mapping(bytes32 => struct AccessControl.RoleData)) (numberOfBytes: 32)
+lib/openzeppelin-contracts/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol:ERC20PresetMinterPauser:_roleMembers (storage_slot: 1) (offset: 0) (type: mapping(bytes32 => struct EnumerableSet.AddressSet)) (numberOfBytes: 32)
+lib/openzeppelin-contracts/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol:ERC20PresetMinterPauser:_balances (storage_slot: 2) (offset: 0) (type: mapping(address => uint256)) (numberOfBytes: 32)
+lib/openzeppelin-contracts/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol:ERC20PresetMinterPauser:_allowances (storage_slot: 3) (offset: 0) (type: mapping(address => mapping(address => uint256))) (numberOfBytes: 32)
+lib/openzeppelin-contracts/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol:ERC20PresetMinterPauser:_totalSupply (storage_slot: 4) (offset: 0) (type: uint256) (numberOfBytes: 32)
+lib/openzeppelin-contracts/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol:ERC20PresetMinterPauser:_name (storage_slot: 5) (offset: 0) (type: string) (numberOfBytes: 32)
+lib/openzeppelin-contracts/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol:ERC20PresetMinterPauser:_symbol (storage_slot: 6) (offset: 0) (type: string) (numberOfBytes: 32)
+lib/openzeppelin-contracts/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol:ERC20PresetMinterPauser:_paused (storage_slot: 7) (offset: 0) (type: bool) (numberOfBytes: 1)

@@ -1,0 +1,3 @@
+src/extensions/sequential-governance/governance-relay/CommonGovernanceRelay.sol:CommonGovernanceRelay:round (storage_slot: 0) (offset: 0) (type: mapping(uint256 => uint256)) (numberOfBytes: 32)
+src/extensions/sequential-governance/governance-relay/CommonGovernanceRelay.sol:CommonGovernanceRelay:vote (storage_slot: 1) (offset: 0) (type: mapping(uint256 => mapping(uint256 => struct CoreGovernance.ProposalVote))) (numberOfBytes: 32)
+src/extensions/sequential-governance/governance-relay/CommonGovernanceRelay.sol:CommonGovernanceRelay:_proposalExpiryDuration (storage_slot: 2) (offset: 0) (type: uint256) (numberOfBytes: 32)

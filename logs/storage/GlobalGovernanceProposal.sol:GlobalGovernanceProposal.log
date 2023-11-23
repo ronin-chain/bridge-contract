@@ -1,0 +1,4 @@
+src/extensions/sequential-governance/governance-proposal/GlobalGovernanceProposal.sol:GlobalGovernanceProposal:round (storage_slot: 0) (offset: 0) (type: mapping(uint256 => uint256)) (numberOfBytes: 32)
+src/extensions/sequential-governance/governance-proposal/GlobalGovernanceProposal.sol:GlobalGovernanceProposal:vote (storage_slot: 1) (offset: 0) (type: mapping(uint256 => mapping(uint256 => struct CoreGovernance.ProposalVote))) (numberOfBytes: 32)
+src/extensions/sequential-governance/governance-proposal/GlobalGovernanceProposal.sol:GlobalGovernanceProposal:_proposalExpiryDuration (storage_slot: 2) (offset: 0) (type: uint256) (numberOfBytes: 32)
+src/extensions/sequential-governance/governance-proposal/GlobalGovernanceProposal.sol:GlobalGovernanceProposal:_targetOptionsMap (storage_slot: 3) (offset: 0) (type: mapping(enum GlobalProposal.TargetOption => address)) (numberOfBytes: 32)

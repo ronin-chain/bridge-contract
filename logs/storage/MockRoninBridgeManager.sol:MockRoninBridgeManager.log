@@ -1,0 +1,4 @@
+src/mocks/ronin/MockRoninBridgeManager.sol:MockRoninBridgeManager:round (storage_slot: 0) (offset: 0) (type: mapping(uint256 => uint256)) (numberOfBytes: 32)
+src/mocks/ronin/MockRoninBridgeManager.sol:MockRoninBridgeManager:vote (storage_slot: 1) (offset: 0) (type: mapping(uint256 => mapping(uint256 => struct CoreGovernance.ProposalVote))) (numberOfBytes: 32)
+src/mocks/ronin/MockRoninBridgeManager.sol:MockRoninBridgeManager:_proposalExpiryDuration (storage_slot: 2) (offset: 0) (type: uint256) (numberOfBytes: 32)
+src/mocks/ronin/MockRoninBridgeManager.sol:MockRoninBridgeManager:_targetOptionsMap (storage_slot: 3) (offset: 0) (type: mapping(enum GlobalProposal.TargetOption => address)) (numberOfBytes: 32)
