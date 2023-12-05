@@ -11,6 +11,7 @@ import {MockBridge} from "@ronin/contracts/mocks/MockBridge.sol";
 
 import {Base_Test} from "@ronin/test/Base.t.sol";
 import {SignerUtils} from "@ronin/test/utils/Signers.sol";
+import {InitTestOutput} from "@ronin/test/init-test/Structs.sol";
 import {InitTest} from "@ronin/test/init-test/InitTest.sol";
 import "./BridgeManagerInterface.sol";
 
@@ -28,7 +29,10 @@ contract Bridge_Integration_Test is Base_Test, InitTest, SignerUtils {
     _setOperators(_getSigners(_operatorNum));
     _prepareDeploymentArgs();
 
-    init();
+    InitTestOutput memory output = init();
+
+    _bridgeContract = MockBridge(output.bridgeContractAddress);
+    _bridgeManagerContract = RoninBridgeManager(output.roninBridgeManagerAddress);
   }
 
   function _prepareDeploymentArgs() internal {
@@ -42,10 +46,6 @@ contract Bridge_Integration_Test is Base_Test, InitTest, SignerUtils {
     for (uint256 i; i < operators.length; i++) {
       _operators.push(operators[i]);
     }
-  }
-
-  function _deploy() internal {
-    _bridgeContract = new MockBridge();
   }
 
   function test_abc() external {}

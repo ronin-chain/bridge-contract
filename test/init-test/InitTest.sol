@@ -7,7 +7,6 @@ import "./Structs.sol";
 
 import {DefaultTestConfig} from "./DefaultTestConfig.sol";
 
-import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import {TransparentUpgradeableProxyV2} from "@ronin/contracts/extensions/TransparentUpgradeableProxyV2.sol";
 
 import {BridgeTracking} from "@ronin/contracts/ronin/gateway/BridgeTracking.sol";
@@ -15,14 +14,12 @@ import {BridgeSlash} from "@ronin/contracts/ronin/gateway/BridgeSlash.sol";
 import {BridgeReward} from "@ronin/contracts/ronin/gateway/BridgeReward.sol";
 import {RoninBridgeManager} from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import {MainchainBridgeManager} from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
+import {MockBridge} from "@ronin/contracts/mocks/MockBridge.sol";
 
 contract InitTest is Base_Test {
-  address _proxyAdmin;
   InitTestInput internal _inputArguments;
 
   constructor() {
-    _proxyAdmin = _deployProxyAdmin();
-
     _inputArguments.roninGeneralConfig = DefaultTestConfig.get().roninGeneralConfig;
     _inputArguments.maintenanceArguments = DefaultTestConfig.get().maintenanceArguments;
     _inputArguments.stakingVestingArguments = DefaultTestConfig.get().stakingVestingArguments;
@@ -62,17 +59,21 @@ contract InitTest is Base_Test {
 
   function init() public returns (InitTestOutput memory output) {
     _prepareAddressForGeneralConfig();
-    output.bridgeTrackingAddress = _deployBridgeTracking();
-    output.bridgeSlashAddress = _deployBridgeSlash();
-    output.bridgeRewardAddress = _deployBridgeReward();
-    output.roninBridgeManagerAddress = _deployRoninBridgeManager();
-    output.mainchainBridgeManagerAddress = _deployMainchainBridgeManager();
+
+    output.bridgeContractAddress = payable(_deployBridgeContract());
+    output.bridgeTrackingAddress = payable(_deployBridgeTracking());
+    output.bridgeSlashAddress = payable(_deployBridgeSlash());
+    output.bridgeRewardAddress = payable(_deployBridgeReward());
+    output.roninBridgeManagerAddress = payable(_deployRoninBridgeManager());
+    output.mainchainBridgeManagerAddress = payable(_deployMainchainBridgeManager());
   }
 
   function _prepareAddressForGeneralConfig() internal {
-    uint256 nonce = 1;
+    uint256 nonce = 0;
     address deployer = address(this);
-
+    nonce += 2;
+    _inputArguments.roninGeneralConfig.bridgeContract = _calculateAddress(deployer, nonce).addr;
+    _inputArguments.mainchainGeneralConfig.bridgeContract = _calculateAddress(deployer, nonce).addr;
     nonce += 2;
     _inputArguments.roninGeneralConfig.bridgeTrackingContract = _calculateAddress(deployer, nonce);
     nonce += 2;
@@ -83,20 +84,26 @@ contract InitTest is Base_Test {
     nonce += 1;
     _inputArguments.roninGeneralConfig.bridgeManagerContract = _calculateAddress(deployer, nonce);
 
-    console2.log("Deployer", deployer);
-    console2.log("Expected bridgeTrackingContract", _inputArguments.roninGeneralConfig.bridgeTrackingContract.addr);
-    console2.log("Expected bridgeSlashContract", _inputArguments.roninGeneralConfig.bridgeSlashContract.addr);
-    console2.log("Expected bridgeRewardContract", _inputArguments.roninGeneralConfig.bridgeRewardContract.addr);
-    console2.log("Expected bridgeManagerContract", _inputArguments.roninGeneralConfig.bridgeManagerContract.addr);
+    // console2.log("Deployer", deployer);
+    // console2.log(" > bridgeTrackingContract", _inputArguments.roninGeneralConfig.bridgeTrackingContract.addr);
+    // console2.log(" > bridgeSlashContract", _inputArguments.roninGeneralConfig.bridgeSlashContract.addr);
+    // console2.log(" > bridgeRewardContract", _inputArguments.roninGeneralConfig.bridgeRewardContract.addr);
+    // console2.log(" > bridgeManagerContract", _inputArguments.roninGeneralConfig.bridgeManagerContract.addr);
   }
 
-  function _deployBridgeContract() internal {}
+  function _deployBridgeContract() internal returns (address) {
+    MockBridge logic = new MockBridge();
+    TransparentUpgradeableProxyV2 proxy = new TransparentUpgradeableProxyV2(address(logic), address(this), abi.encode());
+    address bridgeContract = address(proxy);
+    vm.label(bridgeContract, "BridgeContract");
+    return bridgeContract;
+  }
 
   function _deployBridgeTracking() internal returns (address) {
     BridgeTracking logic = new BridgeTracking();
     TransparentUpgradeableProxyV2 proxy = new TransparentUpgradeableProxyV2(
       address(logic),
-      _proxyAdmin,
+      _inputArguments.roninGeneralConfig.bridgeManagerContract.addr,
       abi.encodeCall(
         BridgeTracking.initialize,
         (
@@ -116,7 +123,7 @@ contract InitTest is Base_Test {
     BridgeSlash logic = new BridgeSlash();
     TransparentUpgradeableProxyV2 proxy = new TransparentUpgradeableProxyV2(
       address(logic),
-      _proxyAdmin,
+      _inputArguments.roninGeneralConfig.bridgeManagerContract.addr,
       abi.encodeCall(
         BridgeSlash.initialize,
         (
@@ -135,9 +142,11 @@ contract InitTest is Base_Test {
 
   function _deployBridgeReward() internal returns (address) {
     BridgeReward logic = new BridgeReward();
-    TransparentUpgradeableProxyV2 proxy = new TransparentUpgradeableProxyV2(
+    TransparentUpgradeableProxyV2 proxy = new TransparentUpgradeableProxyV2{
+      value: _inputArguments.bridgeRewardArguments.topupAmount
+    }(
       address(logic),
-      _proxyAdmin,
+      _inputArguments.roninGeneralConfig.bridgeManagerContract.addr,
       abi.encodeCall(
         BridgeReward.initialize,
         (
@@ -151,7 +160,7 @@ contract InitTest is Base_Test {
       )
     );
     address result = address(proxy);
-    vm.label(result, "BridgeSlashContract");
+    vm.label(result, "BridgeRewardProxy");
     assertEq(result, _inputArguments.roninGeneralConfig.bridgeRewardContract.addr);
     return result;
   }
@@ -198,6 +207,7 @@ contract InitTest is Base_Test {
     );
 
     address result = address(bridgeManager);
+    vm.label(result, "RoninBridgeManager");
     assertEq(result, _inputArguments.roninGeneralConfig.bridgeManagerContract.addr);
     return result;
   }
@@ -231,12 +241,8 @@ contract InitTest is Base_Test {
       options,
       targets
     );
-
+    vm.label(address(bridgeManager), "MainchainBridgeManager");
     return address(bridgeManager);
-  }
-
-  function _deployProxyAdmin() internal returns (address) {
-    return address(new ProxyAdmin());
   }
 
   function _calculateAddress(address deployer, uint256 nonce) internal pure returns (AddressExtended memory rs) {

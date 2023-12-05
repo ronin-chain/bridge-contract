@@ -157,17 +157,18 @@ struct InitTestInput {
 }
 
 struct InitTestOutput {
-  address roninGovernanceAdminAddress;
-  address maintenanceContractAddress;
-  address roninTrustedOrganizationAddress;
-  address fastFinalityTrackingAddress;
-  address slashContractAddress;
-  address stakingContractAddress;
-  address stakingVestingContractAddress;
-  address validatorContractAddress;
-  address bridgeTrackingAddress;
-  address bridgeSlashAddress;
-  address bridgeRewardAddress;
-  address roninBridgeManagerAddress;
-  address mainchainBridgeManagerAddress;
+  address payable bridgeContractAddress;
+  address payable roninGovernanceAdminAddress;
+  address payable maintenanceContractAddress;
+  address payable roninTrustedOrganizationAddress;
+  address payable fastFinalityTrackingAddress;
+  address payable slashContractAddress;
+  address payable stakingContractAddress;
+  address payable stakingVestingContractAddress;
+  address payable validatorContractAddress;
+  address payable bridgeTrackingAddress;
+  address payable bridgeSlashAddress;
+  address payable bridgeRewardAddress;
+  address payable roninBridgeManagerAddress;
+  address payable mainchainBridgeManagerAddress;
 }
