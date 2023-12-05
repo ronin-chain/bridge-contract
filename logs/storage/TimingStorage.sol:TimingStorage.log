@@ -1,6 +1,0 @@
-src/ronin/validator/storage-fragments/TimingStorage.sol:TimingStorage:_numberOfBlocksInEpoch (storage_slot: 0) (offset: 0) (type: uint256) (numberOfBytes: 32)
-src/ronin/validator/storage-fragments/TimingStorage.sol:TimingStorage:_lastUpdatedBlock (storage_slot: 1) (offset: 0) (type: uint256) (numberOfBytes: 32)
-src/ronin/validator/storage-fragments/TimingStorage.sol:TimingStorage:_lastUpdatedPeriod (storage_slot: 2) (offset: 0) (type: uint256) (numberOfBytes: 32)
-src/ronin/validator/storage-fragments/TimingStorage.sol:TimingStorage:_currentPeriodStartAtBlock (storage_slot: 3) (offset: 0) (type: uint256) (numberOfBytes: 32)
-src/ronin/validator/storage-fragments/TimingStorage.sol:TimingStorage:_periodOf (storage_slot: 4) (offset: 0) (type: mapping(uint256 => uint256)) (numberOfBytes: 32)
-src/ronin/validator/storage-fragments/TimingStorage.sol:TimingStorage:______gap (storage_slot: 5) (offset: 0) (type: uint256[49]) (numberOfBytes: 1568)

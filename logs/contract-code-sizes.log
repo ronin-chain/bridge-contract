@@ -3,10 +3,12 @@
 | Address                                         | 0.086     | 24.49       |
 | AddressArrayUtils                               | 0.086     | 24.49       |
 | Ballot                                          | 0.086     | 24.49       |
+| BridgeManagerInterface                          | 0.933     | 23.643      |
 | BridgeOperatorsBallot                           | 0.166     | 24.41       |
 | BridgeReward                                    | 6.031     | 18.545      |
 | BridgeSlash                                     | 5.635     | 18.941      |
 | BridgeTracking                                  | 6.873     | 17.703      |
+| DefaultTestConfig                               | 3.367     | 21.209      |
 | ECDSA                                           | 0.086     | 24.49       |
 | ERC1967Proxy                                    | 0.177     | 24.399      |
 | ERC20                                           | 2.172     | 22.404      |
@@ -36,8 +38,10 @@
 | PRBMathUtils                                    | 0.063     | 24.513      |
 | PauseEnforcer                                   | 4.548     | 20.028      |
 | Proposal                                        | 0.166     | 24.41       |
+| ProxyAdmin                                      | 1.683     | 22.893      |
 | RoninBridgeManager                              | 24.579    | -0.003      |
 | RoninGatewayV3                                  | 19.755    | 4.821       |
+| SignerUtils                                     | 0.155     | 24.421      |
 | StdStyle                                        | 0.086     | 24.49       |
 | StorageSlot                                     | 0.086     | 24.49       |
 | Strings                                         | 0.086     | 24.49       |

@@ -1,4 +1,0 @@
-src/ronin/fast-finality/FastFinalityTracking.sol:FastFinalityTracking:_initialized (storage_slot: 0) (offset: 0) (type: uint8) (numberOfBytes: 1)
-src/ronin/fast-finality/FastFinalityTracking.sol:FastFinalityTracking:_initializing (storage_slot: 0) (offset: 1) (type: bool) (numberOfBytes: 1)
-src/ronin/fast-finality/FastFinalityTracking.sol:FastFinalityTracking:_tracker (storage_slot: 1) (offset: 0) (type: mapping(uint256 => mapping(address => uint256))) (numberOfBytes: 32)
-src/ronin/fast-finality/FastFinalityTracking.sol:FastFinalityTracking:_latestTrackingBlock (storage_slot: 2) (offset: 0) (type: uint256) (numberOfBytes: 32)

@@ -1,7 +1,0 @@
-src/ronin/StakingVesting.sol:StakingVesting:______deprecatedValidator (storage_slot: 0) (offset: 0) (type: address) (numberOfBytes: 20)
-src/ronin/StakingVesting.sol:StakingVesting:_initialized (storage_slot: 0) (offset: 20) (type: uint8) (numberOfBytes: 1)
-src/ronin/StakingVesting.sol:StakingVesting:_initializing (storage_slot: 0) (offset: 21) (type: bool) (numberOfBytes: 1)
-src/ronin/StakingVesting.sol:StakingVesting:_blockProducerBonusPerBlock (storage_slot: 1) (offset: 0) (type: uint256) (numberOfBytes: 32)
-src/ronin/StakingVesting.sol:StakingVesting:_bridgeOperatorBonusPerBlock (storage_slot: 2) (offset: 0) (type: uint256) (numberOfBytes: 32)
-src/ronin/StakingVesting.sol:StakingVesting:lastBlockSendingBonus (storage_slot: 3) (offset: 0) (type: uint256) (numberOfBytes: 32)
-src/ronin/StakingVesting.sol:StakingVesting:_fastFinalityRewardPercentage (storage_slot: 4) (offset: 0) (type: uint256) (numberOfBytes: 32)
