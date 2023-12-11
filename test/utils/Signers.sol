@@ -7,13 +7,15 @@ contract SignerUtils is StdCheats {
   uint256 public constant ACCOUNT_SIGNER = uint256(keccak256("@ronin-bridge-contract.signer.index"));
   uint256 internal _accountNonce;
 
-  function _getSigners(uint256 num) internal returns (Account[] memory accounts) {
+  function getSigners(uint256 num) internal returns (Account[] memory accounts) {
+    require(num >= 1, "Invalid number of signers");
     uint256 startIdx = _accountNonce;
-    uint256 endIdx = _accountNonce += num;
+    uint256 endIdx = _accountNonce + num - 1;
     accounts = new Account[](num);
 
-    for (uint256 i = startIdx; i < endIdx; i++) {
-      accounts[i] = makeAccount(string(abi.encodePacked(ACCOUNT_SIGNER, i)));
+    for (uint256 i = startIdx; i <= endIdx; i++) {
+      accounts[i - startIdx] = makeAccount(string(abi.encodePacked(ACCOUNT_SIGNER, i)));
     }
+    _accountNonce += num - 1;
   }
 }

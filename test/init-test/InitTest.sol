@@ -42,7 +42,7 @@ contract InitTest is Base_Test {
       _inputArguments.bridgeManagerArguments.members.push(arg.members[i]);
     }
     delete _inputArguments.bridgeManagerArguments.targets;
-    for (uint256 i; i < arg.members.length; i++) {
+    for (uint256 i; i < arg.targets.length; i++) {
       _inputArguments.bridgeManagerArguments.targets.push(arg.targets[i]);
     }
   }
@@ -65,14 +65,15 @@ contract InitTest is Base_Test {
     output.bridgeSlashAddress = payable(_deployBridgeSlash());
     output.bridgeRewardAddress = payable(_deployBridgeReward());
     output.roninBridgeManagerAddress = payable(_deployRoninBridgeManager());
-    output.mainchainBridgeManagerAddress = payable(_deployMainchainBridgeManager());
+    // output.mainchainBridgeManagerAddress = payable(_deployMainchainBridgeManager());
   }
 
   function _prepareAddressForGeneralConfig() internal {
     uint256 nonce = 0;
     address deployer = address(this);
-    nonce += 2;
+    nonce += 1;
     _inputArguments.roninGeneralConfig.bridgeContract = _calculateAddress(deployer, nonce).addr;
+    nonce += 1;
     _inputArguments.mainchainGeneralConfig.bridgeContract = _calculateAddress(deployer, nonce).addr;
     nonce += 2;
     _inputArguments.roninGeneralConfig.bridgeTrackingContract = _calculateAddress(deployer, nonce);
@@ -84,11 +85,11 @@ contract InitTest is Base_Test {
     nonce += 1;
     _inputArguments.roninGeneralConfig.bridgeManagerContract = _calculateAddress(deployer, nonce);
 
-    // console2.log("Deployer", deployer);
-    // console2.log(" > bridgeTrackingContract", _inputArguments.roninGeneralConfig.bridgeTrackingContract.addr);
-    // console2.log(" > bridgeSlashContract", _inputArguments.roninGeneralConfig.bridgeSlashContract.addr);
-    // console2.log(" > bridgeRewardContract", _inputArguments.roninGeneralConfig.bridgeRewardContract.addr);
-    // console2.log(" > bridgeManagerContract", _inputArguments.roninGeneralConfig.bridgeManagerContract.addr);
+    console2.log("Deployer", deployer);
+    console2.log(" > bridgeTrackingContract", _inputArguments.roninGeneralConfig.bridgeTrackingContract.addr);
+    console2.log(" > bridgeSlashContract", _inputArguments.roninGeneralConfig.bridgeSlashContract.addr);
+    console2.log(" > bridgeRewardContract", _inputArguments.roninGeneralConfig.bridgeRewardContract.addr);
+    console2.log(" > bridgeManagerContract", _inputArguments.roninGeneralConfig.bridgeManagerContract.addr);
   }
 
   function _deployBridgeContract() internal returns (address) {
