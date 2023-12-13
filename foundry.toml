@@ -26,6 +26,7 @@ evm_version = 'shanghai'
 [fmt]
 line_length = 120
 tab_width = 2
+bracket_spacing = true
 
 [profile.default.fuzz]
 runs = 256

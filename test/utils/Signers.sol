@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {StdCheats} from "forge-std/StdCheats.sol";
+import { StdCheats } from "forge-std/StdCheats.sol";
 
 contract SignerUtils is StdCheats {
   uint256 public constant ACCOUNT_SIGNER = uint256(keccak256("@ronin-bridge-contract.signer.index"));

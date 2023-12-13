@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {console2} from "forge-std/console2.sol";
+import { console2 } from "forge-std/console2.sol";
 import "../Base.t.sol";
 import "./Structs.sol";
 
-import {DefaultTestConfig} from "./DefaultTestConfig.sol";
+import { DefaultTestConfig } from "./DefaultTestConfig.sol";
 
-import {TransparentUpgradeableProxyV2} from "@ronin/contracts/extensions/TransparentUpgradeableProxyV2.sol";
+import { TransparentUpgradeableProxyV2 } from "@ronin/contracts/extensions/TransparentUpgradeableProxyV2.sol";
 
-import {BridgeTracking} from "@ronin/contracts/ronin/gateway/BridgeTracking.sol";
-import {BridgeSlash} from "@ronin/contracts/ronin/gateway/BridgeSlash.sol";
-import {BridgeReward} from "@ronin/contracts/ronin/gateway/BridgeReward.sol";
-import {RoninBridgeManager} from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
-import {MainchainBridgeManager} from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
-import {MockBridge} from "@ronin/contracts/mocks/MockBridge.sol";
+import { BridgeTracking } from "@ronin/contracts/ronin/gateway/BridgeTracking.sol";
+import { BridgeSlash } from "@ronin/contracts/ronin/gateway/BridgeSlash.sol";
+import { BridgeReward } from "@ronin/contracts/ronin/gateway/BridgeReward.sol";
+import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
+import { MainchainBridgeManager } from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
+import { MockBridge } from "@ronin/contracts/mocks/MockBridge.sol";
 
 contract InitTest is Base_Test {
   InitTestInput internal _inputArguments;

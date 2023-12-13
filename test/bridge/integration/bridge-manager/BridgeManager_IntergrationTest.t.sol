@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {console2} from "forge-std/console2.sol";
-import {StdStyle} from "forge-std/StdStyle.sol";
+import { console2 } from "forge-std/console2.sol";
+import { StdStyle } from "forge-std/StdStyle.sol";
 
-import {IBridgeManager} from "@ronin/contracts/interfaces/bridge/IBridgeManager.sol";
-import {MockBridge} from "@ronin/contracts/mocks/MockBridge.sol";
-import {RoninBridgeManager} from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
-import {MainchainBridgeManager} from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
-import {ContractType} from "@ronin/contracts/utils/ContractType.sol";
+import { IBridgeManager } from "@ronin/contracts/interfaces/bridge/IBridgeManager.sol";
+import { MockBridge } from "@ronin/contracts/mocks/MockBridge.sol";
+import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
+import { MainchainBridgeManager } from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
+import { ContractType } from "@ronin/contracts/utils/ContractType.sol";
 
-import {Base_Test} from "@ronin/test/Base.t.sol";
-import {SignerUtils} from "@ronin/test/utils/Signers.sol";
-import {InitTest} from "@ronin/test/init-test/InitTest.sol";
-import {DefaultTestConfig} from "@ronin/test/init-test/DefaultTestConfig.sol";
+import { Base_Test } from "@ronin/test/Base.t.sol";
+import { SignerUtils } from "@ronin/test/utils/Signers.sol";
+import { InitTest } from "@ronin/test/init-test/InitTest.sol";
+import { DefaultTestConfig } from "@ronin/test/init-test/DefaultTestConfig.sol";
 import "@ronin/test/init-test/Structs.sol";
 import "./BridgeManagerInterface.sol";
 
