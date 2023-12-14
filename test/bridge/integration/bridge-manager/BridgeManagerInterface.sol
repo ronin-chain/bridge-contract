@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-// import "@openzeppelin/contracts/"
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import { SignerUtils } from "@ronin/test/utils/Signers.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";

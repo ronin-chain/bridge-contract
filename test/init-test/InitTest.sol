@@ -15,9 +15,12 @@ import { BridgeReward } from "@ronin/contracts/ronin/gateway/BridgeReward.sol";
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import { MainchainBridgeManager } from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
 import { MockBridge } from "@ronin/contracts/mocks/MockBridge.sol";
+import { AddressArrayUtils } from "@ronin/contracts/libraries/AddressArrayUtils.sol";
 
 contract InitTest is Base_Test {
   InitTestInput internal _inputArguments;
+  address internal _deployer;
+  address internal _proxyAdmin;
 
   constructor() {
     _inputArguments.roninGeneralConfig = DefaultTestConfig.get().roninGeneralConfig;
@@ -58,45 +61,54 @@ contract InitTest is Base_Test {
   }
 
   function init() public returns (InitTestOutput memory output) {
+    _deployer = makeAddr("deployer");
+    vm.deal(_deployer, _inputArguments.bridgeRewardArguments.topupAmount);
+    _proxyAdmin = makeAddr("proxyAdmin");
+
     _prepareAddressForGeneralConfig();
 
+    vm.startPrank(_deployer);
     output.bridgeContractAddress = payable(_deployBridgeContract());
     output.bridgeTrackingAddress = payable(_deployBridgeTracking());
     output.bridgeSlashAddress = payable(_deployBridgeSlash());
     output.bridgeRewardAddress = payable(_deployBridgeReward());
     output.roninBridgeManagerAddress = payable(_deployRoninBridgeManager());
-    // output.mainchainBridgeManagerAddress = payable(_deployMainchainBridgeManager());
+    output.mainchainBridgeManagerAddress = payable(_deployMainchainBridgeManager());
+    vm.stopPrank();
   }
 
   function _prepareAddressForGeneralConfig() internal {
-    uint256 nonce = 0;
-    address deployer = address(this);
-    nonce += 1;
-    _inputArguments.roninGeneralConfig.bridgeContract = _calculateAddress(deployer, nonce).addr;
-    nonce += 1;
-    _inputArguments.mainchainGeneralConfig.bridgeContract = _calculateAddress(deployer, nonce).addr;
+    uint256 nonce = 1;
+    _inputArguments.roninGeneralConfig.bridgeContract = _calculateAddress(_deployer, nonce).addr;
+    // nonce += 2;
+    // _inputArguments.mainchainGeneralConfig.bridgeContract = _calculateAddress(_deployer, nonce).addr;
     nonce += 2;
-    _inputArguments.roninGeneralConfig.bridgeTrackingContract = _calculateAddress(deployer, nonce);
+    _inputArguments.roninGeneralConfig.bridgeTrackingContract = _calculateAddress(_deployer, nonce);
     nonce += 2;
-    _inputArguments.roninGeneralConfig.bridgeSlashContract = _calculateAddress(deployer, nonce);
+    _inputArguments.roninGeneralConfig.bridgeSlashContract = _calculateAddress(_deployer, nonce);
     nonce += 2;
-    _inputArguments.roninGeneralConfig.bridgeRewardContract = _calculateAddress(deployer, nonce);
+    _inputArguments.roninGeneralConfig.bridgeRewardContract = _calculateAddress(_deployer, nonce);
 
     nonce += 1;
-    _inputArguments.roninGeneralConfig.bridgeManagerContract = _calculateAddress(deployer, nonce);
+    _inputArguments.roninGeneralConfig.bridgeManagerContract = _calculateAddress(_deployer, nonce);
+    nonce += 1;
+    _inputArguments.mainchainGeneralConfig.bridgeManagerContract = _calculateAddress(_deployer, nonce);
 
-    console2.log("Deployer", deployer);
+    console2.log("Deployer", _deployer);
+    console2.log(" > bridgeContract", _inputArguments.roninGeneralConfig.bridgeContract);
     console2.log(" > bridgeTrackingContract", _inputArguments.roninGeneralConfig.bridgeTrackingContract.addr);
     console2.log(" > bridgeSlashContract", _inputArguments.roninGeneralConfig.bridgeSlashContract.addr);
     console2.log(" > bridgeRewardContract", _inputArguments.roninGeneralConfig.bridgeRewardContract.addr);
-    console2.log(" > bridgeManagerContract", _inputArguments.roninGeneralConfig.bridgeManagerContract.addr);
+    console2.log(" > roninBridgeManagerContract", _inputArguments.roninGeneralConfig.bridgeManagerContract.addr);
+    console2.log(" > mainchainBridgeManagerContract", _inputArguments.mainchainGeneralConfig.bridgeContract);
   }
 
   function _deployBridgeContract() internal returns (address) {
     MockBridge logic = new MockBridge();
-    TransparentUpgradeableProxyV2 proxy = new TransparentUpgradeableProxyV2(address(logic), address(this), abi.encode());
+    TransparentUpgradeableProxyV2 proxy = new TransparentUpgradeableProxyV2(address(logic), _proxyAdmin, abi.encode());
     address bridgeContract = address(proxy);
-    vm.label(bridgeContract, "BridgeContract");
+    vm.label(bridgeContract, "RoninBridgeContract");
+    assertEq(bridgeContract, _inputArguments.roninGeneralConfig.bridgeContract);
     return bridgeContract;
   }
 

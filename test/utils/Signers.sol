@@ -16,6 +16,6 @@ contract SignerUtils is StdCheats {
     for (uint256 i = startIdx; i <= endIdx; i++) {
       accounts[i - startIdx] = makeAccount(string(abi.encodePacked(ACCOUNT_SIGNER, i)));
     }
-    _accountNonce += num - 1;
+    _accountNonce += num;
   }
 }
