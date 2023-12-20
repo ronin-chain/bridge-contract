@@ -21,10 +21,12 @@ contract Migration__20231215_MapTokenMainchain is BridgeMigration {
   address constant _aggMainchainToken = address(0xFB0489e9753B045DdB35e39c6B0Cc02EC6b99AC5);
   address internal _mainchainGatewayV3;
 
-  uint256 constant _highTierThreshold = 0;
-  uint256 constant _lockedThreshold = 0;
-  uint256 constant _unlockFeePercentages = 0;
-  uint256 constant _dailyWithdrawalLimit = 0;
+  // The decimal of AGG token is 18
+  uint256 constant _highTierThreshold = 200_000_000 ether;
+  uint256 constant _lockedThreshold = 800_000_000 ether;
+  // The MAX_PERCENTAGE is 1_000_000
+  uint256 constant _unlockFeePercentages = 10;
+  uint256 constant _dailyWithdrawalLimit = 500_000_000 ether;
 
   function setUp() public override {
     super.setUp();
