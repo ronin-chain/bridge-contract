@@ -15,7 +15,6 @@ import { IGeneralConfigExtended } from "../IGeneralConfigExtended.sol";
 
 contract Migration__20231215_MapTokenRoninchain is BridgeMigration {
   RoninBridgeManager internal _roninBridgeManager;
-  IGeneralConfigExtended internal constant _config = IGeneralConfigExtended(address(CONFIG));
   address constant _aggRoninToken = address(0x294311a8C37F0744F99EB152c419D4D3D6FEC1C7);
   address constant _aggMainchainToken = address(0xFB0489e9753B045DdB35e39c6B0Cc02EC6b99AC5);
   address internal _roninGatewayV3;
@@ -60,7 +59,7 @@ contract Migration__20231215_MapTokenRoninchain is BridgeMigration {
     uint256[] memory gasAmounts = new uint256[](1);
     gasAmounts[0] = 1_000_000;
 
-    _verifyProposalGasAmount(_roninBridgeManager, targets, values, calldatas, gasAmounts);
+    _verifyRoninProposalGasAmount(targets, values, calldatas, gasAmounts);
 
     vm.broadcast(sender());
     _roninBridgeManager.propose(
