@@ -16,43 +16,37 @@ abstract contract BridgeManager is IQuorum, IBridgeManager, BridgeManagerCallbac
   using EnumerableSet for EnumerableSet.AddressSet;
 
   /// @dev value is equal to keccak256("@ronin.dpos.gateway.BridgeAdmin.governorToBridgeOperatorInfo.slot") - 1
-  bytes32 private constant GOVERNOR_TO_BRIDGE_OPERATOR_INFO_SLOT =
-    0x88547008e60f5748911f2e59feb3093b7e4c2e87b2dd69d61f112fcc932de8e3;
+  bytes32 private constant GOVERNOR_TO_BRIDGE_OPERATOR_INFO_SLOT = 0x88547008e60f5748911f2e59feb3093b7e4c2e87b2dd69d61f112fcc932de8e3;
   /// @dev value is equal to keccak256("@ronin.dpos.gateway.BridgeAdmin.govenorOf.slot") - 1
   bytes32 private constant GOVENOR_OF_SLOT = 0x8400683eb2cb350596d73644c0c89fe45f108600003457374f4ab3e87b4f3aa3;
   /// @dev value is equal to keccak256("@ronin.dpos.gateway.BridgeAdmin.governors.slot") - 1
   bytes32 private constant GOVERNOR_SET_SLOT = 0x546f6b46ab35b030b6816596b352aef78857377176c8b24baa2046a62cf1998c;
   /// @dev value is equal to keccak256("@ronin.dpos.gateway.BridgeAdmin.bridgeOperators.slot") - 1
-  bytes32 private constant BRIDGE_OPERATOR_SET_SLOT =
-    0xd38c234075fde25875da8a6b7e36b58b86681d483271a99eeeee1d78e258a24d;
+  bytes32 private constant BRIDGE_OPERATOR_SET_SLOT = 0xd38c234075fde25875da8a6b7e36b58b86681d483271a99eeeee1d78e258a24d;
 
   /**
    * @dev The numerator value used for calculations in the contract.
    * @notice value is equal to keccak256("@ronin.dpos.gateway.BridgeAdmin.numerator.slot") - 1
    */
-  TUint256Slot internal constant NUMERATOR_SLOT =
-    TUint256Slot.wrap(0xc55405a488814eaa0e2a685a0131142785b8d033d311c8c8244e34a7c12ca40f);
+  TUint256Slot internal constant NUMERATOR_SLOT = TUint256Slot.wrap(0xc55405a488814eaa0e2a685a0131142785b8d033d311c8c8244e34a7c12ca40f);
 
   /**
    * @dev The denominator value used for calculations in the contract.
    * @notice value is equal to keccak256("@ronin.dpos.gateway.BridgeAdmin.denominator.slot") - 1
    */
-  TUint256Slot internal constant DENOMINATOR_SLOT =
-    TUint256Slot.wrap(0xac1ff16a4f04f2a37a9ba5252a69baa100b460e517d1f8019c054a5ad698f9ff);
+  TUint256Slot internal constant DENOMINATOR_SLOT = TUint256Slot.wrap(0xac1ff16a4f04f2a37a9ba5252a69baa100b460e517d1f8019c054a5ad698f9ff);
 
   /**
    * @dev The nonce value used for tracking nonces in the contract.
    * @notice value is equal to keccak256("@ronin.dpos.gateway.BridgeAdmin.nonce.slot") - 1
    */
-  TUint256Slot internal constant NONCE_SLOT =
-    TUint256Slot.wrap(0x92872d32822c9d44b36a2537d3e0d4c46fc4de1ce154ccfaed560a8a58445f1d);
+  TUint256Slot internal constant NONCE_SLOT = TUint256Slot.wrap(0x92872d32822c9d44b36a2537d3e0d4c46fc4de1ce154ccfaed560a8a58445f1d);
 
   /**
    * @dev The total weight value used for storing the cumulative weight in the contract.
    * @notice value is equal to keccak256("@ronin.dpos.gateway.BridgeAdmin.totalWeights.slot") - 1
    */
-  TUint256Slot internal constant TOTAL_WEIGHTS_SLOT =
-    TUint256Slot.wrap(0x6924fe71b0c8b61aea02ca498b5f53b29bd95726278b1fe4eb791bb24a42644c);
+  TUint256Slot internal constant TOTAL_WEIGHTS_SLOT = TUint256Slot.wrap(0x6924fe71b0c8b61aea02ca498b5f53b29bd95726278b1fe4eb791bb24a42644c);
 
   /**
    * @inheritdoc IBridgeManager
@@ -105,9 +99,7 @@ abstract contract BridgeManager is IQuorum, IBridgeManager, BridgeManagerCallbac
   /**
    * @inheritdoc IBridgeManager
    */
-  function removeBridgeOperators(
-    address[] calldata bridgeOperators
-  ) external onlySelfCall returns (bool[] memory removeds) {
+  function removeBridgeOperators(address[] calldata bridgeOperators) external onlySelfCall returns (bool[] memory removeds) {
     removeds = _removeBridgeOperators(bridgeOperators);
   }
 
@@ -137,10 +129,7 @@ abstract contract BridgeManager is IQuorum, IBridgeManager, BridgeManagerCallbac
     _governorOf[newBridgeOperator] = msg.sender;
     _gorvernorToBridgeOperatorInfo[msg.sender].addr = newBridgeOperator;
 
-    _notifyRegisters(
-      IBridgeManagerCallback.onBridgeOperatorUpdated.selector,
-      abi.encode(currentBridgeOperator, newBridgeOperator)
-    );
+    _notifyRegisters(IBridgeManagerCallback.onBridgeOperatorUpdated.selector, abi.encode(currentBridgeOperator, newBridgeOperator));
 
     emit BridgeOperatorUpdated(msg.sender, currentBridgeOperator, newBridgeOperator);
   }
@@ -156,10 +145,7 @@ abstract contract BridgeManager is IQuorum, IBridgeManager, BridgeManagerCallbac
   /**
    * @inheritdoc IQuorum
    */
-  function setThreshold(
-    uint256 numerator,
-    uint256 denominator
-  ) external override onlySelfCall returns (uint256, uint256) {
+  function setThreshold(uint256 numerator, uint256 denominator) external override onlySelfCall returns (uint256, uint256) {
     return _setThreshold(numerator, denominator);
   }
 
@@ -187,9 +173,7 @@ abstract contract BridgeManager is IQuorum, IBridgeManager, BridgeManagerCallbac
   /**
    * @inheritdoc IBridgeManager
    */
-  function sumGovernorsWeight(
-    address[] calldata governors
-  ) external view nonDuplicate(governors) returns (uint256 sum) {
+  function sumGovernorsWeight(address[] calldata governors) external view nonDuplicate(governors) returns (uint256 sum) {
     sum = _sumGovernorsWeight(governors);
   }
 
@@ -375,9 +359,7 @@ abstract contract BridgeManager is IQuorum, IBridgeManager, BridgeManagerCallbac
    * @param bridgeOperators An array of addresses representing the bridge operators to be removed.
    * @return removeds An array of boolean values indicating whether each bridge operator was successfully removed.
    */
-  function _removeBridgeOperators(
-    address[] memory bridgeOperators
-  ) internal nonDuplicate(bridgeOperators) returns (bool[] memory removeds) {
+  function _removeBridgeOperators(address[] memory bridgeOperators) internal nonDuplicate(bridgeOperators) returns (bool[] memory removeds) {
     uint256 length = bridgeOperators.length;
     removeds = new bool[](length);
     // simply skip remove operations if inputs are empty.
@@ -431,10 +413,7 @@ abstract contract BridgeManager is IQuorum, IBridgeManager, BridgeManagerCallbac
    * Emits the `ThresholdUpdated` event.
    *
    */
-  function _setThreshold(
-    uint256 numerator,
-    uint256 denominator
-  ) internal virtual returns (uint256 previousNum, uint256 previousDenom) {
+  function _setThreshold(uint256 numerator, uint256 denominator) internal virtual returns (uint256 previousNum, uint256 previousDenom) {
     if (numerator > denominator) revert ErrInvalidThreshold(msg.sig);
 
     previousNum = NUMERATOR_SLOT.load();
@@ -540,11 +519,7 @@ abstract contract BridgeManager is IQuorum, IBridgeManager, BridgeManagerCallbac
    * @dev Internal function to access the mapping from governor => BridgeOperatorInfo.
    * @return governorToBridgeOperatorInfo the mapping from governor => BridgeOperatorInfo.
    */
-  function _getGovernorToBridgeOperatorInfo()
-    internal
-    pure
-    returns (mapping(address => BridgeOperatorInfo) storage governorToBridgeOperatorInfo)
-  {
+  function _getGovernorToBridgeOperatorInfo() internal pure returns (mapping(address => BridgeOperatorInfo) storage governorToBridgeOperatorInfo) {
     assembly ("memory-safe") {
       governorToBridgeOperatorInfo.slot := GOVERNOR_TO_BRIDGE_OPERATOR_INFO_SLOT
     }
