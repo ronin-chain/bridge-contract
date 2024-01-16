@@ -80,8 +80,8 @@ contract InitTest is Base_Test {
   function _prepareAddressForGeneralConfig() internal {
     uint256 nonce = 1;
     _inputArguments.roninGeneralConfig.bridgeContract = _calculateAddress(_deployer, nonce).addr;
-    // nonce += 2;
-    // _inputArguments.mainchainGeneralConfig.bridgeContract = _calculateAddress(_deployer, nonce).addr;
+    _inputArguments.mainchainGeneralConfig.bridgeContract = _inputArguments.roninGeneralConfig.bridgeContract;
+
     nonce += 2;
     _inputArguments.roninGeneralConfig.bridgeTrackingContract = _calculateAddress(_deployer, nonce);
     nonce += 2;
@@ -107,7 +107,7 @@ contract InitTest is Base_Test {
     MockBridge logic = new MockBridge();
     TransparentUpgradeableProxyV2 proxy = new TransparentUpgradeableProxyV2(address(logic), _proxyAdmin, abi.encode());
     address bridgeContract = address(proxy);
-    vm.label(bridgeContract, "RoninBridgeContract");
+    vm.label(bridgeContract, "BridgeContract");
     assertEq(bridgeContract, _inputArguments.roninGeneralConfig.bridgeContract);
     return bridgeContract;
   }

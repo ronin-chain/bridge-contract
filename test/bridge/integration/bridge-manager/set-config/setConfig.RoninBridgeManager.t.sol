@@ -8,8 +8,15 @@ contract SetConfig_RoninBridgeManager_Test is Bridge_Integration_Test {
     super.setUp();
   }
 
-  function test_setConfigCorrect() external {
+  function test_setBridgeContract() external {
     address bridgeContract = _roninBridgeManager.getContract(ContractType.BRIDGE);
+    assertEq(bridgeContract, address(_bridgeContract));
+  }
+
+  function test_setBridgeOperatorsContract() external {
     address[] memory bridgeOperators = _roninBridgeManager.getBridgeOperators();
+    for (uint256 i; i < bridgeOperators.length; i++) {
+      assertEq(bridgeOperators[i], _operators[i].addr);
+    }
   }
 }
