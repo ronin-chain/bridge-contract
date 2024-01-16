@@ -16,20 +16,12 @@ contract BridgeManager_Unit_Concrete_Test is Base_Test {
 
   modifier assertStateNotChange() {
     // Get before test state
-    (
-      address[] memory beforeBridgeOperators,
-      address[] memory beforeGovernors,
-      uint96[] memory beforeVoteWeights
-    ) = _getBridgeMembers();
+    (address[] memory beforeBridgeOperators, address[] memory beforeGovernors, uint96[] memory beforeVoteWeights) = _getBridgeMembers();
 
     _;
 
     // Compare after and before state
-    (
-      address[] memory afterBridgeOperators,
-      address[] memory afterGovernors,
-      uint96[] memory afterVoteWeights
-    ) = _getBridgeMembers();
+    (address[] memory afterBridgeOperators, address[] memory afterGovernors, uint96[] memory afterVoteWeights) = _getBridgeMembers();
 
     _assertBridgeMembers({
       comparingOperators: beforeBridgeOperators,
@@ -70,11 +62,7 @@ contract BridgeManager_Unit_Concrete_Test is Base_Test {
     _bridgeManager = new MockBridgeManager(bridgeOperators, governors, voteWeights);
   }
 
-  function _generateNewOperators()
-    internal
-    pure
-    returns (address[] memory operators, address[] memory governors, uint96[] memory weights)
-  {
+  function _generateNewOperators() internal pure returns (address[] memory operators, address[] memory governors, uint96[] memory weights) {
     operators = new address[](1);
     operators[0] = address(0x10003);
 
@@ -100,7 +88,7 @@ contract BridgeManager_Unit_Concrete_Test is Base_Test {
     )
   {
     if (removingNumber > _totalOperator) {
-      revert();
+      revert("_generateRemovingOperators: exceed number to remove");
     }
 
     uint remainingNumber = _totalOperator - removingNumber;
@@ -129,24 +117,23 @@ contract BridgeManager_Unit_Concrete_Test is Base_Test {
     return address(0x10010);
   }
 
-  function _getBridgeMembers()
-    internal
-    view
-    returns (address[] memory bridgeOperators, address[] memory governors, uint96[] memory voteWeights)
-  {
-    governors = _bridgeManager.getGovernors();
-    bridgeOperators = _bridgeManager.getBridgeOperatorOf(governors);
-    voteWeights = _bridgeManager.getGovernorWeights(governors);
-    // (governors, bridgeOperators, voteWeights) = _bridgeManager.getFullBridgeOperatorInfos();
+  function _getBridgeMembers() internal view returns (address[] memory operators, address[] memory governors, uint96[] memory weights) {
+    // (governors, operators, weights) = _bridgeManager.getFullBridgeOperatorInfos();
+    address[] memory governors_ = _bridgeManager.getGovernors();
+    return _getBridgeMembersByGovernors(governors_);
   }
 
-  function _getBridgeMembers(
-    address[] memory governors
-  ) internal view returns (address[] memory bridgeOperators, address[] memory governors_, uint96[] memory voteWeights) {
-    governors_ = governors;
-    bridgeOperators = _bridgeManager.getBridgeOperatorOf(governors);
-    voteWeights = _bridgeManager.getGovernorWeights(governors);
-    // (governors, bridgeOperators, voteWeights) = _bridgeManager.getFullBridgeOperatorInfos();
+  function _getBridgeMembersByGovernors(
+    address[] memory queryingGovernors
+  ) internal view returns (address[] memory operators, address[] memory governors, uint96[] memory weights) {
+    governors = queryingGovernors;
+
+    operators = new address[](queryingGovernors.length);
+    for (uint i; i < queryingGovernors.length; i++) {
+      operators[i] = _bridgeManager.getOperatorOf(queryingGovernors[i]);
+    }
+
+    weights = _bridgeManager.getGovernorWeights(queryingGovernors);
   }
 
   function _assertBridgeMembers(
@@ -157,6 +144,10 @@ contract BridgeManager_Unit_Concrete_Test is Base_Test {
     uint96[] memory comparingWeights,
     uint96[] memory expectingWeights
   ) internal {
+    assertEq(comparingOperators.length, expectingOperators.length, "wrong bridge operators length");
+    assertEq(comparingGovernors.length, expectingGovernors.length, "wrong governors length");
+    assertEq(comparingWeights.length, expectingWeights.length, "wrong weights length");
+
     assertEq(comparingOperators, expectingOperators, "wrong bridge operators");
     assertEq(comparingGovernors, expectingGovernors, "wrong governors");
     assertEq(comparingWeights, expectingWeights, "wrong weights");

@@ -38,7 +38,7 @@ contract BridgeManagerCRUDTest is BridgeManagerUtils {
 
     for (uint256 i = 1; i < bridgeOperators.length; ++i) {
       lastOperator = bridgeOperators[i];
-      bridgeManager.updateBridgeOperator(lastOperator);
+      bridgeManager.updateBridgeOperator(bridgeOperators[0], lastOperator);
       vm.expectRevert(abi.encodeWithSelector(ErrBridgeOperatorUpdateFailed.selector, lastOperator));
     }
 
@@ -57,20 +57,10 @@ contract BridgeManagerCRUDTest is BridgeManagerUtils {
   ) external virtual {
     vm.assume(caller != _bridgeManager);
 
-    (address[] memory bridgeOperators, address[] memory governors, uint96[] memory voteWeights) = getValidInputs(
-      r1,
-      r2,
-      r3,
-      numBridgeOperators
-    );
+    (address[] memory bridgeOperators, address[] memory governors, uint96[] memory voteWeights) = getValidInputs(r1, r2, r3, numBridgeOperators);
 
     vm.expectRevert(
-      abi.encodeWithSelector(
-        ErrUnexpectedInternalCall.selector,
-        IBridgeManager.addBridgeOperators.selector,
-        ContractType.BRIDGE,
-        caller
-      )
+      abi.encodeWithSelector(ErrUnexpectedInternalCall.selector, IBridgeManager.addBridgeOperators.selector, ContractType.BRIDGE, caller)
     );
 
     _addBridgeOperators(caller, _bridgeManager, voteWeights, governors, bridgeOperators);
@@ -79,26 +69,10 @@ contract BridgeManagerCRUDTest is BridgeManagerUtils {
   /**
    * @notice Checks whether bridge contract can add bridge operators.
    */
-  function test_AddBridgeOperators_CallerIsBridgeAdminOperator(
-    uint256 r1,
-    uint256 r2,
-    uint256 r3,
-    uint256 numBridgeOperators
-  ) external virtual {
-    (address[] memory bridgeOperators, address[] memory governors, uint96[] memory voteWeights) = getValidInputs(
-      r1,
-      r2,
-      r3,
-      numBridgeOperators
-    );
+  function test_AddBridgeOperators_CallerIsBridgeAdminOperator(uint256 r1, uint256 r2, uint256 r3, uint256 numBridgeOperators) external virtual {
+    (address[] memory bridgeOperators, address[] memory governors, uint96[] memory voteWeights) = getValidInputs(r1, r2, r3, numBridgeOperators);
 
-    IBridgeManager bridgeManager = _addBridgeOperators(
-      _bridgeManager,
-      _bridgeManager,
-      voteWeights,
-      governors,
-      bridgeOperators
-    );
+    IBridgeManager bridgeManager = _addBridgeOperators(_bridgeManager, _bridgeManager, voteWeights, governors, bridgeOperators);
 
     _invariantTest(bridgeManager, voteWeights, governors, bridgeOperators);
   }
@@ -107,12 +81,7 @@ contract BridgeManagerCRUDTest is BridgeManagerUtils {
    * @notice Checks whether bridge contract can add bridge operators
    * when governors, operators or vote weight contains null or duplicated.
    */
-  function testFail_AddBridgeOperators_NullOrDuplicateInputs(
-    uint256 r1,
-    uint256 r2,
-    uint256 r3,
-    uint256 numBridgeOperators
-  ) external virtual {
+  function testFail_AddBridgeOperators_NullOrDuplicateInputs(uint256 r1, uint256 r2, uint256 r3, uint256 numBridgeOperators) external virtual {
     (
       bool nullifyOrDuplicate,
       uint256 modifyTimes,
@@ -125,16 +94,12 @@ contract BridgeManagerCRUDTest is BridgeManagerUtils {
     if (modifiedInputIdx == uint8(InputIndex.VoteWeights)) {
       // allow duplicate vote weights
       vm.assume(nullifyOrDuplicate);
-      vm.expectRevert(
-        abi.encodeWithSelector(ErrInvalidVoteWeight.selector, IBridgeManager.addBridgeOperators.selector)
-      );
+      vm.expectRevert(abi.encodeWithSelector(ErrInvalidVoteWeight.selector, IBridgeManager.addBridgeOperators.selector));
     } else {
       if (modifyTimes == 1) {
         vm.expectRevert(abi.encodeWithSelector(ErrZeroAddress.selector, IBridgeManager.addBridgeOperators.selector));
       } else {
-        vm.expectRevert(
-          abi.encodeWithSelector(AddressArrayUtils.ErrDuplicated.selector, IBridgeManager.addBridgeOperators.selector)
-        );
+        vm.expectRevert(abi.encodeWithSelector(AddressArrayUtils.ErrDuplicated.selector, IBridgeManager.addBridgeOperators.selector));
       }
     }
 
@@ -144,26 +109,10 @@ contract BridgeManagerCRUDTest is BridgeManagerUtils {
   /**
    * @notice Checks whether bridge contract can remove bridge operators.
    */
-  function test_RemoveBridgeOperators_CallerIsBridgeContract(
-    uint256 r1,
-    uint256 r2,
-    uint256 r3,
-    uint16 numBridgeOperators
-  ) external virtual {
-    (address[] memory bridgeOperators, address[] memory governors, uint96[] memory voteWeights) = getValidInputs(
-      r1,
-      r2,
-      r3,
-      numBridgeOperators
-    );
+  function test_RemoveBridgeOperators_CallerIsBridgeContract(uint256 r1, uint256 r2, uint256 r3, uint16 numBridgeOperators) external virtual {
+    (address[] memory bridgeOperators, address[] memory governors, uint96[] memory voteWeights) = getValidInputs(r1, r2, r3, numBridgeOperators);
 
-    IBridgeManager bridgeManager = _addBridgeOperators(
-      _bridgeManager,
-      _bridgeManager,
-      voteWeights,
-      governors,
-      bridgeOperators
-    );
+    IBridgeManager bridgeManager = _addBridgeOperators(_bridgeManager, _bridgeManager, voteWeights, governors, bridgeOperators);
     uint256 removeAmount = _randomize(voteWeights.length, 1, voteWeights.length);
 
     uint256 tailIdx = voteWeights.length - 1;
@@ -206,28 +155,13 @@ contract BridgeManagerCRUDTest is BridgeManagerUtils {
   /**
    * @notice Checks whether governor can update their bridge operator address.
    */
-  function test_UpdateBridgeOperator_CallerIsGovernor(
-    uint256 r1,
-    uint256 r2,
-    uint256 r3,
-    uint16 numBridgeOperators
-  ) external virtual {
-    (address[] memory bridgeOperators, address[] memory governors, uint96[] memory voteWeights) = getValidInputs(
-      r1,
-      r2,
-      r3,
-      numBridgeOperators
-    );
-    IBridgeManager bridgeManager = _addBridgeOperators(
-      _bridgeManager,
-      _bridgeManager,
-      voteWeights,
-      governors,
-      bridgeOperators
-    );
+  function test_UpdateBridgeOperator_CallerIsGovernor(uint256 r1, uint256 r2, uint256 r3, uint16 numBridgeOperators) external virtual {
+    (address[] memory bridgeOperators, address[] memory governors, uint96[] memory voteWeights) = getValidInputs(r1, r2, r3, numBridgeOperators);
+    IBridgeManager bridgeManager = _addBridgeOperators(_bridgeManager, _bridgeManager, voteWeights, governors, bridgeOperators);
 
     uint256 randomSeed = _randomize(_triShuffle(r1, r2, r3), 0, voteWeights.length - 1);
     address randomGovernor = governors[randomSeed];
+    address correspondingOperator = bridgeOperators[randomSeed];
     address newBridgeOperator = makeAddr("NEW_BRIDGE_OPERATOR");
     vm.deal(newBridgeOperator, 1 ether);
 
@@ -236,7 +170,7 @@ contract BridgeManagerCRUDTest is BridgeManagerUtils {
     bool[] memory statuses = new bool[](1);
     statuses[0] = true;
     emit BridgeOperatorUpdated(randomGovernor, bridgeOperators[randomSeed], newBridgeOperator);
-    bridgeManager.updateBridgeOperator(newBridgeOperator);
+    bridgeManager.updateBridgeOperator(correspondingOperator, newBridgeOperator);
 
     // swap and pop
     bridgeOperators[randomSeed] = bridgeOperators[bridgeOperators.length - 1];
@@ -248,25 +182,9 @@ contract BridgeManagerCRUDTest is BridgeManagerUtils {
   /**
    * @notice Checks whether unauthorized sender can update bridge operator address.
    */
-  function testFail_UpdateBridgeOperator_CallerIsNotGovernor(
-    uint256 r1,
-    uint256 r2,
-    uint256 r3,
-    uint16 numBridgeOperators
-  ) external virtual {
-    (address[] memory bridgeOperators, address[] memory governors, uint96[] memory voteWeights) = getValidInputs(
-      r1,
-      r2,
-      r3,
-      numBridgeOperators
-    );
-    IBridgeManager bridgeManager = _addBridgeOperators(
-      _bridgeManager,
-      _bridgeManager,
-      voteWeights,
-      governors,
-      bridgeOperators
-    );
+  function testFail_UpdateBridgeOperator_CallerIsNotGovernor(uint256 r1, uint256 r2, uint256 r3, uint16 numBridgeOperators) external virtual {
+    (address[] memory bridgeOperators, address[] memory governors, uint96[] memory voteWeights) = getValidInputs(r1, r2, r3, numBridgeOperators);
+    IBridgeManager bridgeManager = _addBridgeOperators(_bridgeManager, _bridgeManager, voteWeights, governors, bridgeOperators);
 
     address unauthorizedCaller = makeAddr("UNAUTHORIZED_CALLER");
     for (uint256 i; i < governors.length; ) {
@@ -278,15 +196,9 @@ contract BridgeManagerCRUDTest is BridgeManagerUtils {
     address newBridgeOperator = makeAddr("NEW_BRIDGE_OPERATOR");
 
     vm.prank(unauthorizedCaller);
-    bridgeManager.updateBridgeOperator(newBridgeOperator);
+    bridgeManager.updateBridgeOperator(bridgeOperators[0], newBridgeOperator);
 
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        ErrUnauthorized.selector,
-        IBridgeManager.updateBridgeOperator.selector,
-        RoleAccess.GOVERNOR
-      )
-    );
+    vm.expectRevert(abi.encodeWithSelector(ErrUnauthorized.selector, IBridgeManager.updateBridgeOperator.selector, RoleAccess.GOVERNOR));
   }
 
   function _setUp() internal virtual {
