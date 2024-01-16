@@ -6,23 +6,23 @@ import { IdentityGuard } from "../../utils/IdentityGuard.sol";
 import "../../utils/CommonErrors.sol";
 
 abstract contract BridgeManagerQuorum is IQuorum, IdentityGuard {
-  struct BridgeManagerConfigStorage {
+  struct BridgeManagerQuorumStorage {
     uint256 _nonce;
     uint256 _numerator;
     uint256 _denominator;
   }
 
-  // keccak256(abi.encode(uint256(keccak256("ronin.storage.BridgeManagerConfigStorage")) - 1)) & ~bytes32(uint256(0xff))
-  bytes32 private constant $$_BridgeManagerConfigStorage = 0xa284664d8adf7d69a916362ec8082a90fd7c59679617cbcde6ef7ac0ead56500;
+  // keccak256(abi.encode(uint256(keccak256("ronin.storage.BridgeManagerQuorumStorage")) - 1)) & ~bytes32(uint256(0xff))
+  bytes32 private constant $$_BridgeManagerQuorumStorage = 0xf3019750f3837257cd40d215c9cc111e92586d2855a1e7e25d959613ed013f00;
 
-  function _getBridgeManagerConfigStorage() private pure returns (BridgeManagerConfigStorage storage $) {
+  function _getBridgeManagerQuorumStorage() private pure returns (BridgeManagerQuorumStorage storage $) {
     assembly {
-      $.slot := $$_BridgeManagerConfigStorage
+      $.slot := $$_BridgeManagerQuorumStorage
     }
   }
 
   constructor(uint256 num, uint256 denom) {
-    BridgeManagerConfigStorage storage $ = _getBridgeManagerConfigStorage();
+    BridgeManagerQuorumStorage storage $ = _getBridgeManagerQuorumStorage();
     $._nonce = 1;
 
     _setThreshold(num, denom);
@@ -39,7 +39,7 @@ abstract contract BridgeManagerQuorum is IQuorum, IdentityGuard {
    * @inheritdoc IQuorum
    */
   function getThreshold() public view virtual returns (uint256 num, uint256 denom) {
-    BridgeManagerConfigStorage storage $ = _getBridgeManagerConfigStorage();
+    BridgeManagerQuorumStorage storage $ = _getBridgeManagerQuorumStorage();
     return ($._numerator, $._denominator);
   }
 
@@ -47,7 +47,7 @@ abstract contract BridgeManagerQuorum is IQuorum, IdentityGuard {
    * @inheritdoc IQuorum
    */
   function checkThreshold(uint256 voteWeight) external view virtual returns (bool) {
-    BridgeManagerConfigStorage storage $ = _getBridgeManagerConfigStorage();
+    BridgeManagerQuorumStorage storage $ = _getBridgeManagerQuorumStorage();
 
     return voteWeight * $._denominator >= $._numerator * _totalWeight();
   }
@@ -61,7 +61,7 @@ abstract contract BridgeManagerQuorum is IQuorum, IdentityGuard {
   function _setThreshold(uint256 numerator, uint256 denominator) internal virtual returns (uint256 previousNum, uint256 previousDenom) {
     if (numerator > denominator) revert ErrInvalidThreshold(msg.sig);
 
-    BridgeManagerConfigStorage storage $ = _getBridgeManagerConfigStorage();
+    BridgeManagerQuorumStorage storage $ = _getBridgeManagerQuorumStorage();
 
     previousNum = $._numerator;
     previousDenom = $._denominator;
