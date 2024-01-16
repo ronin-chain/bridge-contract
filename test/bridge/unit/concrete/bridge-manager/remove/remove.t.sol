@@ -33,7 +33,7 @@ contract Remove_Unit_Concrete_Test is BridgeManager_Unit_Concrete_Test {
   function test_RevertWhen_RemoveOperator_OneAddress_AddressNotOperator() external {
     address[] memory removingOperators = wrapAddress(_governors[0]);
 
-    vm.expectRevert(abi.encodeWithSelector(ErrZeroAddress.selector, IBridgeManager.removeBridgeOperators.selector));
+    vm.expectRevert(abi.encodeWithSelector(IBridgeManager.ErrOperatorNotFound.selector, removingOperators[0]));
     _bridgeManager.removeBridgeOperators(removingOperators);
   }
 
@@ -54,19 +54,17 @@ contract Remove_Unit_Concrete_Test is BridgeManager_Unit_Concrete_Test {
 
     assertEq(_bridgeManager.totalBridgeOperator(), _bridgeOperators.length - 1, "wrong total bridge operator");
     assertEq(_bridgeManager.getTotalWeight(), _totalWeight - removingWeights[0], "wrong total total weight");
-    assertEq(
-      _bridgeManager.getBridgeOperatorOf(removingGovernors),
-      wrapAddress(address(0)),
-      "wrong bridge operator of"
-    );
-    assertEq(_bridgeManager.getGovernorsOf(removingOperators), wrapAddress(address(0)), "wrong governor of");
+
+    vm.expectRevert(abi.encodeWithSelector(IBridgeManager.ErrGovernorNotFound.selector, removingGovernors[0]));
+    _bridgeManager.getOperatorOf(removingGovernors[0]);
+
+    vm.expectRevert(abi.encodeWithSelector(IBridgeManager.ErrOperatorNotFound.selector, removingOperators[0]));
+    _bridgeManager.getGovernorOf(removingOperators[0]);
 
     // Compare after and before state
-    (
-      address[] memory afterBridgeOperators,
-      address[] memory afterGovernors,
-      uint96[] memory afterVoteWeights
-    ) = _getBridgeMembers(remainingGovernors);
+    (address[] memory afterBridgeOperators, address[] memory afterGovernors, uint96[] memory afterVoteWeights) = _getBridgeMembersByGovernors(
+      remainingGovernors
+    );
 
     _assertBridgeMembers({
       comparingOperators: afterBridgeOperators,
@@ -79,27 +77,20 @@ contract Remove_Unit_Concrete_Test is BridgeManager_Unit_Concrete_Test {
   }
 
   function test_RevertWhen_TwoAddress_Duplicated() external {
-    (
-      address[] memory removingOperators,
-      address[] memory removingGovernors,
-      uint96[] memory removingWeights,
-      ,
-      ,
-
-    ) = _generateRemovingOperators(2);
+    (address[] memory removingOperators, address[] memory removingGovernors, uint96[] memory removingWeights, , , ) = _generateRemovingOperators(2);
 
     removingOperators[1] = removingOperators[0];
     removingGovernors[1] = removingGovernors[0];
     removingWeights[1] = removingWeights[0];
 
     // Run the test.
-    vm.expectRevert(
-      abi.encodeWithSelector(AddressArrayUtils.ErrDuplicated.selector, IBridgeManager.removeBridgeOperators.selector)
-    );
+    vm.expectRevert(abi.encodeWithSelector(AddressArrayUtils.ErrDuplicated.selector, IBridgeManager.removeBridgeOperators.selector));
     _bridgeManager.removeBridgeOperators(removingOperators);
   }
 
   function test_RemoveOperators_TwoAddress_ThatValid() external {
+    uint TO_REMOVE_NUM = 2;
+
     (
       address[] memory removingOperators,
       address[] memory removingGovernors,
@@ -107,33 +98,33 @@ contract Remove_Unit_Concrete_Test is BridgeManager_Unit_Concrete_Test {
       address[] memory remainingOperators,
       address[] memory remainingGovernors,
       uint96[] memory remainingWeights
-    ) = _generateRemovingOperators(2);
+    ) = _generateRemovingOperators(TO_REMOVE_NUM);
 
     bool[] memory removeds = _bridgeManager.removeBridgeOperators(removingOperators);
-    bool[] memory expectedRemoved = new bool[](2);
+    bool[] memory expectedRemoved = new bool[](TO_REMOVE_NUM);
     expectedRemoved[0] = true;
     expectedRemoved[1] = true;
     assertEq(removeds, expectedRemoved);
 
-    address[] memory zeroAddressArrays = new address[](2);
+    address[] memory zeroAddressArrays = new address[](TO_REMOVE_NUM);
     zeroAddressArrays[0] = address(0);
     zeroAddressArrays[1] = address(0);
 
-    assertEq(_bridgeManager.totalBridgeOperator(), _bridgeOperators.length - 2, "wrong total bridge operator");
-    assertEq(
-      _bridgeManager.getTotalWeight(),
-      _totalWeight - (LibArrayUtils.sum(removingWeights)),
-      "wrong total total weight"
-    );
-    assertEq(_bridgeManager.getBridgeOperatorOf(removingGovernors), zeroAddressArrays, "wrong bridge operator of");
-    assertEq(_bridgeManager.getGovernorsOf(removingOperators), zeroAddressArrays, "wrong governor of");
+    assertEq(_bridgeManager.totalBridgeOperator(), _bridgeOperators.length - TO_REMOVE_NUM, "wrong total bridge operator");
+    assertEq(_bridgeManager.getTotalWeight(), _totalWeight - (LibArrayUtils.sum(removingWeights)), "wrong total total weight");
+
+    for (uint i; i < TO_REMOVE_NUM; i++) {
+      vm.expectRevert(abi.encodeWithSelector(IBridgeManager.ErrGovernorNotFound.selector, removingGovernors[i]));
+      _bridgeManager.getOperatorOf(removingGovernors[i]);
+
+      vm.expectRevert(abi.encodeWithSelector(IBridgeManager.ErrOperatorNotFound.selector, removingOperators[i]));
+      _bridgeManager.getGovernorOf(removingOperators[i]);
+    }
 
     // Compare after and before state
-    (
-      address[] memory afterBridgeOperators,
-      address[] memory afterGovernors,
-      uint96[] memory afterVoteWeights
-    ) = _getBridgeMembers(remainingGovernors);
+    (address[] memory afterBridgeOperators, address[] memory afterGovernors, uint96[] memory afterVoteWeights) = _getBridgeMembersByGovernors(
+      remainingGovernors
+    );
 
     _assertBridgeMembers({
       comparingOperators: afterBridgeOperators,
