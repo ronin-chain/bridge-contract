@@ -1,2 +1,4 @@
-script/configs/NetworkConfig.sol:NetworkConfig:_networkDataMap (storage_slot: 0) (offset: 0) (type: mapping(enum Network => struct NetworkConfig.NetworkData)) (numberOfBytes: 32)
-script/configs/NetworkConfig.sol:NetworkConfig:_networkMap (storage_slot: 1) (offset: 0) (type: mapping(uint256 => enum Network)) (numberOfBytes: 32)
+lib/foundry-deployment-kit/script/configs/NetworkConfig.sol:NetworkConfig:_deploymentRoot (storage_slot: 0) (offset: 0) (type: string) (numberOfBytes: 32)
+lib/foundry-deployment-kit/script/configs/NetworkConfig.sol:NetworkConfig:_isForkModeEnabled (storage_slot: 1) (offset: 0) (type: bool) (numberOfBytes: 1)
+lib/foundry-deployment-kit/script/configs/NetworkConfig.sol:NetworkConfig:_networkDataMap (storage_slot: 2) (offset: 0) (type: mapping(TNetwork => struct INetworkConfig.NetworkData)) (numberOfBytes: 32)
+lib/foundry-deployment-kit/script/configs/NetworkConfig.sol:NetworkConfig:_networkMap (storage_slot: 3) (offset: 0) (type: mapping(uint256 => TNetwork)) (numberOfBytes: 32)

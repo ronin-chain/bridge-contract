@@ -1,1 +1,3 @@
-script/configs/RuntimeConfig.sol:RuntimeConfig:_options (storage_slot: 0) (offset: 0) (type: struct RuntimeConfig.Options) (numberOfBytes: 32)
+lib/foundry-deployment-kit/script/configs/RuntimeConfig.sol:RuntimeConfig:_resolved (storage_slot: 0) (offset: 0) (type: bool) (numberOfBytes: 1)
+lib/foundry-deployment-kit/script/configs/RuntimeConfig.sol:RuntimeConfig:_option (storage_slot: 1) (offset: 0) (type: struct IRuntimeConfig.Option) (numberOfBytes: 32)
+lib/foundry-deployment-kit/script/configs/RuntimeConfig.sol:RuntimeConfig:_rawCommand (storage_slot: 2) (offset: 0) (type: string) (numberOfBytes: 32)
