@@ -35,8 +35,66 @@ contract InitTest is Base_Test {
     _inputArguments.governanceAdminArguments = DefaultTestConfig.get().governanceAdminArguments;
     _inputArguments.bridgeRewardArguments = DefaultTestConfig.get().bridgeRewardArguments;
 
+    setRoninGatewayArgs(DefaultTestConfig.get().roninGatewayV3Arguments);
+    setMainchainGatewayArgs(DefaultTestConfig.get().mainchainGatewayV3Arguments);
     setBridgeManagerArgs(DefaultTestConfig.get().bridgeManagerArguments);
     setRoninTrustedOrgArgs(DefaultTestConfig.get().roninTrustedOrganizationArguments);
+  }
+
+  function setRoninGatewayArgs(RoninGatewayV3Arguments memory arg) public {
+    _inputArguments.roninGatewayV3Arguments.roleSetter = arg.roleSetter;
+    _inputArguments.roninGatewayV3Arguments.numerator = arg.numerator;
+    _inputArguments.roninGatewayV3Arguments.denominator = arg.denominator;
+    _inputArguments.roninGatewayV3Arguments.trustedNumerator = arg.trustedNumerator;
+    _inputArguments.roninGatewayV3Arguments.trustedDenominator = arg.trustedDenominator;
+
+    delete _inputArguments.roninGatewayV3Arguments.withdrawalMigrators;
+    for (uint256 i; i < arg.withdrawalMigrators.length; i++) {
+      _inputArguments.roninGatewayV3Arguments.withdrawalMigrators.push(arg.withdrawalMigrators[i]);
+    }
+    for (uint256 index; index < 2; index++) {
+      delete _inputArguments.roninGatewayV3Arguments.packedAddresses[index];
+      for (uint256 i; i < arg.packedAddresses[index].length; i++) {
+        _inputArguments.roninGatewayV3Arguments.packedAddresses[index].push(arg.packedAddresses[index][i]);
+      }
+
+      delete _inputArguments.roninGatewayV3Arguments.packedNumbers[index];
+      for (uint256 i; i < arg.packedNumbers[index].length; i++) {
+        _inputArguments.roninGatewayV3Arguments.packedNumbers[index].push(arg.packedNumbers[index][i]);
+      }
+    }
+
+    delete _inputArguments.roninGatewayV3Arguments.standards;
+    for (uint256 i; i < arg.standards.length; i++) {
+      _inputArguments.roninGatewayV3Arguments.standards.push(arg.standards[i]);
+    }
+  }
+
+  function setMainchainGatewayArgs(MainchainGatewayV3Arguments memory arg) public {
+    _inputArguments.mainchainGatewayV3Arguments.roleSetter = arg.roleSetter;
+    _inputArguments.mainchainGatewayV3Arguments.wrappedToken = arg.wrappedToken;
+    _inputArguments.mainchainGatewayV3Arguments.numerator = arg.numerator;
+    _inputArguments.mainchainGatewayV3Arguments.highTierVWNumerator = arg.highTierVWNumerator;
+    _inputArguments.mainchainGatewayV3Arguments.denominator = arg.denominator;
+
+    for (uint256 index; index < 3; index++) {
+      delete _inputArguments.mainchainGatewayV3Arguments.addresses[index];
+      for (uint256 i; i < arg.addresses[index].length; i++) {
+        _inputArguments.mainchainGatewayV3Arguments.addresses[index].push(arg.addresses[index][i]);
+      }
+    }
+
+    for (uint256 index; index < 3; index++) {
+      delete _inputArguments.mainchainGatewayV3Arguments.thresholds[index];
+      for (uint256 i; i < arg.thresholds[index].length; i++) {
+        _inputArguments.mainchainGatewayV3Arguments.thresholds[index].push(arg.thresholds[index][i]);
+      }
+    }
+
+    delete _inputArguments.mainchainGatewayV3Arguments.standards;
+    for (uint256 i; i < arg.standards.length; i++) {
+      _inputArguments.mainchainGatewayV3Arguments.standards.push(arg.standards[i]);
+    }
   }
 
   function setBridgeManagerArgs(BridgeManagerArguments memory arg) public {
