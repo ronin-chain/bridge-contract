@@ -15,6 +15,7 @@ import { BridgeReward } from "@ronin/contracts/ronin/gateway/BridgeReward.sol";
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import { MainchainBridgeManager } from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
 import { MockBridge } from "@ronin/contracts/mocks/MockBridge.sol";
+import { MainchainGatewayV3 } from "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
 import { AddressArrayUtils } from "@ronin/contracts/libraries/AddressArrayUtils.sol";
 
 contract InitTest is Base_Test {
@@ -71,6 +72,7 @@ contract InitTest is Base_Test {
 
     vm.startPrank(_deployer);
     output.bridgeContractAddress = payable(_deployBridgeContract());
+    output.mainchainGatewayV3Address = payable(_deployMainchainGatewayV3());
     output.bridgeTrackingAddress = payable(_deployBridgeTracking());
     output.bridgeSlashAddress = payable(_deployBridgeSlash());
     output.bridgeRewardAddress = payable(_deployBridgeReward());
@@ -82,7 +84,8 @@ contract InitTest is Base_Test {
   function _prepareAddressForGeneralConfig() internal {
     uint256 nonce = 1;
     _inputArguments.roninGeneralConfig.bridgeContract = _calculateAddress(_deployer, nonce).addr;
-    _inputArguments.mainchainGeneralConfig.bridgeContract = _inputArguments.roninGeneralConfig.bridgeContract;
+    nonce += 2;
+    _inputArguments.mainchainGeneralConfig.bridgeContract = _calculateAddress(_deployer, nonce).addr;
 
     nonce += 2;
     _inputArguments.roninGeneralConfig.bridgeTrackingContract = _calculateAddress(_deployer, nonce);
@@ -97,7 +100,8 @@ contract InitTest is Base_Test {
     _inputArguments.mainchainGeneralConfig.bridgeManagerContract = _calculateAddress(_deployer, nonce);
 
     console2.log("Deployer", _deployer);
-    console2.log(" > bridgeContract", _inputArguments.roninGeneralConfig.bridgeContract);
+    console2.log(" > roninGateway", _inputArguments.roninGeneralConfig.bridgeContract);
+    console2.log(" > mainchainGateway", _inputArguments.mainchainGeneralConfig.bridgeContract);
     console2.log(" > bridgeTrackingContract", _inputArguments.roninGeneralConfig.bridgeTrackingContract.addr);
     console2.log(" > bridgeSlashContract", _inputArguments.roninGeneralConfig.bridgeSlashContract.addr);
     console2.log(" > bridgeRewardContract", _inputArguments.roninGeneralConfig.bridgeRewardContract.addr);
@@ -258,6 +262,32 @@ contract InitTest is Base_Test {
     );
     vm.label(address(bridgeManager), "MainchainBridgeManager");
     return address(bridgeManager);
+  }
+
+  function _deployMainchainGatewayV3() internal returns (address) {
+    MainchainGatewayV3 logic = new MainchainGatewayV3();
+    TransparentUpgradeableProxyV2 proxy = new TransparentUpgradeableProxyV2(
+      address(logic),
+      _proxyAdmin,
+      abi.encodeCall(
+        MainchainGatewayV3.initialize,
+        (
+          _inputArguments.mainchainGatewayV3Arguments.roleSetter,
+          _inputArguments.mainchainGatewayV3Arguments.wrappedToken,
+          _inputArguments.mainchainGatewayV3Arguments.roninChainId,
+          _inputArguments.mainchainGatewayV3Arguments.numerator,
+          _inputArguments.mainchainGatewayV3Arguments.highTierVWNumerator,
+          _inputArguments.mainchainGatewayV3Arguments.denominator,
+          _inputArguments.mainchainGatewayV3Arguments.addresses,
+          _inputArguments.mainchainGatewayV3Arguments.thresholds,
+          _inputArguments.mainchainGatewayV3Arguments.standards
+        )
+      )
+    );
+    address mainchainGatewayContract = address(proxy);
+    vm.label(mainchainGatewayContract, "MainchainGatewayV3");
+    assertEq(mainchainGatewayContract, _inputArguments.mainchainGeneralConfig.bridgeContract);
+    return mainchainGatewayContract;
   }
 
   function _calculateAddress(address deployer, uint256 nonce) internal pure returns (AddressExtended memory rs) {

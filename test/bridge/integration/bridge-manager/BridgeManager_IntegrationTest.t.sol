@@ -8,6 +8,7 @@ import { IBridgeManager } from "@ronin/contracts/interfaces/bridge/IBridgeManage
 import { MockBridge } from "@ronin/contracts/mocks/MockBridge.sol";
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import { MainchainBridgeManager } from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
+import { MainchainGatewayV3 } from "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
 import { ContractType } from "@ronin/contracts/utils/ContractType.sol";
 import { BridgeSlash } from "src/ronin/gateway/BridgeSlash.sol";
 import { BridgeTracking } from "src/ronin/gateway/BridgeTracking.sol";
@@ -28,6 +29,7 @@ contract Bridge_Integration_Test is Base_Test, InitTest, SignerUtils {
   Account[] internal _governors;
 
   MockBridge internal _bridgeContract;
+  MainchainGatewayV3 internal _mainchainGatewayV3;
   RoninBridgeManager internal _roninBridgeManager;
   BridgeTracking internal _bridgeTracking;
   BridgeSlash internal _bridgeSlash;
@@ -50,6 +52,7 @@ contract Bridge_Integration_Test is Base_Test, InitTest, SignerUtils {
     _bridgeReward = BridgeReward(output.bridgeRewardAddress);
     _bridgeTracking = BridgeTracking(output.bridgeTrackingAddress);
 
+    _mainchainGatewayV3 = MainchainGatewayV3(output.mainchainGatewayV3Address);
     _mainchainBridgeManager = MainchainBridgeManager(output.mainchainBridgeManagerAddress);
 
     vm.roll(1);

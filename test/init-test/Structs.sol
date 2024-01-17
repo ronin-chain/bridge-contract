@@ -2,6 +2,8 @@
 pragma solidity ^0.8.19;
 
 import "@ronin/contracts/libraries/GlobalProposal.sol";
+import "@ronin/contracts/interfaces/IWETH.sol";
+import "@ronin/contracts/libraries/Token.sol";
 
 struct MaintenanceArguments {
   uint256 minMaintenanceDurationInBlock;
@@ -114,6 +116,25 @@ struct BridgeManagerArguments {
   TargetOptionStruct[] targets;
 }
 
+struct MainchainGatewayV3Arguments {
+  address roleSetter;
+  IWETH wrappedToken;
+  uint256 roninChainId;
+  uint256 numerator;
+  uint256 highTierVWNumerator;
+  uint256 denominator;
+  // addresses[0]: mainchainTokens
+  // addresses[1]: roninTokens
+  // addresses[2]: withdrawalUnlockers
+  address[][3] addresses;
+  // thresholds[0]: highTierThreshold
+  // thresholds[1]: lockedThreshold
+  // thresholds[2]: unlockFeePercentages
+  // thresholds[3]: dailyWithdrawalLimit
+  uint256[][4] thresholds;
+  Token.Standard[] standards;
+}
+
 struct BridgeRewardArguments {
   uint256 rewardPerPeriod;
   uint256 topupAmount;
@@ -154,6 +175,7 @@ struct InitTestInput {
   RoninGovernanceAdminArguments governanceAdminArguments;
   BridgeManagerArguments bridgeManagerArguments;
   BridgeRewardArguments bridgeRewardArguments;
+  MainchainGatewayV3Arguments mainchainGatewayV3Arguments;
 }
 
 struct InitTestOutput {
@@ -171,4 +193,5 @@ struct InitTestOutput {
   address payable bridgeRewardAddress;
   address payable roninBridgeManagerAddress;
   address payable mainchainBridgeManagerAddress;
+  address payable mainchainGatewayV3Address;
 }

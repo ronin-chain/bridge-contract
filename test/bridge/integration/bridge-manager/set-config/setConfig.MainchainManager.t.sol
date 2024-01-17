@@ -10,7 +10,7 @@ contract SetConfig_MainchainManager_Test is Bridge_Integration_Test {
 
   function test_configBridgeContractCorrectly() external {
     address bridgeContract = _mainchainBridgeManager.getContract(ContractType.BRIDGE);
-    assertEq(bridgeContract, address(_bridgeContract));
+    assertEq(bridgeContract, address(_mainchainGatewayV3));
   }
 
   function test_configBridgeOperatorsCorrectly() external {
@@ -32,7 +32,7 @@ contract SetConfig_MainchainManager_Test is Bridge_Integration_Test {
     address[] memory results = _mainchainBridgeManager.resolveTargets(targets);
 
     assertEq(results[0], address(_mainchainBridgeManager));
-    assertEq(results[1], address(_bridgeContract));
+    assertEq(results[1], address(_mainchainGatewayV3));
     assertEq(results[2], address(DEFAULT_ADDRESS));
     assertEq(results[3], address(DEFAULT_ADDRESS));
     assertEq(results[4], address(DEFAULT_ADDRESS));
