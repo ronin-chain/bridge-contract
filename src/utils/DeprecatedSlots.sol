@@ -9,7 +9,7 @@ pragma solidity ^0.8.0;
  * The purpose of these contracts is to preserve the slots for already deployed contracts.
  */
 contract HasBridgeDeprecated {
-  /// @custom:deprecated Previously `_roninGatewayV3Contract` (non-zero value)
+  /// @custom:deprecated Previously `_bridgeContract` (non-zero value)
   address internal ______deprecatedBridge;
 }
 
