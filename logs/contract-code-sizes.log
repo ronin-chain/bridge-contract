@@ -29,12 +29,14 @@
 | MockBridgeReward                                | 6.77      | 17.806      |
 | MockBridgeSlash                                 | 1.447     | 23.129      |
 | MockBridgeTracking                              | 1.969     | 22.607      |
+| MockERC20                                       | 2.441     | 22.135      |
 | MockGatewayForTracking                          | 1.662     | 22.914      |
 | MockRoninBridgeManager                          | 24.579    | -0.003      |
 | MockRoninGatewayV3Extended                      | 20.038    | 4.538       |
 | MockTUint256Slot                                | 2.729     | 21.847      |
 | MockValidatorContract_OnlyTiming_ForHardhatTest | 1.15      | 23.426      |
 | MockValidatorSet_ForFoundryTest                 | 0.172     | 24.404      |
+| MockWrapToken                                   | 1.977     | 22.599      |
 | PRBMathUtils                                    | 0.063     | 24.513      |
 | PauseEnforcer                                   | 4.548     | 20.028      |
 | Proposal                                        | 0.166     | 24.41       |
