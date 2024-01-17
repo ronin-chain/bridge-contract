@@ -2,9 +2,7 @@
 |-------------------------------------------------|-----------|-------------|
 | Address                                         | 0.086     | 24.49       |
 | AddressArrayUtils                               | 0.086     | 24.49       |
-| ArtifactFactory                                 | 9.155     | 15.421      |
 | Ballot                                          | 0.086     | 24.49       |
-| BaseGeneralConfig                               | 12.892    | 11.684      |
 | BridgeManagerInterface                          | 0.933     | 23.643      |
 | BridgeOperatorsBallot                           | 0.166     | 24.41       |
 | BridgeReward                                    | 6.031     | 18.545      |
@@ -21,12 +19,7 @@
 | HasBridgeDeprecated                             | 0.063     | 24.513      |
 | HasValidatorDeprecated                          | 0.063     | 24.513      |
 | IsolatedGovernance                              | 0.086     | 24.49       |
-| JSONParserLib                                   | 0.086     | 24.49       |
 | LibArrayUtils                                   | 0.086     | 24.49       |
-| LibErrorHandler                                 | 0.086     | 24.49       |
-| LibProxy                                        | 0.086     | 24.49       |
-| LibSharedAddress                                | 0.086     | 24.49       |
-| LibString                                       | 0.086     | 24.49       |
 | LibTUint256Slot                                 | 0.086     | 24.49       |
 | MainchainBridgeManager                          | 19.332    | 5.244       |
 | MainchainGatewayV3                              | 18.187    | 6.389       |
@@ -36,8 +29,6 @@
 | MockBridgeReward                                | 6.77      | 17.806      |
 | MockBridgeSlash                                 | 1.447     | 23.129      |
 | MockBridgeTracking                              | 1.969     | 22.607      |
-| MockERC20                                       | 3.687     | 20.889      |
-| MockERC721                                      | 3.825     | 20.751      |
 | MockGatewayForTracking                          | 1.662     | 22.914      |
 | MockRoninBridgeManager                          | 24.579    | -0.003      |
 | MockRoninGatewayV3Extended                      | 20.038    | 4.538       |
@@ -47,7 +38,6 @@
 | PRBMathUtils                                    | 0.063     | 24.513      |
 | PauseEnforcer                                   | 4.548     | 20.028      |
 | Proposal                                        | 0.166     | 24.41       |
-| ProxyAdmin                                      | 1.683     | 22.893      |
 | RoninBridgeManager                              | 24.579    | -0.003      |
 | RoninGatewayV3                                  | 19.755    | 4.821       |
 | SignerUtils                                     | 0.155     | 24.421      |
@@ -56,7 +46,7 @@
 | Strings                                         | 0.086     | 24.49       |
 | Token                                           | 0.214     | 24.362      |
 | Transfer                                        | 0.166     | 24.41       |
-| TransparentUpgradeableProxy                     | 2.188     | 22.388      |
+| TransparentUpgradeableProxy                     | 2.068     | 22.508      |
 | TransparentUpgradeableProxyV2                   | 2.361     | 22.215      |
 | console                                         | 0.086     | 24.49       |
 | console2                                        | 0.086     | 24.49       |
