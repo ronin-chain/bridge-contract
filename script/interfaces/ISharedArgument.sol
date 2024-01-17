@@ -10,6 +10,7 @@ interface ISharedArgument is IGeneralConfig {
     uint256 num;
     uint256 denom;
     uint256 roninChainId;
+    uint256 expiryDuration;
     address bridgeContract;
     address[] callbackRegisters;
     address[] bridgeOperators;
@@ -88,6 +89,8 @@ interface ISharedArgument is IGeneralConfig {
 
   struct UnitTestParam {
     address proxyAdmin;
+    uint256[] operatorPKs;
+    uint256[] governorPKs;
   }
 
   struct SharedParameter {
