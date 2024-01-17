@@ -14,7 +14,8 @@ import { BridgeSlash } from "@ronin/contracts/ronin/gateway/BridgeSlash.sol";
 import { BridgeReward } from "@ronin/contracts/ronin/gateway/BridgeReward.sol";
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import { MainchainBridgeManager } from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
-import { MockBridge } from "@ronin/contracts/mocks/MockBridge.sol";
+import { RoninGatewayV3 } from "@ronin/contracts/ronin/gateway/RoninGatewayV3.sol";
+import { MockRoninGatewayV3Extended } from "@ronin/contracts/mocks/ronin/MockRoninGatewayV3Extended.sol";
 import { MainchainGatewayV3 } from "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
 import { AddressArrayUtils } from "@ronin/contracts/libraries/AddressArrayUtils.sol";
 
@@ -71,7 +72,7 @@ contract InitTest is Base_Test {
     _prepareAddressForGeneralConfig();
 
     vm.startPrank(_deployer);
-    output.bridgeContractAddress = payable(_deployBridgeContract());
+    output.roninGatewayV3Address = payable(_deployRoninGatewayV3Contract());
     output.mainchainGatewayV3Address = payable(_deployMainchainGatewayV3());
     output.bridgeTrackingAddress = payable(_deployBridgeTracking());
     output.bridgeSlashAddress = payable(_deployBridgeSlash());
@@ -109,13 +110,30 @@ contract InitTest is Base_Test {
     console2.log(" > mainchainBridgeManagerContract", _inputArguments.mainchainGeneralConfig.bridgeContract);
   }
 
-  function _deployBridgeContract() internal returns (address) {
-    MockBridge logic = new MockBridge();
-    TransparentUpgradeableProxyV2 proxy = new TransparentUpgradeableProxyV2(address(logic), _proxyAdmin, abi.encode());
-    address bridgeContract = address(proxy);
-    vm.label(bridgeContract, "BridgeContract");
-    assertEq(bridgeContract, _inputArguments.roninGeneralConfig.bridgeContract);
-    return bridgeContract;
+  function _deployRoninGatewayV3Contract() internal returns (address) {
+    MockRoninGatewayV3Extended logic = new MockRoninGatewayV3Extended();
+    TransparentUpgradeableProxyV2 proxy = new TransparentUpgradeableProxyV2(
+      address(logic),
+      _proxyAdmin,
+      abi.encodeCall(
+        RoninGatewayV3.initialize,
+        (
+          _inputArguments.roninGatewayV3Arguments.roleSetter,
+          _inputArguments.roninGatewayV3Arguments.numerator,
+          _inputArguments.roninGatewayV3Arguments.denominator,
+          _inputArguments.roninGatewayV3Arguments.trustedNumerator,
+          _inputArguments.roninGatewayV3Arguments.trustedDenominator,
+          _inputArguments.roninGatewayV3Arguments.withdrawalMigrators,
+          _inputArguments.roninGatewayV3Arguments.packedAddresses,
+          _inputArguments.roninGatewayV3Arguments.packedNumbers,
+          _inputArguments.roninGatewayV3Arguments.standards
+        )
+      )
+    );
+    address roninGatewayContract = address(proxy);
+    vm.label(roninGatewayContract, "RoninGatewayV3");
+    assertEq(roninGatewayContract, _inputArguments.roninGeneralConfig.bridgeContract);
+    return roninGatewayContract;
   }
 
   function _deployBridgeTracking() internal returns (address) {

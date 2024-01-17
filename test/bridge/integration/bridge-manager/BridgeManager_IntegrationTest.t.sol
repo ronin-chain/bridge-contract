@@ -5,7 +5,7 @@ import { console2 } from "forge-std/console2.sol";
 import { StdStyle } from "forge-std/StdStyle.sol";
 
 import { IBridgeManager } from "@ronin/contracts/interfaces/bridge/IBridgeManager.sol";
-import { MockBridge } from "@ronin/contracts/mocks/MockBridge.sol";
+import { MockRoninGatewayV3Extended } from "@ronin/contracts/mocks/ronin/MockRoninGatewayV3Extended.sol";
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import { MainchainBridgeManager } from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
 import { MainchainGatewayV3 } from "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
@@ -28,7 +28,7 @@ contract Bridge_Integration_Test is Base_Test, InitTest, SignerUtils {
   Account[] internal _operators;
   Account[] internal _governors;
 
-  MockBridge internal _bridgeContract;
+  MockRoninGatewayV3Extended internal _roninGatewayV3Contract;
   MainchainGatewayV3 internal _mainchainGatewayV3;
   RoninBridgeManager internal _roninBridgeManager;
   BridgeTracking internal _bridgeTracking;
@@ -46,7 +46,7 @@ contract Bridge_Integration_Test is Base_Test, InitTest, SignerUtils {
 
     InitTestOutput memory output = init();
 
-    _bridgeContract = MockBridge(output.bridgeContractAddress);
+    _roninGatewayV3Contract = MockRoninGatewayV3Extended(output.roninGatewayV3Address);
     _roninBridgeManager = RoninBridgeManager(output.roninBridgeManagerAddress);
     _bridgeSlash = BridgeSlash(output.bridgeSlashAddress);
     _bridgeReward = BridgeReward(output.bridgeRewardAddress);

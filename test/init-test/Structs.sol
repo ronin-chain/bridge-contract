@@ -116,6 +116,18 @@ struct BridgeManagerArguments {
   TargetOptionStruct[] targets;
 }
 
+struct RoninGatewayV3Arguments {
+  address roleSetter;
+  uint256 numerator;
+  uint256 denominator;
+  uint256 trustedNumerator;
+  uint256 trustedDenominator;
+  address[] withdrawalMigrators;
+  address[][2] packedAddresses;
+  uint256[][2] packedNumbers;
+  Token.Standard[] standards;
+}
+
 struct MainchainGatewayV3Arguments {
   address roleSetter;
   IWETH wrappedToken;
@@ -175,11 +187,11 @@ struct InitTestInput {
   RoninGovernanceAdminArguments governanceAdminArguments;
   BridgeManagerArguments bridgeManagerArguments;
   BridgeRewardArguments bridgeRewardArguments;
+  RoninGatewayV3Arguments roninGatewayV3Arguments;
   MainchainGatewayV3Arguments mainchainGatewayV3Arguments;
 }
 
 struct InitTestOutput {
-  address payable bridgeContractAddress;
   address payable roninGovernanceAdminAddress;
   address payable maintenanceContractAddress;
   address payable roninTrustedOrganizationAddress;
@@ -192,6 +204,7 @@ struct InitTestOutput {
   address payable bridgeSlashAddress;
   address payable bridgeRewardAddress;
   address payable roninBridgeManagerAddress;
+  address payable roninGatewayV3Address;
   address payable mainchainBridgeManagerAddress;
   address payable mainchainGatewayV3Address;
 }

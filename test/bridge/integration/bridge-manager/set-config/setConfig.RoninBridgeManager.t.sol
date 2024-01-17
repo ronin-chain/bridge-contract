@@ -10,7 +10,7 @@ contract SetConfig_RoninBridgeManager_Test is Bridge_Integration_Test {
 
   function test_configBridgeContractCorrectly() external {
     address bridgeContract = _roninBridgeManager.getContract(ContractType.BRIDGE);
-    assertEq(bridgeContract, address(_bridgeContract));
+    assertEq(bridgeContract, address(_roninGatewayV3Contract));
   }
 
   function test_configBridgeOperatorsCorrectly() external {
@@ -32,7 +32,7 @@ contract SetConfig_RoninBridgeManager_Test is Bridge_Integration_Test {
     address[] memory results = _roninBridgeManager.resolveTargets(targets);
 
     assertEq(results[0], address(_roninBridgeManager));
-    assertEq(results[1], address(_bridgeContract));
+    assertEq(results[1], address(_roninGatewayV3Contract));
     assertEq(results[2], address(_bridgeSlash));
     assertEq(results[3], address(_bridgeReward));
     assertEq(results[4], address(_bridgeTracking));
