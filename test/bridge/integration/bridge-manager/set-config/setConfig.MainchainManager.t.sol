@@ -3,18 +3,18 @@ pragma solidity ^0.8.19;
 
 import "../BridgeManager_IntegrationTest.t.sol";
 
-contract SetConfig_RoninBridgeManager_Test is Bridge_Integration_Test {
+contract SetConfig_MainchainManager_Test is Bridge_Integration_Test {
   function setUp() public virtual override {
     super.setUp();
   }
 
   function test_configBridgeContractCorrectly() external {
-    address bridgeContract = _roninBridgeManager.getContract(ContractType.BRIDGE);
+    address bridgeContract = _mainchainBridgeManager.getContract(ContractType.BRIDGE);
     assertEq(bridgeContract, address(_bridgeContract));
   }
 
   function test_configBridgeOperatorsCorrectly() external {
-    address[] memory bridgeOperators = _roninBridgeManager.getBridgeOperators();
+    address[] memory bridgeOperators = _mainchainBridgeManager.getBridgeOperators();
 
     for (uint256 i; i < bridgeOperators.length; i++) {
       assertEq(bridgeOperators[i], _operators[i].addr);
@@ -29,12 +29,12 @@ contract SetConfig_RoninBridgeManager_Test is Bridge_Integration_Test {
     targets[3] = GlobalProposal.TargetOption.BridgeReward;
     targets[4] = GlobalProposal.TargetOption.BridgeTracking;
 
-    address[] memory results = _roninBridgeManager.resolveTargets(targets);
+    address[] memory results = _mainchainBridgeManager.resolveTargets(targets);
 
-    assertEq(results[0], address(_roninBridgeManager));
+    assertEq(results[0], address(_mainchainBridgeManager));
     assertEq(results[1], address(_bridgeContract));
-    assertEq(results[2], address(_bridgeSlash));
-    assertEq(results[3], address(_bridgeReward));
-    assertEq(results[4], address(_bridgeTracking));
+    assertEq(results[2], address(DEFAULT_ADDRESS));
+    assertEq(results[3], address(DEFAULT_ADDRESS));
+    assertEq(results[4], address(DEFAULT_ADDRESS));
   }
 }

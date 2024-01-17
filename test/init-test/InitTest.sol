@@ -18,6 +18,8 @@ import { MockBridge } from "@ronin/contracts/mocks/MockBridge.sol";
 import { AddressArrayUtils } from "@ronin/contracts/libraries/AddressArrayUtils.sol";
 
 contract InitTest is Base_Test {
+  address constant DEFAULT_ADDRESS = address(0);
+
   InitTestInput internal _inputArguments;
   address internal _deployer;
   address internal _proxyAdmin;

@@ -9,6 +9,9 @@ import { MockBridge } from "@ronin/contracts/mocks/MockBridge.sol";
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import { MainchainBridgeManager } from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
 import { ContractType } from "@ronin/contracts/utils/ContractType.sol";
+import { BridgeSlash } from "src/ronin/gateway/BridgeSlash.sol";
+import { BridgeTracking } from "src/ronin/gateway/BridgeTracking.sol";
+import { BridgeReward } from "src/ronin/gateway/BridgeReward.sol";
 
 import { Base_Test } from "@ronin/test/Base.t.sol";
 import { SignerUtils } from "@ronin/test/utils/Signers.sol";
@@ -26,6 +29,9 @@ contract Bridge_Integration_Test is Base_Test, InitTest, SignerUtils {
 
   MockBridge internal _bridgeContract;
   RoninBridgeManager internal _roninBridgeManager;
+  BridgeTracking internal _bridgeTracking;
+  BridgeSlash internal _bridgeSlash;
+  BridgeReward internal _bridgeReward;
   MainchainBridgeManager internal _mainchainBridgeManager;
 
   BridgeManagerInterface _bridgeManagerInterface;
@@ -40,6 +46,10 @@ contract Bridge_Integration_Test is Base_Test, InitTest, SignerUtils {
 
     _bridgeContract = MockBridge(output.bridgeContractAddress);
     _roninBridgeManager = RoninBridgeManager(output.roninBridgeManagerAddress);
+    _bridgeSlash = BridgeSlash(output.bridgeSlashAddress);
+    _bridgeReward = BridgeReward(output.bridgeRewardAddress);
+    _bridgeTracking = BridgeTracking(output.bridgeTrackingAddress);
+
     _mainchainBridgeManager = MainchainBridgeManager(output.mainchainBridgeManagerAddress);
 
     vm.roll(1);
