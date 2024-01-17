@@ -7,3 +7,4 @@ hardhat/=node_modules/hardhat/
 @prb/test/=lib/prb-test/src/
 @prb/math/=lib/prb-math/
 solady/=lib/solady/src/
+foundry-deployment-kit/=lib/foundry-deployment-kit/script/
