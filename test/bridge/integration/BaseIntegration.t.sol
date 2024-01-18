@@ -27,7 +27,7 @@ import { AXSDeploy } from "@ronin/script/contracts/token/AXSDeploy.s.sol";
 import { SLPDeploy } from "@ronin/script/contracts/token/SLPDeploy.s.sol";
 import { USDCDeploy } from "@ronin/script/contracts/token/USDCDeploy.s.sol";
 
-contract Base_Integration is Base_Test {
+contract BaseIntegration_Test is Base_Test {
   ISharedArgument.SharedParameter _param;
 
   RoninBridgeManager _roninBridgeManager;
@@ -45,10 +45,10 @@ contract Base_Integration is Base_Test {
 
   function setUp() public virtual {
     _roninGatewayV3 = new RoninGatewayV3Deploy().run();
-    _roninBridgeManager = new RoninBridgeManagerDeploy().run();
     _bridgeTracking = new BridgeTrackingDeploy().run();
     _bridgeSlash = new BridgeSlashDeploy().run();
     _bridgeReward = new BridgeRewardDeploy().run();
+    _roninBridgeManager = new RoninBridgeManagerDeploy().run();
 
     _mainchainGatewayV3 = new MainchainGatewayV3Deploy().run();
     _mainchainBridgeManager = new MainchainBridgeManagerDeploy().run();
@@ -60,6 +60,4 @@ contract Base_Integration is Base_Test {
 
     _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
   }
-
-  function test_() public { }
 }

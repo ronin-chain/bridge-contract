@@ -122,15 +122,14 @@ contract Migration is BaseMigration, Utils {
       options[0] = GlobalProposal.TargetOption.GatewayContract;
       targets[0] = loadContract(Contract.MainchainGatewayV3.key());
 
-      param.mainchainBridgeManager.num = 70;
-      param.mainchainBridgeManager.denom = 100;
-      param.mainchainBridgeManager.roninChainId = block.chainid;
-      param.roninBridgeManager.expiryDuration = 60 * 60 * 24 * 14; // 14 days
+      param.mainchainBridgeManager.num = 2;
+      param.mainchainBridgeManager.denom = 4;
+      param.mainchainBridgeManager.roninChainId = 0;
       param.mainchainBridgeManager.bridgeContract = loadContract(Contract.MainchainGatewayV3.key());
       param.mainchainBridgeManager.callbackRegisters = getEmptyAddressArray();
-      param.mainchainBridgeManager.bridgeOperators = getEmptyAddressArray();
-      param.mainchainBridgeManager.governors = getEmptyAddressArray();
-      param.mainchainBridgeManager.voteWeights = getEmptyUint96Array();
+      param.mainchainBridgeManager.bridgeOperators = operatorAddrs;
+      param.mainchainBridgeManager.governors = governorAddrs;
+      param.mainchainBridgeManager.voteWeights = voteWeights;
       param.mainchainBridgeManager.targetOptions = options;
       param.mainchainBridgeManager.targets = targets;
 

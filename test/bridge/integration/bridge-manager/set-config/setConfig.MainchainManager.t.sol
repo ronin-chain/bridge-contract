@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "../BridgeManager_IntegrationTest.t.sol";
+import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
+import { ContractType } from "@ronin/contracts/utils/ContractType.sol";
+import "../../BaseIntegration.t.sol";
 
-contract SetConfig_MainchainManager_Test is Bridge_Integration_Test {
+contract SetConfig_MainchainManager_Test is BaseIntegration_Test {
   function setUp() public virtual override {
     super.setUp();
   }
@@ -16,9 +18,7 @@ contract SetConfig_MainchainManager_Test is Bridge_Integration_Test {
   function test_configBridgeOperatorsCorrectly() external {
     address[] memory bridgeOperators = _mainchainBridgeManager.getBridgeOperators();
 
-    for (uint256 i; i < bridgeOperators.length; i++) {
-      assertEq(bridgeOperators[i], _operators[i].addr);
-    }
+    assertEq(bridgeOperators, _param.mainchainBridgeManager.bridgeOperators);
   }
 
   function test_configTargetsCorrectly() external {
@@ -33,8 +33,8 @@ contract SetConfig_MainchainManager_Test is Bridge_Integration_Test {
 
     assertEq(results[0], address(_mainchainBridgeManager));
     assertEq(results[1], address(_mainchainGatewayV3));
-    assertEq(results[2], address(DEFAULT_ADDRESS));
-    assertEq(results[3], address(DEFAULT_ADDRESS));
-    assertEq(results[4], address(DEFAULT_ADDRESS));
+    assertEq(results[2], address(address(0)));
+    assertEq(results[3], address(address(0)));
+    assertEq(results[4], address(address(0)));
   }
 }

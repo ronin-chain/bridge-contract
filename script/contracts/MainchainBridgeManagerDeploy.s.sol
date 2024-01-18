@@ -16,7 +16,6 @@ contract MainchainBridgeManagerDeploy is Migration {
       param.num,
       param.denom,
       param.roninChainId,
-      param.expiryDuration,
       param.bridgeContract,
       param.callbackRegisters,
       param.bridgeOperators,

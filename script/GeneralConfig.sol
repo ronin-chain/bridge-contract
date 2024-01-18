@@ -59,10 +59,10 @@ contract GeneralConfig is BaseGeneralConfig, Utils {
 
       // ronin bridge contracts
       setAddress(DefaultNetwork.Local.key(), Contract.RoninGatewayV3.key(), vm.computeCreateAddress(deployer, 4));
-      setAddress(DefaultNetwork.Local.key(), Contract.RoninBridgeManager.key(), vm.computeCreateAddress(deployer, 5));
-      setAddress(DefaultNetwork.Local.key(), Contract.BridgeTracking.key(), vm.computeCreateAddress(deployer, 7));
-      setAddress(DefaultNetwork.Local.key(), Contract.BridgeSlash.key(), vm.computeCreateAddress(deployer, 9));
-      setAddress(DefaultNetwork.Local.key(), Contract.BridgeReward.key(), vm.computeCreateAddress(deployer, 11));
+      setAddress(DefaultNetwork.Local.key(), Contract.BridgeTracking.key(), vm.computeCreateAddress(deployer, 6));
+      setAddress(DefaultNetwork.Local.key(), Contract.BridgeSlash.key(), vm.computeCreateAddress(deployer, 8));
+      setAddress(DefaultNetwork.Local.key(), Contract.BridgeReward.key(), vm.computeCreateAddress(deployer, 10));
+      setAddress(DefaultNetwork.Local.key(), Contract.RoninBridgeManager.key(), vm.computeCreateAddress(deployer, 11));
 
       //mainchain bridge contracts
       setAddress(DefaultNetwork.Local.key(), Contract.MainchainGatewayV3.key(), vm.computeCreateAddress(deployer, 13));
@@ -75,24 +75,6 @@ contract GeneralConfig is BaseGeneralConfig, Utils {
       setAddress(DefaultNetwork.Local.key(), Contract.AXS.key(), vm.computeCreateAddress(deployer, 16));
       setAddress(DefaultNetwork.Local.key(), Contract.SLP.key(), vm.computeCreateAddress(deployer, 17));
       setAddress(DefaultNetwork.Local.key(), Contract.USDC.key(), vm.computeCreateAddress(deployer, 18));
-
-      console.log("Deployer", deployer);
-      console.log(" > roninGateway", getAddress(DefaultNetwork.Local.key(), Contract.RoninGatewayV3.key()));
-      console.log(" > mainchainGateway", getAddress(DefaultNetwork.Local.key(), Contract.MainchainGatewayV3.key()));
-      console.log(" > bridgeTrackingContract", getAddress(DefaultNetwork.Local.key(), Contract.BridgeTracking.key()));
-      console.log(" > bridgeSlashContract", getAddress(DefaultNetwork.Local.key(), Contract.BridgeSlash.key()));
-      console.log(" > bridgeRewardContract", getAddress(DefaultNetwork.Local.key(), Contract.BridgeReward.key()));
-      console.log(
-        " > roninBridgeManagerContract", getAddress(DefaultNetwork.Local.key(), Contract.RoninBridgeManager.key())
-      );
-      console.log(
-        " > mainchainBridgeManagerContract",
-        getAddress(DefaultNetwork.Local.key(), Contract.MainchainBridgeManager.key())
-      );
-      console.log(" > WETH", getAddress(DefaultNetwork.Local.key(), Contract.WETH.key()));
-      console.log(" > AXS", getAddress(DefaultNetwork.Local.key(), Contract.AXS.key()));
-      console.log(" > SLP", getAddress(DefaultNetwork.Local.key(), Contract.SLP.key()));
-      console.log(" > USDC", getAddress(DefaultNetwork.Local.key(), Contract.USDC.key()));
     }
   }
 
