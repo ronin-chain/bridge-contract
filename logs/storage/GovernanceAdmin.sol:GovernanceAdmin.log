@@ -1,7 +1,0 @@
-src/extensions/GovernanceAdmin.sol:GovernanceAdmin:round (storage_slot: 0) (offset: 0) (type: mapping(uint256 => uint256)) (numberOfBytes: 32)
-src/extensions/GovernanceAdmin.sol:GovernanceAdmin:vote (storage_slot: 1) (offset: 0) (type: mapping(uint256 => mapping(uint256 => struct CoreGovernance.ProposalVote))) (numberOfBytes: 32)
-src/extensions/GovernanceAdmin.sol:GovernanceAdmin:_proposalExpiryDuration (storage_slot: 2) (offset: 0) (type: uint256) (numberOfBytes: 32)
-src/extensions/GovernanceAdmin.sol:GovernanceAdmin:______deprecatedGovernanceAdmin (storage_slot: 3) (offset: 0) (type: address) (numberOfBytes: 20)
-src/extensions/GovernanceAdmin.sol:GovernanceAdmin:______deprecatedBridge (storage_slot: 4) (offset: 0) (type: address) (numberOfBytes: 20)
-src/extensions/GovernanceAdmin.sol:GovernanceAdmin:roninChainId (storage_slot: 5) (offset: 0) (type: uint256) (numberOfBytes: 32)
-src/extensions/GovernanceAdmin.sol:GovernanceAdmin:DOMAIN_SEPARATOR (storage_slot: 6) (offset: 0) (type: bytes32) (numberOfBytes: 32)

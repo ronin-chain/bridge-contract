@@ -1,2 +1,0 @@
-src/ronin/VaultForwarder.sol:VaultForwarder:_roles (storage_slot: 0) (offset: 0) (type: mapping(bytes32 => struct AccessControl.RoleData)) (numberOfBytes: 32)
-src/ronin/VaultForwarder.sol:VaultForwarder:_roleMembers (storage_slot: 1) (offset: 0) (type: mapping(bytes32 => struct EnumerableSet.AddressSet)) (numberOfBytes: 32)

@@ -1,7 +1,0 @@
-src/ronin/validator/storage-fragments/ValidatorInfoStorageV2.sol:ValidatorInfoStorageV2:______deprecatedTrustedOrg (storage_slot: 0) (offset: 0) (type: address) (numberOfBytes: 20)
-src/ronin/validator/storage-fragments/ValidatorInfoStorageV2.sol:ValidatorInfoStorageV2:_maxValidatorNumber (storage_slot: 1) (offset: 0) (type: uint256) (numberOfBytes: 32)
-src/ronin/validator/storage-fragments/ValidatorInfoStorageV2.sol:ValidatorInfoStorageV2:validatorCount (storage_slot: 2) (offset: 0) (type: uint256) (numberOfBytes: 32)
-src/ronin/validator/storage-fragments/ValidatorInfoStorageV2.sol:ValidatorInfoStorageV2:_validators (storage_slot: 3) (offset: 0) (type: mapping(uint256 => address)) (numberOfBytes: 32)
-src/ronin/validator/storage-fragments/ValidatorInfoStorageV2.sol:ValidatorInfoStorageV2:_validatorMap (storage_slot: 4) (offset: 0) (type: mapping(address => enum EnumFlags.ValidatorFlag)) (numberOfBytes: 32)
-src/ronin/validator/storage-fragments/ValidatorInfoStorageV2.sol:ValidatorInfoStorageV2:_maxPrioritizedValidatorNumber (storage_slot: 5) (offset: 0) (type: uint256) (numberOfBytes: 32)
-src/ronin/validator/storage-fragments/ValidatorInfoStorageV2.sol:ValidatorInfoStorageV2:______gap (storage_slot: 6) (offset: 0) (type: uint256[50]) (numberOfBytes: 1600)
