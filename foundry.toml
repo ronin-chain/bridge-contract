@@ -11,7 +11,7 @@ libs = [
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
 
-solc = '0.8.21'
+solc = '0.8.23'
 extra_output = ["devdoc", "userdoc", "storagelayout"]
 fs_permissions = [{ access = "read-write", path = "./" }]
 evm_version = 'istanbul'
@@ -26,6 +26,7 @@ evm_version = 'shanghai'
 [fmt]
 line_length = 120
 tab_width = 2
+bracket_spacing = true
 
 [profile.default.fuzz]
 runs = 256
