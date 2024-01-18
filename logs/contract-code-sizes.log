@@ -5,12 +5,10 @@
 | ArtifactFactory                                 | 9.155     | 15.421      |
 | Ballot                                          | 0.086     | 24.49       |
 | BaseGeneralConfig                               | 20.129    | 4.447       |
-| BridgeManagerInterface                          | 0.935     | 23.641      |
 | BridgeOperatorsBallot                           | 0.166     | 24.41       |
 | BridgeReward                                    | 6.032     | 18.544      |
 | BridgeSlash                                     | 5.639     | 18.937      |
 | BridgeTracking                                  | 6.875     | 17.701      |
-| DefaultTestConfig                               | 4.493     | 20.083      |
 | ECDSA                                           | 0.086     | 24.49       |
 | ERC1967Proxy                                    | 0.177     | 24.399      |
 | ERC20                                           | 2.173     | 22.403      |
@@ -53,7 +51,6 @@
 | ProxyAdmin                                      | 1.684     | 22.892      |
 | RoninBridgeManager                              | 24.601    | -0.025      |
 | RoninGatewayV3                                  | 19.765    | 4.811       |
-| SignerUtils                                     | 0.155     | 24.421      |
 | StdStyle                                        | 0.086     | 24.49       |
 | StorageSlot                                     | 0.086     | 24.49       |
 | Strings                                         | 0.086     | 24.49       |
