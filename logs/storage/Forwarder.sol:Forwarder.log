@@ -1,2 +1,0 @@
-src/extensions/forwarder/Forwarder.sol:Forwarder:_roles (storage_slot: 0) (offset: 0) (type: mapping(bytes32 => struct AccessControl.RoleData)) (numberOfBytes: 32)
-src/extensions/forwarder/Forwarder.sol:Forwarder:_roleMembers (storage_slot: 1) (offset: 0) (type: mapping(bytes32 => struct EnumerableSet.AddressSet)) (numberOfBytes: 32)
