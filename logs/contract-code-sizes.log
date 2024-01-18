@@ -18,6 +18,7 @@
 | EnumerableSet                                   | 0.086     | 24.49       |
 | ErrorHandler                                    | 0.086     | 24.49       |
 | GeneralConfig                                   | 20.129    | 4.447       |
+| GeneralConfigExtended                           | 20.351    | 4.225       |
 | GlobalProposal                                  | 0.166     | 24.41       |
 | HasBridgeDeprecated                             | 0.063     | 24.513      |
 | HasValidatorDeprecated                          | 0.063     | 24.513      |
