@@ -1,3 +1,5 @@
-lib/foundry-deployment-kit/script/configs/WalletConfig.sol:WalletConfig:_envPk (storage_slot: 0) (offset: 0) (type: uint256) (numberOfBytes: 32)
-lib/foundry-deployment-kit/script/configs/WalletConfig.sol:WalletConfig:_envSender (storage_slot: 1) (offset: 0) (type: address) (numberOfBytes: 20)
-lib/foundry-deployment-kit/script/configs/WalletConfig.sol:WalletConfig:_trezorSender (storage_slot: 2) (offset: 0) (type: address) (numberOfBytes: 20)
+lib/foundry-deployment-kit/script/configs/WalletConfig.sol:WalletConfig:stdstore (storage_slot: 0) (offset: 0) (type: struct StdStorage) (numberOfBytes: 224)
+lib/foundry-deployment-kit/script/configs/WalletConfig.sol:WalletConfig:_envLabel (storage_slot: 7) (offset: 0) (type: string) (numberOfBytes: 32)
+lib/foundry-deployment-kit/script/configs/WalletConfig.sol:WalletConfig:_envSender (storage_slot: 8) (offset: 0) (type: address) (numberOfBytes: 20)
+lib/foundry-deployment-kit/script/configs/WalletConfig.sol:WalletConfig:_trezorSender (storage_slot: 9) (offset: 0) (type: address) (numberOfBytes: 20)
+lib/foundry-deployment-kit/script/configs/WalletConfig.sol:WalletConfig:_walletOption (storage_slot: 9) (offset: 20) (type: enum IWalletConfig.WalletOption) (numberOfBytes: 1)

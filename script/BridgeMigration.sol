@@ -60,7 +60,7 @@ contract BridgeMigration is BaseMigration {
     _config.switchTo(DefaultNetwork.RoninMainnet.key());
   }
 
- function _verifyProposalGasAmount(
+  function _verifyProposalGasAmount(
     address bridgeManager,
     address[] memory targets,
     uint256[] memory values,
@@ -70,7 +70,7 @@ contract BridgeMigration is BaseMigration {
     for (uint256 i; i < targets.length; i++) {
       vm.deal(address(bridgeManager), values[i]);
       uint256 gasUsed = gasleft();
-      (bool success, bytes memory returnOrRevertData) = targets[i].call{value: values[i]}(calldatas[i]);
+      (bool success, bytes memory returnOrRevertData) = targets[i].call{ value: values[i] }(calldatas[i]);
       gasUsed = gasUsed - gasleft();
       success.handleRevert(bytes4(calldatas[i]), returnOrRevertData);
 

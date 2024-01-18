@@ -1,0 +1,5 @@
+src/mocks/token/MockWrappedToken.sol:MockWrappedToken:name (storage_slot: 0) (offset: 0) (type: string) (numberOfBytes: 32)
+src/mocks/token/MockWrappedToken.sol:MockWrappedToken:symbol (storage_slot: 1) (offset: 0) (type: string) (numberOfBytes: 32)
+src/mocks/token/MockWrappedToken.sol:MockWrappedToken:decimals (storage_slot: 2) (offset: 0) (type: uint8) (numberOfBytes: 1)
+src/mocks/token/MockWrappedToken.sol:MockWrappedToken:balanceOf (storage_slot: 3) (offset: 0) (type: mapping(address => uint256)) (numberOfBytes: 32)
+src/mocks/token/MockWrappedToken.sol:MockWrappedToken:allowance (storage_slot: 4) (offset: 0) (type: mapping(address => mapping(address => uint256))) (numberOfBytes: 32)

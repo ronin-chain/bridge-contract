@@ -41,12 +41,8 @@ contract Migration__20231215_MapTokenRoninchain is BridgeMigration {
     //   uint256[] calldata chainIds,
     //   Token.Standard[] calldata _standards
     // )
-    bytes memory innerData = abi.encodeCall(IRoninGatewayV3.mapTokens, (
-      roninTokens,
-      mainchainTokens,
-      chainIds,
-      standards
-    ));
+    bytes memory innerData =
+      abi.encodeCall(IRoninGatewayV3.mapTokens, (roninTokens, mainchainTokens, chainIds, standards));
     bytes memory proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
 
     uint256 expiredTime = block.timestamp + 10 days;
@@ -62,13 +58,6 @@ contract Migration__20231215_MapTokenRoninchain is BridgeMigration {
     _verifyRoninProposalGasAmount(targets, values, calldatas, gasAmounts);
 
     vm.broadcast(sender());
-    _roninBridgeManager.propose(
-      block.chainid,
-      expiredTime,
-      targets,
-      values,
-      calldatas,
-      gasAmounts
-    );
+    _roninBridgeManager.propose(block.chainid, expiredTime, targets, values, calldatas, gasAmounts);
   }
 }
