@@ -1,5 +1,0 @@
-test/bridge/integration/bridge-manager/BridgeManagerInterface.sol:BridgeManagerInterface:gasMeteringOff (storage_slot: 0) (offset: 0) (type: bool) (numberOfBytes: 1)
-test/bridge/integration/bridge-manager/BridgeManagerInterface.sol:BridgeManagerInterface:stdstore (storage_slot: 1) (offset: 0) (type: struct StdStorage) (numberOfBytes: 224)
-test/bridge/integration/bridge-manager/BridgeManagerInterface.sol:BridgeManagerInterface:_accountNonce (storage_slot: 8) (offset: 0) (type: uint256) (numberOfBytes: 32)
-test/bridge/integration/bridge-manager/BridgeManagerInterface.sol:BridgeManagerInterface:_contract (storage_slot: 9) (offset: 0) (type: contract RoninBridgeManager) (numberOfBytes: 20)
-test/bridge/integration/bridge-manager/BridgeManagerInterface.sol:BridgeManagerInterface:_signers (storage_slot: 10) (offset: 0) (type: struct StdCheatsSafe.Account[]) (numberOfBytes: 32)

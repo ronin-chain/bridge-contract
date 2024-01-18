@@ -54,7 +54,7 @@
 | Strings                                         | 0.086     | 24.49       |
 | Token                                           | 0.214     | 24.362      |
 | Transfer                                        | 0.166     | 24.41       |
-| TransparentUpgradeableProxy                     | 2.188     | 22.388      |
+| TransparentUpgradeableProxy                     | 2.068     | 22.508      |
 | TransparentUpgradeableProxyV2                   | 2.361     | 22.215      |
 | console                                         | 0.086     | 24.49       |
 | console2                                        | 0.086     | 24.49       |
