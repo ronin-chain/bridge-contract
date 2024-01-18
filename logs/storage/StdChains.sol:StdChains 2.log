@@ -1,5 +1,0 @@
-lib/forge-std/src/StdChains.sol:StdChains:stdChainsInitialized (storage_slot: 0) (offset: 0) (type: bool) (numberOfBytes: 1)
-lib/forge-std/src/StdChains.sol:StdChains:chains (storage_slot: 1) (offset: 0) (type: mapping(string => struct StdChains.Chain)) (numberOfBytes: 32)
-lib/forge-std/src/StdChains.sol:StdChains:defaultRpcUrls (storage_slot: 2) (offset: 0) (type: mapping(string => string)) (numberOfBytes: 32)
-lib/forge-std/src/StdChains.sol:StdChains:idToAlias (storage_slot: 3) (offset: 0) (type: mapping(uint256 => string)) (numberOfBytes: 32)
-lib/forge-std/src/StdChains.sol:StdChains:fallbackToDefaultRpcUrls (storage_slot: 4) (offset: 0) (type: bool) (numberOfBytes: 1)

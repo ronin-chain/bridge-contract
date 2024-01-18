@@ -1,2 +1,0 @@
-src/mocks/MockBridge.sol:MockBridge:bridgeOperatorAddedBlock (storage_slot: 0) (offset: 0) (type: mapping(address => uint256)) (numberOfBytes: 32)
-src/mocks/MockBridge.sol:MockBridge:bridgeOperators (storage_slot: 1) (offset: 0) (type: address[]) (numberOfBytes: 32)
