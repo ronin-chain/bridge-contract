@@ -48,8 +48,8 @@ contract GeneralConfig is BaseGeneralConfig, Utils {
     _mapContractName(Contract.MainchainGatewayV3);
     _mapContractName(Contract.MainchainBridgeManager);
 
-    _contractNameMap[Contract.WETH.key()] = "MockWrapToken";
-    _contractNameMap[Contract.WRON.key()] = "MockWrapToken";
+    _contractNameMap[Contract.WETH.key()] = "MockWrappedToken";
+    _contractNameMap[Contract.WRON.key()] = "MockWrappedToken";
     _contractNameMap[Contract.AXS.key()] = "MockERC20";
     _contractNameMap[Contract.SLP.key()] = "MockERC20";
     _contractNameMap[Contract.USDC.key()] = "MockERC20";
