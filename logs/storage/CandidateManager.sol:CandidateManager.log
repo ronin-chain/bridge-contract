@@ -1,8 +1,0 @@
-src/ronin/validator/CandidateManager.sol:CandidateManager:______deprecatedStakingContract (storage_slot: 0) (offset: 0) (type: address) (numberOfBytes: 20)
-src/ronin/validator/CandidateManager.sol:CandidateManager:_maxValidatorCandidate (storage_slot: 1) (offset: 0) (type: uint256) (numberOfBytes: 32)
-src/ronin/validator/CandidateManager.sol:CandidateManager:_candidates (storage_slot: 2) (offset: 0) (type: address[]) (numberOfBytes: 32)
-src/ronin/validator/CandidateManager.sol:CandidateManager:_candidateIndex (storage_slot: 3) (offset: 0) (type: mapping(address => uint256)) (numberOfBytes: 32)
-src/ronin/validator/CandidateManager.sol:CandidateManager:_candidateInfo (storage_slot: 4) (offset: 0) (type: mapping(address => struct ICandidateManager.ValidatorCandidate)) (numberOfBytes: 32)
-src/ronin/validator/CandidateManager.sol:CandidateManager:_minEffectiveDaysOnwards (storage_slot: 5) (offset: 0) (type: uint256) (numberOfBytes: 32)
-src/ronin/validator/CandidateManager.sol:CandidateManager:_candidateCommissionChangeSchedule (storage_slot: 6) (offset: 0) (type: mapping(address => struct ICandidateManager.CommissionSchedule)) (numberOfBytes: 32)
-src/ronin/validator/CandidateManager.sol:CandidateManager:______gap (storage_slot: 7) (offset: 0) (type: uint256[48]) (numberOfBytes: 1536)

@@ -1,4 +1,0 @@
-src/ronin/staking/RewardCalculation.sol:RewardCalculation:_accumulatedRps (storage_slot: 0) (offset: 0) (type: mapping(address => mapping(uint256 => struct PeriodWrapperConsumer.PeriodWrapper))) (numberOfBytes: 32)
-src/ronin/staking/RewardCalculation.sol:RewardCalculation:_userReward (storage_slot: 1) (offset: 0) (type: mapping(address => mapping(address => struct IRewardPool.UserRewardFields))) (numberOfBytes: 32)
-src/ronin/staking/RewardCalculation.sol:RewardCalculation:_stakingPool (storage_slot: 2) (offset: 0) (type: mapping(address => struct IRewardPool.PoolFields)) (numberOfBytes: 32)
-src/ronin/staking/RewardCalculation.sol:RewardCalculation:______gap (storage_slot: 3) (offset: 0) (type: uint256[50]) (numberOfBytes: 1600)

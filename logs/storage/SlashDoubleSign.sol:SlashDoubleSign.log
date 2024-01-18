@@ -1,6 +1,0 @@
-src/ronin/slash-indicator/SlashDoubleSign.sol:SlashDoubleSign:______deprecatedValidator (storage_slot: 0) (offset: 0) (type: address) (numberOfBytes: 20)
-src/ronin/slash-indicator/SlashDoubleSign.sol:SlashDoubleSign:_slashDoubleSignAmount (storage_slot: 1) (offset: 0) (type: uint256) (numberOfBytes: 32)
-src/ronin/slash-indicator/SlashDoubleSign.sol:SlashDoubleSign:_doubleSigningJailUntilBlock (storage_slot: 2) (offset: 0) (type: uint256) (numberOfBytes: 32)
-src/ronin/slash-indicator/SlashDoubleSign.sol:SlashDoubleSign:_doubleSigningOffsetLimitBlock (storage_slot: 3) (offset: 0) (type: uint256) (numberOfBytes: 32)
-src/ronin/slash-indicator/SlashDoubleSign.sol:SlashDoubleSign:_submittedEvidence (storage_slot: 4) (offset: 0) (type: mapping(bytes32 => bool)) (numberOfBytes: 32)
-src/ronin/slash-indicator/SlashDoubleSign.sol:SlashDoubleSign:______gap (storage_slot: 5) (offset: 0) (type: uint256[24]) (numberOfBytes: 768)
