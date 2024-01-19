@@ -89,6 +89,7 @@ interface ISharedArgument is IGeneralConfig {
 
   struct UnitTestParam {
     address proxyAdmin;
+    uint256 roninChainId;
     uint256[] operatorPKs;
     uint256[] governorPKs;
   }

@@ -3,6 +3,7 @@ src = 'src'
 out = 'out'
 optimizer = true
 optimizer_runs = 200
+ffi = true
 
 libs = [
   'lib',

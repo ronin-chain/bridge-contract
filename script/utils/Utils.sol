@@ -22,6 +22,11 @@ contract Utils {
     arr[0] = val;
   }
 
+  function wrapBytes(bytes memory val) internal pure returns (bytes[] memory arr) {
+    arr = new bytes[](1);
+    arr[0] = val;
+  }
+
   function wrapAddress(address val1, address val2, address val3) internal pure returns (address[] memory arr) {
     arr = new address[](3);
     arr[0] = val1;

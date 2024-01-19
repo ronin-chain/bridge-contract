@@ -27,6 +27,8 @@ import { AXSDeploy } from "@ronin/script/contracts/token/AXSDeploy.s.sol";
 import { SLPDeploy } from "@ronin/script/contracts/token/SLPDeploy.s.sol";
 import { USDCDeploy } from "@ronin/script/contracts/token/USDCDeploy.s.sol";
 
+import { BridgeAdminInterface } from "test/helpers/BridgeAdminInterface.t.sol";
+
 contract BaseIntegration_Test is Base_Test {
   ISharedArgument.SharedParameter _param;
 
@@ -42,6 +44,8 @@ contract BaseIntegration_Test is Base_Test {
   MockERC20 _axs;
   MockERC20 _slp;
   MockERC20 _usdc;
+
+  BridgeAdminInterface _bridgeAdminInterface;
 
   function setUp() public virtual {
     _roninGatewayV3 = new RoninGatewayV3Deploy().run();
@@ -59,5 +63,7 @@ contract BaseIntegration_Test is Base_Test {
     _usdc = new USDCDeploy().run();
 
     _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
+
+    _bridgeAdminInterface = new BridgeAdminInterface(_param.test.roninChainId);
   }
 }

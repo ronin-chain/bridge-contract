@@ -8,9 +8,9 @@ import { ISharedArgument } from "./interfaces/ISharedArgument.sol";
 import { Network } from "./utils/Network.sol";
 import { Utils } from "./utils/Utils.sol";
 import { Contract } from "./utils/Contract.sol";
-
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
 import { Token } from "@ronin/contracts/libraries/Token.sol";
+import { LibArray } from "./libraries/LibArray.sol";
 
 contract Migration is BaseMigration, Utils {
   ISharedArgument public constant config = ISharedArgument(address(CONFIG));
@@ -33,15 +33,20 @@ contract Migration is BaseMigration, Utils {
       uint256[] memory operatorPKs = new uint256[](num);
       uint256[] memory governorPKs = new uint256[](num);
       uint96[] memory voteWeights = new uint96[](num);
+
       for (uint256 i; i < num; i++) {
         (address addrOperator, uint256 pkOperator) = makeAddrAndKey(string.concat("operator-", vm.toString(i + 1)));
         (address addrGovernor, uint256 pkGovernor) = makeAddrAndKey(string.concat("governor-", vm.toString(i + 1)));
+
         operatorAddrs[i] = addrOperator;
         governorAddrs[i] = addrGovernor;
         operatorPKs[i] = pkOperator;
         governorPKs[i] = pkGovernor;
         voteWeights[i] = 100;
       }
+
+      LibArray.inlineSortByValue(operatorPKs, LibArray.toUint256s(operatorAddrs));
+      LibArray.inlineSortByValue(governorPKs, LibArray.toUint256s(governorAddrs));
 
       address governanceAdmin = makeAddr("governance-admin");
       address validatorSetContract = makeAddr("validator-set-contract");
@@ -65,6 +70,7 @@ contract Migration is BaseMigration, Utils {
 
       // test
       param.test.proxyAdmin = makeAddr("proxy-admin");
+      param.test.roninChainId = 0;
       param.test.operatorPKs = operatorPKs;
       param.test.governorPKs = governorPKs;
 
@@ -89,7 +95,7 @@ contract Migration is BaseMigration, Utils {
       // Ronin Bridge Manager
       param.roninBridgeManager.num = 2;
       param.roninBridgeManager.denom = 4;
-      param.roninBridgeManager.roninChainId = 0;
+      param.roninBridgeManager.roninChainId = param.test.roninChainId;
       param.roninBridgeManager.expiryDuration = 60 * 60 * 24 * 14; // 14 days
       param.roninBridgeManager.bridgeContract = loadContract(Contract.RoninGatewayV3.key());
       param.roninBridgeManager.callbackRegisters = wrapAddress(loadContract(Contract.BridgeSlash.key()));
@@ -124,7 +130,7 @@ contract Migration is BaseMigration, Utils {
 
       param.mainchainBridgeManager.num = 2;
       param.mainchainBridgeManager.denom = 4;
-      param.mainchainBridgeManager.roninChainId = 0;
+      param.mainchainBridgeManager.roninChainId = param.test.roninChainId;
       param.mainchainBridgeManager.bridgeContract = loadContract(Contract.MainchainGatewayV3.key());
       param.mainchainBridgeManager.callbackRegisters = getEmptyAddressArray();
       param.mainchainBridgeManager.bridgeOperators = operatorAddrs;
