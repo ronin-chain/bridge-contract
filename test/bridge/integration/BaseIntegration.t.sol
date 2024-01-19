@@ -65,5 +65,7 @@ contract BaseIntegration_Test is Base_Test {
     _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
 
     _bridgeAdminInterface = new BridgeAdminInterface(_param.test.roninChainId);
+
+    _mainchainGatewayV3.initializeV2(address(_mainchainBridgeManager));
   }
 }
