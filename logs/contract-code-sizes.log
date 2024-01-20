@@ -15,7 +15,7 @@
 | ERC20PresetMinterPauser                         | 6.368     | 18.208      |
 | EnumerableSet                                   | 0.086     | 24.49       |
 | ErrorHandler                                    | 0.086     | 24.49       |
-| GeneralConfig                                   | 20.128    | 4.448       |
+| GeneralConfig                                   | 20.616    | 3.96        |
 | GeneralConfigExtended                           | 20.35     | 4.226       |
 | GlobalProposal                                  | 0.166     | 24.41       |
 | HasBridgeDeprecated                             | 0.063     | 24.513      |
