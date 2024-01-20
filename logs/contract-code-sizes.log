@@ -22,10 +22,12 @@
 | HasValidatorDeprecated                          | 0.063     | 24.513      |
 | IsolatedGovernance                              | 0.086     | 24.49       |
 | JSONParserLib                                   | 0.086     | 24.49       |
+| LibArray                                        | 0.086     | 24.49       |
 | LibArrayUtils                                   | 0.086     | 24.49       |
 | LibErrorHandler                                 | 0.086     | 24.49       |
 | LibProxy                                        | 0.086     | 24.49       |
 | LibSharedAddress                                | 0.086     | 24.49       |
+| LibSort                                         | 0.086     | 24.49       |
 | LibString                                       | 0.086     | 24.49       |
 | LibTUint256Slot                                 | 0.086     | 24.49       |
 | MainchainBridgeManager                          | 19.361    | 5.215       |
