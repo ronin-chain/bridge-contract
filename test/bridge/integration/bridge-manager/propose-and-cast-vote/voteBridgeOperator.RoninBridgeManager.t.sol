@@ -13,7 +13,6 @@ import "../../BaseIntegration.t.sol";
 contract VoteBridgeOperator_RoninBridgeManager_Test is BaseIntegration_Test {
   using LibSort for address[];
 
-  uint256 _nonce;
   uint256 _proposalExpiryDuration;
   uint256 _addingOperatorNum;
   address[] _addingOperators;
@@ -27,8 +26,8 @@ contract VoteBridgeOperator_RoninBridgeManager_Test is BaseIntegration_Test {
 
   function setUp() public virtual override {
     super.setUp();
+    _config.switchTo(Network.RoninLocal.key());
 
-    _nonce = 1;
     _proposalExpiryDuration = 60;
     _addingOperatorNum = 3;
 
@@ -48,17 +47,17 @@ contract VoteBridgeOperator_RoninBridgeManager_Test is BaseIntegration_Test {
   }
 
   function test_voteBridgeOperators() public {
-    GlobalProposal.GlobalProposalDetail memory globalProposal = _bridgeAdminInterface.createGlobalProposal({
+    GlobalProposal.GlobalProposalDetail memory globalProposal = _roninProposalUtils.createGlobalProposal({
       expiryTimestamp: block.timestamp + _proposalExpiryDuration,
       targetOption: GlobalProposal.TargetOption.BridgeManager,
       value: 0,
       calldata_: abi.encodeCall(IBridgeManager.addBridgeOperators, (_voteWeights, _addingOperators, _addingGovernors)),
       gasAmount: 500_000,
-      nonce: _nonce
+      nonce: _roninNonce++
     });
 
     SignatureConsumer.Signature[] memory signatures =
-      _bridgeAdminInterface.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
+      _roninProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
 
     vm.prank(_param.roninBridgeManager.governors[0]);
     _roninBridgeManager.proposeGlobalProposalStructAndCastVotes(globalProposal, _supports, signatures);

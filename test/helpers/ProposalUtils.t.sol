@@ -10,7 +10,7 @@ import { Ballot } from "@ronin/contracts/libraries/Ballot.sol";
 import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/SignatureConsumer.sol";
 import { Utils } from "script/utils/Utils.sol";
 
-contract BridgeAdminInterface is Utils, Test {
+contract ProposalUtils is Utils, Test {
   using ECDSA for bytes32;
   using GlobalProposal for GlobalProposal.GlobalProposalDetail;
   using Proposal for Proposal.ProposalDetail;

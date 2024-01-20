@@ -36,6 +36,24 @@ contract GeneralConfig is BaseGeneralConfig, Utils {
       Network.RoninDevnet.envLabel(),
       Network.RoninDevnet.explorer()
     );
+
+    setNetworkInfo(
+      Network.RoninLocal.chainId(),
+      Network.RoninLocal.key(),
+      Network.RoninLocal.chainAlias(),
+      Network.RoninLocal.deploymentDir(),
+      Network.RoninLocal.envLabel(),
+      Network.RoninLocal.explorer()
+    );
+
+    setNetworkInfo(
+      Network.EthLocal.chainId(),
+      Network.EthLocal.key(),
+      Network.EthLocal.chainAlias(),
+      Network.EthLocal.deploymentDir(),
+      Network.EthLocal.envLabel(),
+      Network.EthLocal.explorer()
+    );
   }
 
   function _setUpContracts() internal virtual override {
@@ -53,32 +71,17 @@ contract GeneralConfig is BaseGeneralConfig, Utils {
     _contractNameMap[Contract.AXS.key()] = "MockERC20";
     _contractNameMap[Contract.SLP.key()] = "MockERC20";
     _contractNameMap[Contract.USDC.key()] = "MockERC20";
-
-    if (getCurrentNetwork() == DefaultNetwork.Local.key()) {
-      address deployer = getSender();
-
-      // ronin bridge contracts
-      setAddress(DefaultNetwork.Local.key(), Contract.RoninGatewayV3.key(), vm.computeCreateAddress(deployer, 4));
-      setAddress(DefaultNetwork.Local.key(), Contract.BridgeTracking.key(), vm.computeCreateAddress(deployer, 6));
-      setAddress(DefaultNetwork.Local.key(), Contract.BridgeSlash.key(), vm.computeCreateAddress(deployer, 8));
-      setAddress(DefaultNetwork.Local.key(), Contract.BridgeReward.key(), vm.computeCreateAddress(deployer, 10));
-      setAddress(DefaultNetwork.Local.key(), Contract.RoninBridgeManager.key(), vm.computeCreateAddress(deployer, 11));
-
-      //mainchain bridge contracts
-      setAddress(DefaultNetwork.Local.key(), Contract.MainchainGatewayV3.key(), vm.computeCreateAddress(deployer, 13));
-      setAddress(
-        DefaultNetwork.Local.key(), Contract.MainchainBridgeManager.key(), vm.computeCreateAddress(deployer, 14)
-      );
-
-      // ronin tokens
-      setAddress(DefaultNetwork.Local.key(), Contract.WETH.key(), vm.computeCreateAddress(deployer, 15));
-      setAddress(DefaultNetwork.Local.key(), Contract.AXS.key(), vm.computeCreateAddress(deployer, 16));
-      setAddress(DefaultNetwork.Local.key(), Contract.SLP.key(), vm.computeCreateAddress(deployer, 17));
-      setAddress(DefaultNetwork.Local.key(), Contract.USDC.key(), vm.computeCreateAddress(deployer, 18));
-    }
   }
 
   function _mapContractName(Contract contractEnum) internal {
     _contractNameMap[contractEnum.key()] = contractEnum.name();
+  }
+
+  function getSender() public view virtual override returns (address payable sender) {
+    sender = _option.trezor ? payable(_trezorSender) : payable(_envSender);
+    bool isLocalNetwork = getCurrentNetwork() == DefaultNetwork.Local.key()
+      || getCurrentNetwork() == Network.RoninLocal.key() || getCurrentNetwork() == Network.EthLocal.key();
+    if (sender == address(0x0) && isLocalNetwork) sender = payable(DEFAULT_SENDER);
+    require(sender != address(0x0), "GeneralConfig: Sender is address(0x0)");
   }
 }
