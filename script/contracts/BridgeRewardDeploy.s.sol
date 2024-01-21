@@ -11,23 +11,7 @@ import { RoninBridgeManagerDeploy } from "./RoninBridgeManagerDeploy.s.sol";
 import { BridgeSlashDeploy } from "./BridgeSlashDeploy.s.sol";
 
 contract BridgeRewardDeploy is Migration {
-  function _defaultArguments() internal virtual override returns (bytes memory args) {
-    ISharedArgument.BridgeRewardParam memory param = config.sharedArguments().bridgeReward;
-
-    args = abi.encodeCall(
-      BridgeReward.initialize,
-      (
-        param.bridgeManagerContract,
-        param.bridgeTrackingContract,
-        param.bridgeSlashContract,
-        param.validatorSetContract,
-        param.dposGA,
-        param.rewardPerPeriod
-      )
-    );
-  }
-
   function run() public virtual returns (BridgeReward) {
-    return BridgeReward(_deployProxy(Contract.BridgeReward.key()));
+    return BridgeReward(_deployProxy(Contract.BridgeReward.key(), EMPTY_ARGS));
   }
 }
