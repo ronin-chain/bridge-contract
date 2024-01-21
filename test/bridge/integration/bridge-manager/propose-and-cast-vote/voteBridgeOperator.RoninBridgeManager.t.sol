@@ -8,9 +8,14 @@ import { ContractType } from "@ronin/contracts/utils/ContractType.sol";
 import { IBridgeManager } from "@ronin/contracts/interfaces/bridge/IBridgeManager.sol";
 import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/SignatureConsumer.sol";
 import { LibSort } from "solady/utils/LibSort.sol";
+
 import "../../BaseIntegration.t.sol";
 
 contract VoteBridgeOperator_RoninBridgeManager_Test is BaseIntegration_Test {
+  event ProposalVoted(bytes32 indexed proposalHash, address indexed voter, Ballot.VoteType support, uint256 weight);
+
+  error ErrInvalidProposalNonce(bytes4 sig);
+
   using LibSort for address[];
 
   uint256 _proposalExpiryDuration;
@@ -22,11 +27,18 @@ contract VoteBridgeOperator_RoninBridgeManager_Test is BaseIntegration_Test {
   address[] _beforeRelayedOperators;
   address[] _beforeRelayedGovernors;
 
+  address[] _afterRelayedOperators;
+  address[] _afterRelayedGovernors;
+
   Ballot.VoteType[] _supports;
+
+  GlobalProposal.GlobalProposalDetail _globalProposal;
+  SignatureConsumer.Signature[] _signatures;
+
+  bytes32 _anyValue;
 
   function setUp() public virtual override {
     super.setUp();
-    _config.switchTo(Network.RoninLocal.key());
 
     _proposalExpiryDuration = 60;
     _addingOperatorNum = 3;
@@ -39,27 +51,135 @@ contract VoteBridgeOperator_RoninBridgeManager_Test is BaseIntegration_Test {
       _supports[i] = Ballot.VoteType.For;
     }
 
-    for (uint256 i; i < _addingOperatorNum; i++) {
-      _addingOperators.push(makeAddr(string.concat("adding-operator", vm.toString(i))));
-      _addingGovernors.push(makeAddr(string.concat("adding-governor", vm.toString(i))));
-      _voteWeights.push(uint96(uint256(100)));
-    }
+    _generateAddingOperators(_addingOperatorNum);
   }
 
-  function test_voteBridgeOperators() public {
-    GlobalProposal.GlobalProposalDetail memory globalProposal = _roninProposalUtils.createGlobalProposal({
+  function test_voteAddBridgeOperatorsProposal() public {
+    _config.switchTo(Network.RoninLocal.key());
+
+    _globalProposal = _roninProposalUtils.createGlobalProposal({
       expiryTimestamp: block.timestamp + _proposalExpiryDuration,
       targetOption: GlobalProposal.TargetOption.BridgeManager,
       value: 0,
-      calldata_: abi.encodeCall(IBridgeManager.addBridgeOperators, (_voteWeights, _addingOperators, _addingGovernors)),
+      calldata_: abi.encodeCall(IBridgeManager.addBridgeOperators, (_voteWeights, _addingGovernors, _addingOperators)),
       gasAmount: 500_000,
       nonce: _roninNonce++
     });
 
     SignatureConsumer.Signature[] memory signatures =
-      _roninProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
+      _roninProposalUtils.generateSignaturesGlobal(_globalProposal, _param.test.governorPKs);
+
+    for (uint256 i; i < signatures.length; i++) {
+      _signatures.push(signatures[i]);
+    }
+
+    vm.expectEmit(false, true, true, true);
+    emit ProposalVoted(_anyValue, _param.roninBridgeManager.governors[0], Ballot.VoteType.For, 100);
 
     vm.prank(_param.roninBridgeManager.governors[0]);
-    _roninBridgeManager.proposeGlobalProposalStructAndCastVotes(globalProposal, _supports, signatures);
+    _roninBridgeManager.proposeGlobalProposalStructAndCastVotes(_globalProposal, _supports, _signatures);
+
+    assertEq(
+      _roninBridgeManager.globalProposalVoted(_globalProposal.nonce, _param.roninBridgeManager.governors[0]), true
+    );
+    assertEq(_roninBridgeManager.getBridgeOperators(), _afterRelayedOperators);
+  }
+
+  function test_relayAddBridgeOperator() public {
+    test_voteAddBridgeOperatorsProposal();
+
+    _config.switchTo(Network.EthLocal.key());
+
+    // before relay
+    assertEq(_mainchainBridgeManager.globalProposalRelayed(_globalProposal.nonce), false);
+    assertEq(_mainchainBridgeManager.getBridgeOperators(), _beforeRelayedOperators);
+
+    vm.prank(_param.mainchainBridgeManager.governors[0]);
+    _mainchainBridgeManager.relayGlobalProposal(_globalProposal, _supports, _signatures);
+
+    // after relay
+    assertEq(_mainchainBridgeManager.globalProposalRelayed(_globalProposal.nonce), true);
+    assertEq(_mainchainBridgeManager.getBridgeOperators(), _afterRelayedOperators);
+  }
+
+  function test_RevertWhen_RelayAgain() public {
+    test_relayAddBridgeOperator();
+
+    vm.expectRevert(
+      abi.encodeWithSelector(ErrInvalidProposalNonce.selector, MainchainBridgeManager.relayGlobalProposal.selector)
+    );
+
+    vm.prank(_param.mainchainBridgeManager.governors[0]);
+    _mainchainBridgeManager.relayGlobalProposal(_globalProposal, _supports, _signatures);
+  }
+
+  function test_voteForLargeNumberOfOperators(uint256 seed) public {
+    uint256 numAddingOperators = seed % 10 + 10;
+    _generateAddingOperators(numAddingOperators);
+
+    _config.switchTo(Network.RoninLocal.key());
+
+    _globalProposal = _roninProposalUtils.createGlobalProposal({
+      expiryTimestamp: block.timestamp + _proposalExpiryDuration,
+      targetOption: GlobalProposal.TargetOption.BridgeManager,
+      value: 0,
+      calldata_: abi.encodeCall(IBridgeManager.addBridgeOperators, (_voteWeights, _addingGovernors, _addingOperators)),
+      gasAmount: 200_000 * numAddingOperators,
+      nonce: _roninNonce++
+    });
+
+    SignatureConsumer.Signature[] memory signatures =
+      _roninProposalUtils.generateSignaturesGlobal(_globalProposal, _param.test.governorPKs);
+
+    for (uint256 i; i < signatures.length; i++) {
+      _signatures.push(signatures[i]);
+    }
+
+    vm.expectEmit(false, true, true, true);
+    emit ProposalVoted(_anyValue, _param.roninBridgeManager.governors[0], Ballot.VoteType.For, 100);
+
+    vm.prank(_param.roninBridgeManager.governors[0]);
+    _roninBridgeManager.proposeGlobalProposalStructAndCastVotes(_globalProposal, _supports, _signatures);
+
+    assertEq(
+      _roninBridgeManager.globalProposalVoted(_globalProposal.nonce, _param.roninBridgeManager.governors[0]), true
+    );
+    assertEq(_roninBridgeManager.getBridgeOperators(), _afterRelayedOperators);
+  }
+
+  function test_relayExpiredProposal() public {
+    test_voteAddBridgeOperatorsProposal();
+
+    _config.switchTo(Network.EthLocal.key());
+    vm.warp(block.timestamp + _proposalExpiryDuration + 1);
+
+    // before relay
+    assertEq(_mainchainBridgeManager.globalProposalRelayed(_globalProposal.nonce), false);
+    assertEq(_mainchainBridgeManager.getBridgeOperators(), _beforeRelayedOperators);
+
+    vm.prank(_param.mainchainBridgeManager.governors[0]);
+    _mainchainBridgeManager.relayGlobalProposal(_globalProposal, _supports, _signatures);
+
+    // after relay
+    assertEq(_mainchainBridgeManager.globalProposalRelayed(_globalProposal.nonce), true);
+    assertEq(_mainchainBridgeManager.getBridgeOperators(), _afterRelayedOperators);
+  }
+
+  function _generateAddingOperators(uint256 num) internal {
+    delete _addingOperators;
+    delete _addingGovernors;
+    delete _voteWeights;
+
+    _afterRelayedOperators = _beforeRelayedOperators;
+    _afterRelayedGovernors = _beforeRelayedGovernors;
+
+    for (uint256 i; i < num; i++) {
+      _addingOperators.push(makeAddr(string.concat("adding-operator", vm.toString(i))));
+      _addingGovernors.push(makeAddr(string.concat("adding-governor", vm.toString(i))));
+      _voteWeights.push(uint96(uint256(100)));
+
+      _afterRelayedOperators.push(_addingOperators[i]);
+      _afterRelayedGovernors.push(_addingGovernors[i]);
+    }
   }
 }

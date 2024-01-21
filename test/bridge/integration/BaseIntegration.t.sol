@@ -18,6 +18,7 @@ import { MainchainBridgeManager } from "@ronin/contracts/mainchain/MainchainBrid
 import { MockERC20 } from "@ronin/contracts/mocks/token/MockERC20.sol";
 import { MockWrappedToken } from "@ronin/contracts/mocks/token/MockWrappedToken.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
+import { Proposal } from "@ronin/contracts/libraries/Proposal.sol";
 import { Token } from "@ronin/contracts/libraries/Token.sol";
 import { IWETH } from "@ronin/contracts/interfaces/IWETH.sol";
 import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/SignatureConsumer.sol";
