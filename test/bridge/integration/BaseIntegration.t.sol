@@ -26,6 +26,7 @@ import { Token } from "@ronin/contracts/libraries/Token.sol";
 import { IWETH } from "@ronin/contracts/interfaces/IWETH.sol";
 import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/SignatureConsumer.sol";
 import { Ballot } from "@ronin/contracts/libraries/Ballot.sol";
+import { Transfer } from "@ronin/contracts/libraries/Transfer.sol";
 import { GlobalCoreGovernance } from "@ronin/contracts/extensions/sequential-governance/GlobalCoreGovernance.sol";
 import { IHasContracts } from "@ronin/contracts/interfaces/collections/IHasContracts.sol";
 import { ContractType } from "@ronin/contracts/utils/ContractType.sol";
@@ -58,6 +59,8 @@ import { RoninBridgeAdminUtils } from "test/helpers/RoninBridgeAdminUtils.t.sol"
 import { MainchainBridgeAdminUtils } from "test/helpers/MainchainBridgeAdminUtils.t.sol";
 
 contract BaseIntegration_Test is Base_Test {
+  using Transfer for Transfer.Receipt;
+
   IGeneralConfig _config;
   ISharedArgument.SharedParameter _param;
 
@@ -540,47 +543,25 @@ contract BaseIntegration_Test is Base_Test {
     _config = IGeneralConfig(LibSharedAddress.CONFIG);
   }
 
-  function _wrapUpEpochAndMine() internal {
-    _wrapUpEpoch();
-    // mine a dummy block
-    vm.roll(block.number + 1);
+  function _generateSignaturesFor(
+    Transfer.Receipt memory receipt,
+    uint256[] memory signerPKs,
+    bytes32 domainSeparator
+  ) internal pure returns (SignatureConsumer.Signature[] memory sigs) {
+    sigs = new SignatureConsumer.Signature[](signerPKs.length);
+
+    for (uint256 i; i < signerPKs.length; i++) {
+      bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, receipt.hash()));
+
+      sigs[i] = _sign(signerPKs[i], digest);
+    }
   }
 
-  function _moveToEndPeriodAndWrapUpEpoch() internal {
-    console.log(">> Move to end period ... ");
-    uint256 prevPeriod = _validatorSet.currentPeriod();
-
-    _fastForwardToNextDay();
-    _wrapUpEpoch();
-    uint256 afterPeriod = _validatorSet.currentPeriod();
-
-    console.log(
-      " -> period changes: ", string(abi.encodePacked(vm.toString(prevPeriod), " => ", vm.toString(afterPeriod)))
-    );
-  }
-
-  function _wrapUpEpoch() internal {
-    console.log(">> Wrap up epoch ... ");
-    uint256 prevEpoch = _validatorSet.epochOf(block.number);
-
-    _validatorSet.wrapUpEpoch();
-    vm.roll(block.number + _validatorSet.numberOfBlocksInEpoch());
-
-    uint256 afterEpoch = _validatorSet.epochOf(block.number);
-    console.log(
-      " -> epoch changes: ", string(abi.encodePacked(vm.toString(prevEpoch), " => ", vm.toString(afterEpoch)))
-    );
-  }
-
-  function _fastForwardToNextDay() internal {
-    uint256 numberOfBlocksInEpoch = _validatorSet.numberOfBlocksInEpoch();
-
-    uint256 epochEndingBlockNumber = block.number + (numberOfBlocksInEpoch - 1) - (block.number % numberOfBlocksInEpoch);
-    uint256 nextDayTimestamp = block.timestamp + 1 days;
-
-    // fast forward to next day
-    vm.warp(nextDayTimestamp);
-    vm.roll(epochEndingBlockNumber);
+  function _sign(uint256 pk, bytes32 digest) internal pure returns (SignatureConsumer.Signature memory sig) {
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk, digest);
+    sig.v = v;
+    sig.r = r;
+    sig.s = s;
   }
 
   function logBridgeTracking() public view {

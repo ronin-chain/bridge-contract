@@ -25,7 +25,7 @@ evm_version = 'istanbul'
 evm_version = 'shanghai'
 
 [fmt]
-line_length = 120
+line_length = 160
 tab_width = 2
 bracket_spacing = true
 int_types = 'preserve'
