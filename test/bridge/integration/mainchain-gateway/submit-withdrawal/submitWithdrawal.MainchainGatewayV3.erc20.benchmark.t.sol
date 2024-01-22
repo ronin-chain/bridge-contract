@@ -8,11 +8,13 @@ import { Token } from "@ronin/contracts/libraries/Token.sol";
 import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/SignatureConsumer.sol";
 import "../../BaseIntegration.t.sol";
 
-contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
+contract SubmitWithdrawal_MainchainGatewayV3_Native_Benchmark_Test is BaseIntegration_Test {
   using Transfer for Transfer.Receipt;
 
   Transfer.Receipt _withdrawalReceipt;
   bytes32 _domainSeparator;
+
+  SignatureConsumer.Signature[] _signatures;
 
   function setUp() public virtual override {
     super.setUp();
@@ -35,33 +37,19 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
     vm.deal(address(_mainchainGatewayV3), 10 ether);
     vm.prank(address(_mainchainGatewayV3));
     _mainchainWeth.deposit{ value: 10 ether }();
-  }
 
-  function test_submitWithdrawal_Native() public {
-    _withdrawalReceipt.info.quantity = 10;
-
-    SignatureConsumer.Signature[] memory signatures = _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs, _domainSeparator);
-
-    _mainchainGatewayV3.submitWithdrawal(_withdrawalReceipt, signatures);
-  }
-
-  function test_submitWithdrawal_ERC20() public {
     _withdrawalReceipt.info.quantity = 10;
     _withdrawalReceipt.ronin.tokenAddr = address(_roninAxs);
     _withdrawalReceipt.mainchain.tokenAddr = address(_mainchainAxs);
 
     SignatureConsumer.Signature[] memory signatures = _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs, _domainSeparator);
 
-    _mainchainGatewayV3.submitWithdrawal(_withdrawalReceipt, signatures);
+    for (uint i; i < signatures.length; i++) {
+      _signatures.push(signatures[i]);
+    }
   }
 
-  function testFuzz_submitWithdrawal_ERC20(uint seed) external {
-    _withdrawalReceipt.ronin.tokenAddr = address(_roninAxs);
-    _withdrawalReceipt.mainchain.tokenAddr = address(_mainchainAxs);
-    _withdrawalReceipt.info.quantity = seed % 1_000_000;
-
-    SignatureConsumer.Signature[] memory signatures = _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs, _domainSeparator);
-
-    _mainchainGatewayV3.submitWithdrawal(_withdrawalReceipt, signatures);
+  function test_benchmark_submitWithdrawal_ERC20() public {
+    _mainchainGatewayV3.submitWithdrawal(_withdrawalReceipt, _signatures);
   }
 }

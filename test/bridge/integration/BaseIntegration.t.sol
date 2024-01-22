@@ -22,6 +22,7 @@ import { Token } from "@ronin/contracts/libraries/Token.sol";
 import { IWETH } from "@ronin/contracts/interfaces/IWETH.sol";
 import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/SignatureConsumer.sol";
 import { Ballot } from "@ronin/contracts/libraries/Ballot.sol";
+import { Transfer } from "@ronin/contracts/libraries/Transfer.sol";
 import { GlobalCoreGovernance } from "@ronin/contracts/extensions/sequential-governance/GlobalCoreGovernance.sol";
 import { IHasContracts } from "@ronin/contracts/interfaces/collections/IHasContracts.sol";
 import { ContractType } from "@ronin/contracts/utils/ContractType.sol";
@@ -43,6 +44,8 @@ import { ProposalUtils } from "test/helpers/ProposalUtils.t.sol";
 import { MockValidatorSet_ForFoundryTest } from "test/mocks/MockValidatorSet_ForFoundryTest.sol";
 
 contract BaseIntegration_Test is Base_Test {
+  using Transfer for Transfer.Receipt;
+
   IGeneralConfig _config;
   ISharedArgument.SharedParameter _param;
 
@@ -421,5 +424,26 @@ contract BaseIntegration_Test is Base_Test {
     vm.allowCheatcodes(LibSharedAddress.CONFIG);
     deployCodeTo("GeneralConfig.sol", type(GeneralConfig).creationCode, LibSharedAddress.CONFIG);
     _config = IGeneralConfig(LibSharedAddress.CONFIG);
+  }
+
+  function _generateSignaturesFor(
+    Transfer.Receipt memory receipt,
+    uint256[] memory signerPKs,
+    bytes32 domainSeparator
+  ) internal pure returns (SignatureConsumer.Signature[] memory sigs) {
+    sigs = new SignatureConsumer.Signature[](signerPKs.length);
+
+    for (uint256 i; i < signerPKs.length; i++) {
+      bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, receipt.hash()));
+
+      sigs[i] = _sign(signerPKs[i], digest);
+    }
+  }
+
+  function _sign(uint256 pk, bytes32 digest) internal pure returns (SignatureConsumer.Signature memory sig) {
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk, digest);
+    sig.v = v;
+    sig.r = r;
+    sig.s = s;
   }
 }
