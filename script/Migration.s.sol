@@ -38,7 +38,7 @@ contract Migration is BaseMigration, Utils {
     param.usdc.name = "USD Coin";
     param.usdc.symbol = "USDC";
 
-    uint256 num = 6;
+    uint256 num = 22;
     address[] memory operatorAddrs = new address[](num);
     address[] memory governorAddrs = new address[](num);
     uint256[] memory operatorPKs = new uint256[](num);
@@ -79,14 +79,14 @@ contract Migration is BaseMigration, Utils {
       // Bridge Tracking
 
       // Ronin Gateway V3
-      param.roninGatewayV3.numerator = 3;
-      param.roninGatewayV3.denominator = 6;
-      param.roninGatewayV3.trustedNumerator = 2;
-      param.roninGatewayV3.trustedDenominator = 3;
+      param.roninGatewayV3.numerator = 7;
+      param.roninGatewayV3.denominator = 10;
+      param.roninGatewayV3.trustedNumerator = 9;
+      param.roninGatewayV3.trustedDenominator = 10;
 
       // Ronin Bridge Manager
-      param.roninBridgeManager.num = 2;
-      param.roninBridgeManager.denom = 4;
+      param.roninBridgeManager.num = 7;
+      param.roninBridgeManager.denom = 10;
       param.roninBridgeManager.roninChainId = 0;
       param.roninBridgeManager.roninChainId = param.test.roninChainId;
       param.roninBridgeManager.expiryDuration = 60 * 60 * 24 * 14; // 14 days
@@ -102,8 +102,8 @@ contract Migration is BaseMigration, Utils {
       param.mainchainGatewayV3.denominator = 10;
 
       // Mainchain Bridge Manager
-      param.mainchainBridgeManager.num = 2;
-      param.mainchainBridgeManager.denom = 4;
+      param.mainchainBridgeManager.num = 7;
+      param.mainchainBridgeManager.denom = 10;
       param.mainchainBridgeManager.roninChainId = 0;
       param.mainchainBridgeManager.roninChainId = param.test.roninChainId;
       param.mainchainBridgeManager.bridgeOperators = operatorAddrs;

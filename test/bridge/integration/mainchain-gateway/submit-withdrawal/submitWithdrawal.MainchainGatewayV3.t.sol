@@ -37,20 +37,38 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
     _mainchainWeth.deposit{ value: 10 ether }();
   }
 
-  function test_submitWithdrawal() public {
+  function test_submitWithdrawal_Native() public {
     _withdrawalReceipt.info.quantity = 10;
 
-    SignatureConsumer.Signature[] memory signatures =
-      _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs);
+    SignatureConsumer.Signature[] memory signatures = _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs);
 
     _mainchainGatewayV3.submitWithdrawal(_withdrawalReceipt, signatures);
   }
 
-  function _generateSignaturesFor(Transfer.Receipt memory receipt, uint256[] memory signerPKs)
-    internal
-    view
-    returns (SignatureConsumer.Signature[] memory sigs)
-  {
+  function test_submitWithdrawal_ERC20() public {
+    _withdrawalReceipt.info.quantity = 10;
+    _withdrawalReceipt.ronin.tokenAddr = address(_roninAxs);
+    _withdrawalReceipt.mainchain.tokenAddr = address(_mainchainAxs);
+
+    SignatureConsumer.Signature[] memory signatures = _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs);
+
+    _mainchainGatewayV3.submitWithdrawal(_withdrawalReceipt, signatures);
+  }
+
+  function testFuzz_submitWithdrawal_ERC20(uint seed) external {
+    _withdrawalReceipt.ronin.tokenAddr = address(_roninAxs);
+    _withdrawalReceipt.mainchain.tokenAddr = address(_mainchainAxs);
+    _withdrawalReceipt.info.quantity = seed % 1_000_000;
+
+    SignatureConsumer.Signature[] memory signatures = _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs);
+
+    _mainchainGatewayV3.submitWithdrawal(_withdrawalReceipt, signatures);
+  }
+
+  function _generateSignaturesFor(
+    Transfer.Receipt memory receipt,
+    uint256[] memory signerPKs
+  ) internal view returns (SignatureConsumer.Signature[] memory sigs) {
     sigs = new SignatureConsumer.Signature[](signerPKs.length);
 
     for (uint256 i; i < signerPKs.length; i++) {
