@@ -87,7 +87,6 @@ contract Migration is BaseMigration, Utils {
       // Ronin Bridge Manager
       param.roninBridgeManager.num = 7;
       param.roninBridgeManager.denom = 10;
-      param.roninBridgeManager.roninChainId = 0;
       param.roninBridgeManager.roninChainId = param.test.roninChainId;
       param.roninBridgeManager.expiryDuration = 60 * 60 * 24 * 14; // 14 days
       param.roninBridgeManager.bridgeOperators = operatorAddrs;
@@ -95,16 +94,16 @@ contract Migration is BaseMigration, Utils {
       param.roninBridgeManager.voteWeights = voteWeights;
       param.roninBridgeManager.targetOptions = options;
       param.roninBridgeManager.targets = targets;
+
       // Mainchain Gateway V3
       param.mainchainGatewayV3.roninChainId = param.test.roninChainId;
-      param.mainchainGatewayV3.numerator = 1;
-      param.mainchainGatewayV3.highTierVWNumerator = 10;
+      param.mainchainGatewayV3.numerator = 7;
+      param.mainchainGatewayV3.highTierVWNumerator = 9;
       param.mainchainGatewayV3.denominator = 10;
 
       // Mainchain Bridge Manager
       param.mainchainBridgeManager.num = 7;
       param.mainchainBridgeManager.denom = 10;
-      param.mainchainBridgeManager.roninChainId = 0;
       param.mainchainBridgeManager.roninChainId = param.test.roninChainId;
       param.mainchainBridgeManager.bridgeOperators = operatorAddrs;
       param.mainchainBridgeManager.governors = governorAddrs;
