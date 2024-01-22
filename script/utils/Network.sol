@@ -17,8 +17,8 @@ function chainId(Network network) pure returns (uint256) {
   if (network == Network.Goerli) return 5;
   if (network == Network.EthMainnet) return 1;
   if (network == Network.RoninDevnet) return 2022;
-  if (network == Network.RoninLocal) return 2024;
-  if (network == Network.EthLocal) return 2;
+  if (network == Network.RoninLocal) return 13372020;
+  if (network == Network.EthLocal) return 13370001;
 
   revert("Network: Unknown chain id");
 }

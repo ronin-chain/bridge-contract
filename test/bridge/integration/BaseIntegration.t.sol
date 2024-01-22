@@ -143,25 +143,19 @@ contract BaseIntegration_Test is Base_Test {
     _mainchainGatewayV3Initialize();
   }
 
-  function _getMainchainAndRoninTokens()
-    internal
-    view
-    returns (address[] memory mainchainTokens, address[] memory roninTokens)
-  {
-    uint256 tokenNum = 6;
+  function _getMainchainAndRoninTokens() internal view returns (address[] memory mainchainTokens, address[] memory roninTokens) {
+    uint256 tokenNum = 4;
     mainchainTokens = new address[](tokenNum);
     roninTokens = new address[](tokenNum);
 
     mainchainTokens[0] = address(_mainchainWeth);
-    mainchainTokens[1] = address(_mainchainWron);
-    mainchainTokens[2] = address(_mainchainAxs);
-    mainchainTokens[3] = address(_mainchainSlp);
-    mainchainTokens[4] = address(_mainchainUsdc);
+    mainchainTokens[1] = address(_mainchainAxs);
+    mainchainTokens[2] = address(_mainchainSlp);
+    mainchainTokens[3] = address(_mainchainUsdc);
 
     roninTokens[0] = address(_roninWeth);
-    roninTokens[1] = address(_roninWron);
-    roninTokens[2] = address(_roninAxs);
-    roninTokens[4] = address(_roninSlp);
+    roninTokens[1] = address(_roninAxs);
+    roninTokens[2] = address(_roninSlp);
     roninTokens[3] = address(_roninUsdc);
   }
 
@@ -197,9 +191,7 @@ contract BaseIntegration_Test is Base_Test {
 
     _bridgeTracking.initialize(param.bridgeContract, param.validatorContract, param.startedAtBlock);
     _bridgeTracking.initializeV2();
-    _bridgeTracking.initializeV3(
-      address(_roninBridgeManager), address(_bridgeSlash), address(_bridgeReward), _param.test.dposGA
-    );
+    _bridgeTracking.initializeV3(address(_roninBridgeManager), address(_bridgeSlash), address(_bridgeReward), _param.test.dposGA);
   }
 
   function _bridgeSlashInitialize() internal {
@@ -210,9 +202,7 @@ contract BaseIntegration_Test is Base_Test {
 
     ISharedArgument.BridgeSlashParam memory param = _param.bridgeSlash;
 
-    _bridgeSlash.initialize(
-      param.validatorContract, param.bridgeManagerContract, param.bridgeTrackingContract, param.dposGA
-    );
+    _bridgeSlash.initialize(param.validatorContract, param.bridgeManagerContract, param.bridgeTrackingContract, param.dposGA);
 
     vm.prank(_param.test.dposGA);
     _bridgeSlash.initializeREP2();
@@ -294,8 +284,7 @@ contract BaseIntegration_Test is Base_Test {
         nonce: _roninNonce++
       });
 
-      SignatureConsumer.Signature[] memory signatures =
-        _roninProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
+      SignatureConsumer.Signature[] memory signatures = _roninProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
 
       vm.prank(_param.roninBridgeManager.governors[0]);
       _roninBridgeManager.proposeGlobalProposalStructAndCastVotes(globalProposal, supports_, signatures);
@@ -311,8 +300,7 @@ contract BaseIntegration_Test is Base_Test {
         nonce: _roninNonce++
       });
 
-      SignatureConsumer.Signature[] memory signatures =
-        _roninProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
+      SignatureConsumer.Signature[] memory signatures = _roninProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
 
       vm.prank(_param.roninBridgeManager.governors[0]);
       _roninBridgeManager.proposeGlobalProposalStructAndCastVotes(globalProposal, supports_, signatures);
@@ -349,8 +337,7 @@ contract BaseIntegration_Test is Base_Test {
         nonce: _mainchainNonce++
       });
 
-      SignatureConsumer.Signature[] memory signatures =
-        _mainchainProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
+      SignatureConsumer.Signature[] memory signatures = _mainchainProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
 
       vm.prank(_param.roninBridgeManager.governors[0]);
       _mainchainBridgeManager.relayGlobalProposal(globalProposal, supports_, signatures);
@@ -366,8 +353,7 @@ contract BaseIntegration_Test is Base_Test {
         nonce: _mainchainNonce++
       });
 
-      SignatureConsumer.Signature[] memory signatures =
-        _mainchainProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
+      SignatureConsumer.Signature[] memory signatures = _mainchainProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
 
       vm.prank(_param.roninBridgeManager.governors[0]);
       _mainchainBridgeManager.relayGlobalProposal(globalProposal, supports_, signatures);
@@ -382,10 +368,15 @@ contract BaseIntegration_Test is Base_Test {
     uint256[] memory unlockFeePercentages = new uint256[](tokenNum);
     uint256[] memory dailyWithdrawalLimits = new uint256[](tokenNum);
 
-    highTierThreshold[0] = 10;
-    lockedThreshold[0] = 20;
-    unlockFeePercentages[0] = 100_000;
-    dailyWithdrawalLimits[0] = 12;
+    highTierThreshold[0] = 10 ether;
+    lockedThreshold[0] = 20 ether;
+    unlockFeePercentages[0] = 10_0000; // 10%
+    dailyWithdrawalLimits[0] = 12 ether;
+
+    highTierThreshold[1] = highTierThreshold[2] = highTierThreshold[3] = 100_000_000;
+    lockedThreshold[1] = lockedThreshold[2] = lockedThreshold[3] = 200_000_000;
+    unlockFeePercentages[1] = unlockFeePercentages[2] = unlockFeePercentages[3] = 10_0000; // 10%
+    dailyWithdrawalLimits[1] = dailyWithdrawalLimits[2] = dailyWithdrawalLimits[3] = 120_000_000;
 
     Token.Standard[] memory standards = new Token.Standard[](tokenNum);
     for (uint256 i; i < tokenNum; i++) {
@@ -401,6 +392,7 @@ contract BaseIntegration_Test is Base_Test {
     _param.mainchainGatewayV3.thresholds[2] = unlockFeePercentages;
     _param.mainchainGatewayV3.thresholds[3] = dailyWithdrawalLimits;
     _param.mainchainGatewayV3.standards = standards;
+    _param.mainchainGatewayV3.wrappedToken = address(_mainchainWeth);
 
     ISharedArgument.MainchainGatewayV3Param memory param = _param.mainchainGatewayV3;
 

@@ -35,8 +35,6 @@ contract SubmitWithdrawal_MainchainGatewayV3_Native_Benchmark_Test is BaseIntegr
     _withdrawalReceipt.info.quantity = 0;
 
     vm.deal(address(_mainchainGatewayV3), 10 ether);
-    vm.prank(address(_mainchainGatewayV3));
-    _mainchainWeth.deposit{ value: 10 ether }();
 
     _withdrawalReceipt.info.quantity = 10;
 
