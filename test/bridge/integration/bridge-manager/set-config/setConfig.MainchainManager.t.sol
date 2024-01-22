@@ -8,6 +8,7 @@ import "../../BaseIntegration.t.sol";
 contract SetConfig_MainchainManager_Test is BaseIntegration_Test {
   function setUp() public virtual override {
     super.setUp();
+    _config.switchTo(Network.EthLocal.key());
   }
 
   function test_configBridgeContractCorrectly() external {
