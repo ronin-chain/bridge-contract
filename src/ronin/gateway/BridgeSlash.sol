@@ -93,6 +93,7 @@ contract BridgeSlash is
    */
   function onBridgeOperatorsAdded(
     address[] calldata bridgeOperators,
+    uint96[] calldata /* weights */,
     bool[] memory addeds
   ) external onlyContract(ContractType.BRIDGE_MANAGER) returns (bytes4) {
     uint256 length = bridgeOperators.length;
@@ -203,7 +204,7 @@ contract BridgeSlash is
     address[] calldata,
     bool[] calldata
   ) external view onlyContract(ContractType.BRIDGE_MANAGER) returns (bytes4) {
-    return IBridgeManagerCallback.onBridgeOperatorsAdded.selector;
+    return IBridgeManagerCallback.onBridgeOperatorsRemoved.selector;
   }
 
   /**

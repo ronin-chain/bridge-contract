@@ -10,7 +10,14 @@ import "../extensions/WithdrawalLimitation.sol";
 import "../libraries/Transfer.sol";
 import "../interfaces/IMainchainGatewayV3.sol";
 
-contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessControlEnumerable, IMainchainGatewayV3, HasContracts {
+contract MainchainGatewayV3 is
+  WithdrawalLimitation,
+  Initializable,
+  AccessControlEnumerable,
+  IMainchainGatewayV3,
+  HasContracts,
+  IBridgeManagerCallback
+{
   using Token for Token.Info;
   using Transfer for Transfer.Request;
   using Transfer for Transfer.Receipt;
@@ -37,6 +44,9 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
   uint256 private ______deprecatedBridgeOperatorAddedBlock;
   /// @custom:deprecated Previously `_bridgeOperators` (uint256[])
   uint256 private ______deprecatedBridgeOperators;
+
+  uint96 private _totalOperatorWeight;
+  mapping(address operator => uint96 weight) private _operatorWeight;
 
   fallback() external payable {
     _fallback();
@@ -87,12 +97,8 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
     }
 
     // Grant role for withdrawal unlocker
-    for (uint256 _i; _i < _addresses[2].length;) {
-      _grantRole(WITHDRAWAL_UNLOCKER_ROLE, _addresses[2][_i]);
-
-      unchecked {
-        ++_i;
-      }
+    for (uint256 i; i < _addresses[2].length; i++) {
+      _grantRole(WITHDRAWAL_UNLOCKER_ROLE, _addresses[2][i]);
     }
   }
 
@@ -100,10 +106,19 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
     _setContract(ContractType.BRIDGE_MANAGER, bridgeManagerContract);
   }
 
+  function initializeV3(address[] calldata operators, uint96[] calldata weights) external reinitializer(3) {
+    uint96 totalWeight;
+    for (uint i; i < operators.length; i++) {
+      _operatorWeight[operators[i]] = weights[i];
+      totalWeight += weights[i];
+    }
+    _totalOperatorWeight = totalWeight;
+  }
+
   /**
    * @dev Receives ether without doing anything. Use this function to topup native token.
    */
-  function receiveEther() external payable { }
+  function receiveEther() external payable {}
 
   /**
    * @inheritdoc IMainchainGatewayV3
@@ -129,12 +144,10 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
   /**
    * @inheritdoc IMainchainGatewayV3
    */
-  function submitWithdrawal(Transfer.Receipt calldata _receipt, Signature[] calldata _signatures)
-    external
-    virtual
-    whenNotPaused
-    returns (bool _locked)
-  {
+  function submitWithdrawal(
+    Transfer.Receipt calldata _receipt,
+    Signature[] calldata _signatures
+  ) external virtual whenNotPaused returns (bool _locked) {
     return _submitWithdrawal(_receipt, _signatures);
   }
 
@@ -418,13 +431,81 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
    * @inheritdoc GatewayV3
    */
   function _getTotalWeight() internal view override returns (uint256) {
-    return IBridgeManager(getContract(ContractType.BRIDGE_MANAGER)).getTotalWeight();
+    return _totalOperatorWeight;
   }
 
   /**
    * @dev Returns the weight of an address.
    */
-  function _getWeight(address _addr) internal view returns (uint256) {
-    return IBridgeManager(getContract(ContractType.BRIDGE_MANAGER)).getBridgeOperatorWeight(_addr);
+  function _getWeight(address addr) internal view returns (uint256) {
+    return _operatorWeight[addr];
+  }
+
+  ///////////////////////////////////////////////
+  //                CALLBACKS
+  ///////////////////////////////////////////////
+
+  /**
+   * @inheritdoc IBridgeManagerCallback
+   */
+  function onBridgeOperatorsAdded(
+    address[] calldata operators,
+    uint96[] calldata weights,
+    bool[] memory addeds
+  ) external onlyContract(ContractType.BRIDGE_MANAGER) returns (bytes4) {
+    uint256 length = operators.length;
+    if (length != addeds.length || length != weights.length) revert ErrLengthMismatch(msg.sig);
+    if (length == 0) {
+      return IBridgeManagerCallback.onBridgeOperatorsAdded.selector;
+    }
+
+    for (uint256 i; i < length; ++i) {
+      unchecked {
+        if (addeds[i]) {
+          _totalOperatorWeight += weights[i];
+          _operatorWeight[operators[i]] = weights[i];
+        }
+      }
+    }
+
+    return IBridgeManagerCallback.onBridgeOperatorsAdded.selector;
+  }
+
+  /**
+   * @inheritdoc IBridgeManagerCallback
+   */
+  function onBridgeOperatorUpdated(address currOperator, address newOperator) external onlyContract(ContractType.BRIDGE_MANAGER) returns (bytes4) {
+    _operatorWeight[newOperator] = _operatorWeight[currOperator];
+    delete _operatorWeight[currOperator];
+
+    return IBridgeManagerCallback.onBridgeOperatorUpdated.selector;
+  }
+
+  /**
+   * @inheritdoc IBridgeManagerCallback
+   */
+  function onBridgeOperatorsRemoved(
+    address[] calldata operators,
+    bool[] calldata removeds
+  ) external onlyContract(ContractType.BRIDGE_MANAGER) returns (bytes4) {
+    uint length = operators.length;
+    if (length != removeds.length) revert ErrLengthMismatch(msg.sig);
+    if (length == 0) {
+      return IBridgeManagerCallback.onBridgeOperatorsRemoved.selector;
+    }
+
+    uint96 totalRemovingWeight;
+    for (uint i; i < length; ++i) {
+      unchecked {
+        if (removeds[i]) {
+          totalRemovingWeight += _operatorWeight[operators[i]];
+          delete _operatorWeight[operators[i]];
+        }
+      }
+    }
+
+    _totalOperatorWeight -= totalRemovingWeight;
+
+    return IBridgeManagerCallback.onBridgeOperatorsRemoved.selector;
   }
 }

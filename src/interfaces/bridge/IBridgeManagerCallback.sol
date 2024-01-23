@@ -16,6 +16,7 @@ interface IBridgeManagerCallback is IERC165 {
    */
   function onBridgeOperatorsAdded(
     address[] memory bridgeOperators,
+    uint96[] calldata weights,
     bool[] memory addeds
   ) external returns (bytes4 selector);
 

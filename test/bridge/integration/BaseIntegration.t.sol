@@ -25,6 +25,7 @@ import { Ballot } from "@ronin/contracts/libraries/Ballot.sol";
 import { Transfer } from "@ronin/contracts/libraries/Transfer.sol";
 import { GlobalCoreGovernance } from "@ronin/contracts/extensions/sequential-governance/GlobalCoreGovernance.sol";
 import { IHasContracts } from "@ronin/contracts/interfaces/collections/IHasContracts.sol";
+import { IBridgeManagerCallbackRegister } from "@ronin/contracts/interfaces/bridge/IBridgeManagerCallbackRegister.sol";
 import { ContractType } from "@ronin/contracts/utils/ContractType.sol";
 
 import { RoninBridgeManagerDeploy } from "@ronin/script/contracts/RoninBridgeManagerDeploy.s.sol";
@@ -358,6 +359,25 @@ contract BaseIntegration_Test is Base_Test {
       vm.prank(_param.roninBridgeManager.governors[0]);
       _mainchainBridgeManager.relayGlobalProposal(globalProposal, supports_, signatures);
     }
+    {
+      address[] memory callbacks = new address[](1);
+      callbacks[0] = address(_mainchainGatewayV3);
+
+      // set gateway contract as callback
+      GlobalProposal.GlobalProposalDetail memory globalProposal = _mainchainProposalUtils.createGlobalProposal({
+        expiryTimestamp: block.timestamp + 10,
+        targetOption: GlobalProposal.TargetOption.BridgeManager,
+        value: 0,
+        calldata_: abi.encodeCall(IBridgeManagerCallbackRegister.registerCallbacks, (callbacks)),
+        gasAmount: 500_000,
+        nonce: _mainchainNonce++
+      });
+
+      SignatureConsumer.Signature[] memory signatures = _mainchainProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
+
+      vm.prank(_param.roninBridgeManager.governors[0]);
+      _mainchainBridgeManager.relayGlobalProposal(globalProposal, supports_, signatures);
+    }
   }
 
   function _mainchainGatewayV3Initialize() internal {
@@ -409,6 +429,7 @@ contract BaseIntegration_Test is Base_Test {
     );
 
     _mainchainGatewayV3.initializeV2(address(_mainchainBridgeManager));
+    _mainchainGatewayV3.initializeV3(_param.mainchainBridgeManager.bridgeOperators, _param.mainchainBridgeManager.voteWeights);
   }
 
   function _deployGeneralConfig() internal {
