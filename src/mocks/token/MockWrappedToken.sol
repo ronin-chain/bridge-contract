@@ -42,6 +42,13 @@ contract MockWrappedToken {
     emit Withdrawal(msg.sender, wad);
   }
 
+  function mint(address account, uint256 amount) public {
+    require(account != address(0), "ERC20: mint to the zero address");
+
+    balanceOf[account] += amount;
+    emit Transfer(address(0), account, amount);
+  }
+
   function totalSupply() public view returns (uint256) {
     return address(this).balance;
   }

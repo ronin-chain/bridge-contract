@@ -26,6 +26,9 @@ import { Ballot } from "@ronin/contracts/libraries/Ballot.sol";
 import { GlobalCoreGovernance } from "@ronin/contracts/extensions/sequential-governance/GlobalCoreGovernance.sol";
 import { IHasContracts } from "@ronin/contracts/interfaces/collections/IHasContracts.sol";
 import { ContractType } from "@ronin/contracts/utils/ContractType.sol";
+import { TransparentUpgradeableProxyV2 } from "@ronin/contracts/extensions/TransparentUpgradeableProxyV2.sol";
+import { MockValidatorContract_OnlyTiming_ForHardhatTest } from
+  "@ronin/contracts/mocks/ronin/MockValidatorContract_OnlyTiming_ForHardhatTest.sol";
 
 import { RoninBridgeManagerDeploy } from "@ronin/script/contracts/RoninBridgeManagerDeploy.s.sol";
 import { RoninGatewayV3Deploy } from "@ronin/script/contracts/RoninGatewayV3Deploy.s.sol";
@@ -41,7 +44,7 @@ import { SLPDeploy } from "@ronin/script/contracts/token/SLPDeploy.s.sol";
 import { USDCDeploy } from "@ronin/script/contracts/token/USDCDeploy.s.sol";
 
 import { ProposalUtils } from "test/helpers/ProposalUtils.t.sol";
-import { MockValidatorSet_ForFoundryTest } from "test/mocks/MockValidatorSet_ForFoundryTest.sol";
+import { RoninBridgeAdminUtils } from "test/helpers/RoninBridgeAdminUtils.t.sol";
 
 contract BaseIntegration_Test is Base_Test {
   IGeneralConfig _config;
@@ -67,9 +70,9 @@ contract BaseIntegration_Test is Base_Test {
   MockERC20 _mainchainSlp;
   MockERC20 _mainchainUsdc;
 
-  MockValidatorSet_ForFoundryTest _validatorSet;
+  MockValidatorContract_OnlyTiming_ForHardhatTest _validatorSet;
 
-  ProposalUtils _roninProposalUtils;
+  RoninBridgeAdminUtils _roninProposalUtils;
   ProposalUtils _mainchainProposalUtils;
 
   uint256 _roninNonce = 1;
@@ -83,6 +86,9 @@ contract BaseIntegration_Test is Base_Test {
 
     _initializeRonin();
     _initializeMainchain();
+
+    _changeAdminOnRonin();
+    _changeAdminOnMainchain();
   }
 
   function _deployContractsOnRonin() internal {
@@ -101,10 +107,11 @@ contract BaseIntegration_Test is Base_Test {
     _roninSlp = new SLPDeploy().run();
     _roninUsdc = new USDCDeploy().run();
 
-    _validatorSet = new MockValidatorSet_ForFoundryTest();
-
     _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
-    _roninProposalUtils = new ProposalUtils(_param.test.roninChainId);
+    _roninProposalUtils = new RoninBridgeAdminUtils(
+      _param.test.roninChainId, _param.test.governorPKs, _roninBridgeManager, _param.roninBridgeManager.governors[0]
+    );
+    _validatorSet = new MockValidatorContract_OnlyTiming_ForHardhatTest(_param.test.numberOfBlocksInEpoch);
   }
 
   function _deployContractsOnMainchain() internal {
@@ -121,7 +128,7 @@ contract BaseIntegration_Test is Base_Test {
     _mainchainUsdc = new USDCDeploy().run();
 
     _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
-    _mainchainProposalUtils = new ProposalUtils(_param.test.roninChainId);
+    _mainchainProposalUtils = new ProposalUtils(_param.test.roninChainId, _param.test.governorPKs);
   }
 
   function _initializeRonin() internal {
@@ -159,8 +166,8 @@ contract BaseIntegration_Test is Base_Test {
     roninTokens[0] = address(_roninWeth);
     roninTokens[1] = address(_roninWron);
     roninTokens[2] = address(_roninAxs);
-    roninTokens[4] = address(_roninSlp);
-    roninTokens[3] = address(_roninUsdc);
+    roninTokens[3] = address(_roninSlp);
+    roninTokens[4] = address(_roninUsdc);
   }
 
   function _bridgeRewardInitialize() internal {
@@ -194,10 +201,12 @@ contract BaseIntegration_Test is Base_Test {
     ISharedArgument.BridgeTrackingParam memory param = _param.bridgeTracking;
 
     _bridgeTracking.initialize(param.bridgeContract, param.validatorContract, param.startedAtBlock);
-    _bridgeTracking.initializeV2();
+    // _bridgeTracking.initializeV2(); NOT INITIALIZE V2
     _bridgeTracking.initializeV3(
       address(_roninBridgeManager), address(_bridgeSlash), address(_bridgeReward), _param.test.dposGA
     );
+    vm.prank(_param.test.dposGA);
+    _bridgeTracking.initializeREP2();
   }
 
   function _bridgeSlashInitialize() internal {
@@ -415,6 +424,25 @@ contract BaseIntegration_Test is Base_Test {
     );
 
     _mainchainGatewayV3.initializeV2(address(_mainchainBridgeManager));
+  }
+
+  function _changeAdminOnRonin() internal {
+    _config.switchTo(Network.RoninLocal.key());
+
+    vm.startPrank(_param.test.proxyAdmin);
+    TransparentUpgradeableProxyV2(payable(address(_roninGatewayV3))).changeAdmin(address(_roninBridgeManager));
+    TransparentUpgradeableProxyV2(payable(address(_bridgeReward))).changeAdmin(address(_roninBridgeManager));
+    TransparentUpgradeableProxyV2(payable(address(_bridgeSlash))).changeAdmin(address(_roninBridgeManager));
+    TransparentUpgradeableProxyV2(payable(address(_bridgeTracking))).changeAdmin(address(_roninBridgeManager));
+    vm.stopPrank();
+  }
+
+  function _changeAdminOnMainchain() internal {
+    _config.switchTo(Network.EthLocal.key());
+
+    vm.startPrank(_param.test.proxyAdmin);
+    TransparentUpgradeableProxyV2(payable(address(_mainchainGatewayV3))).changeAdmin(address(_mainchainBridgeManager));
+    vm.stopPrank();
   }
 
   function _deployGeneralConfig() internal {

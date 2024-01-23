@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { BaseMigration } from "foundry-deployment-kit/BaseMigration.s.sol";
+import { BaseMigrationV2 } from "./BaseMigrationV2.sol";
 import { DefaultNetwork } from "foundry-deployment-kit/utils/DefaultNetwork.sol";
 import { GeneralConfig } from "./GeneralConfig.sol";
 import { ISharedArgument } from "./interfaces/ISharedArgument.sol";
@@ -12,7 +12,7 @@ import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
 import { Token } from "@ronin/contracts/libraries/Token.sol";
 import { LibArray } from "./libraries/LibArray.sol";
 
-contract Migration is BaseMigration, Utils {
+contract Migration is BaseMigrationV2, Utils {
   ISharedArgument public constant config = ISharedArgument(address(CONFIG));
 
   function _configByteCode() internal virtual override returns (bytes memory) {
@@ -21,6 +21,7 @@ contract Migration is BaseMigration, Utils {
 
   function _sharedArguments() internal virtual override returns (bytes memory rawArgs) {
     ISharedArgument.SharedParameter memory param;
+    param.test.numberOfBlocksInEpoch = 600;
     param.test.proxyAdmin = makeAddr("proxy-admin");
     param.test.dposGA = makeAddr("governance-admin");
     param.test.mainchainChainId = Network.EthLocal.chainId();

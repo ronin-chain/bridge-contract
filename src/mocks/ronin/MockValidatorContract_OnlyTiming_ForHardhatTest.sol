@@ -46,7 +46,7 @@ contract MockValidatorContract_OnlyTiming_ForHardhatTest {
   }
 
   function epochEndingAt(uint256 _block) public view returns (bool) {
-    for (uint _i = 0; _i < _epochs.length; _i++) {
+    for (uint256 _i = 0; _i < _epochs.length; _i++) {
       if (_block == _epochs[_i]) {
         return true;
       }
@@ -75,6 +75,10 @@ contract MockValidatorContract_OnlyTiming_ForHardhatTest {
 
   function currentPeriod() public view virtual returns (uint256) {
     return _lastUpdatedPeriod;
+  }
+
+  function setCurrentPeriod(uint256 period) external {
+    _lastUpdatedPeriod = period;
   }
 
   function currentPeriodStartAtBlock() public view returns (uint256) {

@@ -16,11 +16,16 @@ contract ProposalUtils is Utils, Test {
   using Proposal for Proposal.ProposalDetail;
 
   uint256 _roninChainId;
+  uint256[] _signerPKs;
   bytes32 _domain;
 
-  constructor(uint256 roninChainId) {
+  constructor(uint256 roninChainId, uint256[] memory signerPKs) {
     _roninChainId = roninChainId;
     _domain = getBridgeManagerDomain(roninChainId);
+
+    for (uint256 i; i < signerPKs.length; i++) {
+      _signerPKs.push(signerPKs[i]);
+    }
   }
 
   function createProposal(
@@ -80,6 +85,14 @@ contract ProposalUtils is Utils, Test {
     return generateSignatures(proposal, signerPKs, Ballot.VoteType.For);
   }
 
+  function generateSignatures(Proposal.ProposalDetail memory proposal)
+    public
+    view
+    returns (SignatureConsumer.Signature[] memory sigs)
+  {
+    return generateSignatures(proposal, _signerPKs, Ballot.VoteType.For);
+  }
+
   function generateSignaturesGlobal(
     GlobalProposal.GlobalProposalDetail memory proposal,
     uint256[] memory signerPKs,
@@ -97,10 +110,13 @@ contract ProposalUtils is Utils, Test {
     return generateSignaturesGlobal(proposal, signerPKs, Ballot.VoteType.For);
   }
 
-  function defaultExpiryTimestamp() public view returns (uint256) { }
-
-  function functionDelegateCallGlobal() public view { }
-  function upgradeGlobal() public view { }
+  function generateSignaturesGlobal(GlobalProposal.GlobalProposalDetail memory proposal)
+    public
+    view
+    returns (SignatureConsumer.Signature[] memory sigs)
+  {
+    return generateSignaturesGlobal(proposal, _signerPKs, Ballot.VoteType.For);
+  }
 
   function getBridgeManagerDomain(uint256 roninChainId) public pure returns (bytes32) {
     return keccak256(
