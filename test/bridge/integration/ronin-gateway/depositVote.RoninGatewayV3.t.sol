@@ -13,6 +13,7 @@ contract DepositVote_RoninGatewayV3_Test is BaseIntegration_Test {
   using Transfer for Transfer.Receipt;
 
   Transfer.Receipt[] _depositReceipts;
+  uint256 _numOperatorsForVoteExecuted;
 
   function setUp() public virtual override {
     super.setUp();
@@ -25,9 +26,7 @@ contract DepositVote_RoninGatewayV3_Test is BaseIntegration_Test {
     );
 
     vm.etch(address(_roninGatewayV3), address(new MockRoninGatewayV3Extended()).code);
-  }
 
-  function test_depositVote() public {
     Transfer.Receipt memory receipt = Transfer.Receipt({
       id: 0,
       kind: Transfer.Kind.Deposit,
@@ -44,7 +43,13 @@ contract DepositVote_RoninGatewayV3_Test is BaseIntegration_Test {
     receipt.id = 1;
     _depositReceipts.push(receipt);
 
-    for (uint256 i; i < _param.roninBridgeManager.num - 1; i++) {
+    _numOperatorsForVoteExecuted =
+      _param.roninBridgeManager.bridgeOperators.length * _param.roninBridgeManager.num / _param.roninBridgeManager.denom;
+  }
+
+  // @dev Should be able to bulk deposits using bridge operator accounts
+  function test_tryBulkDepositFor_NotExecuted() public {
+    for (uint256 i; i < _numOperatorsForVoteExecuted - 1; i++) {
       vm.prank(_param.roninBridgeManager.bridgeOperators[i]);
       _roninGatewayV3.tryBulkDepositFor(_depositReceipts);
     }
@@ -58,7 +63,27 @@ contract DepositVote_RoninGatewayV3_Test is BaseIntegration_Test {
       uint256 totalWeight = MockRoninGatewayV3Extended(payable(address(_roninGatewayV3))).getDepositVoteWeight(
         _depositReceipts[i].mainchain.chainId, i, Transfer.hash(_depositReceipts[i])
       );
-      assertEq(totalWeight, (_param.roninBridgeManager.num - 1) * 100);
+      assertEq(totalWeight, (_numOperatorsForVoteExecuted - 1) * 100);
+    }
+  }
+
+  // Should be able to continue to vote on the votes, the later vote is not counted but is tracked
+  function test_tryBulkDepositFor_Executed() public {
+    test_tryBulkDepositFor_NotExecuted();
+
+    vm.prank(_param.roninBridgeManager.bridgeOperators[_numOperatorsForVoteExecuted - 1]);
+    _roninGatewayV3.tryBulkDepositFor(_depositReceipts);
+
+    for (uint256 i = 0; i < _depositReceipts.length; i++) {
+      (VoteStatusConsumer.VoteStatus status,,,) =
+        _roninGatewayV3.depositVote(_depositReceipts[i].mainchain.chainId, _depositReceipts[i].id);
+
+      assertEq(uint256(uint8(status)), uint256(uint8(VoteStatusConsumer.VoteStatus.Executed)));
+
+      uint256 totalWeight = MockRoninGatewayV3Extended(payable(address(_roninGatewayV3))).getDepositVoteWeight(
+        _depositReceipts[i].mainchain.chainId, i, Transfer.hash(_depositReceipts[i])
+      );
+      assertEq(totalWeight, (_numOperatorsForVoteExecuted) * 100);
     }
   }
 }
