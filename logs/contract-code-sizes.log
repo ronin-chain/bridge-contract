@@ -44,9 +44,9 @@
 | MockRoninBridgeManager                          | 24.601    | -0.025      |
 | MockRoninGatewayV3Extended                      | 20.048    | 4.528       |
 | MockTUint256Slot                                | 2.73      | 21.846      |
-| MockValidatorContract_OnlyTiming_ForHardhatTest | 1.115     | 23.461      |
+| MockValidatorContract_OnlyTiming_ForHardhatTest | 1.158     | 23.418      |
 | MockValidatorSet_ForFoundryTest                 | 0.172     | 24.404      |
-| MockWrappedToken                                | 1.978     | 22.598      |
+| MockWrappedToken                                | 2.225     | 22.351      |
 | PRBMathUtils                                    | 0.063     | 24.513      |
 | PauseEnforcer                                   | 4.548     | 20.028      |
 | Proposal                                        | 0.166     | 24.41       |
