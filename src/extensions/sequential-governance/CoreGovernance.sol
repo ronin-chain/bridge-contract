@@ -63,9 +63,14 @@ abstract contract CoreGovernance is SignatureConsumer, VoteStatusConsumer, Chain
 
   uint256 internal _proposalExpiryDuration;
 
-  constructor(uint256 _expiryDuration) {
+  // constructor(uint256 _expiryDuration) {
+  //   // _setProposalExpiryDuration(_expiryDuration);
+  // }
+
+function __init(uint256 _expiryDuration)  internal {
     _setProposalExpiryDuration(_expiryDuration);
   }
+
 
   /**
    * @dev Creates new voting round by calculating the `_round` number of chain `_chainId`.

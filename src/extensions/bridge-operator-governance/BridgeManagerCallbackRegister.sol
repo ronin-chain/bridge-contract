@@ -19,7 +19,11 @@ abstract contract BridgeManagerCallbackRegister is IdentityGuard, IBridgeManager
    */
   bytes32 private constant CALLBACK_REGISTERS_SLOT = 0x5da136eb38f8d8e354915fc8a767c0dc81d49de5fb65d5477122a82ddd976240;
 
-  constructor(address[] memory callbackRegisters) payable {
+  // constructor(address[] memory callbackRegisters) payable {
+  // //   _registerCallbacks(callbackRegisters);
+  // }
+
+  function __init(address[] memory callbackRegisters) internal  {
     _registerCallbacks(callbackRegisters);
   }
 
@@ -33,9 +37,7 @@ abstract contract BridgeManagerCallbackRegister is IdentityGuard, IBridgeManager
   /**
    * @inheritdoc IBridgeManagerCallbackRegister
    */
-  function unregisterCallbacks(
-    address[] calldata registers
-  ) external onlySelfCall returns (bool[] memory unregistereds) {
+  function unregisterCallbacks(address[] calldata registers) external onlySelfCall returns (bool[] memory unregistereds) {
     unregistereds = _unregisterCallbacks(registers);
   }
 
@@ -51,9 +53,7 @@ abstract contract BridgeManagerCallbackRegister is IdentityGuard, IBridgeManager
    * @param registers The array of callback addresses to register.
    * @return registereds An array indicating the success status of each registration.
    */
-  function _registerCallbacks(
-    address[] memory registers
-  ) internal nonDuplicate(registers) returns (bool[] memory registereds) {
+  function _registerCallbacks(address[] memory registers) internal nonDuplicate(registers) returns (bool[] memory registereds) {
     uint256 length = registers.length;
     registereds = new bool[](length);
     if (length == 0) return registereds;
@@ -81,9 +81,7 @@ abstract contract BridgeManagerCallbackRegister is IdentityGuard, IBridgeManager
    * @param registers The array of callback addresses to unregister.
    * @return unregistereds An array indicating the success status of each unregistration.
    */
-  function _unregisterCallbacks(
-    address[] memory registers
-  ) internal nonDuplicate(registers) returns (bool[] memory unregistereds) {
+  function _unregisterCallbacks(address[] memory registers) internal nonDuplicate(registers) returns (bool[] memory unregistereds) {
     uint256 length = registers.length;
     unregistereds = new bool[](length);
     EnumerableSet.AddressSet storage _callbackRegisters = _getCallbackRegisters();
