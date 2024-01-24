@@ -12,7 +12,8 @@ import { VoteStatusConsumer } from "../../interfaces/consumers/VoteStatusConsume
 import { ErrQueryForEmptyVote } from "../../utils/CommonErrors.sol";
 
 contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernanceProposal {
-  constructor(
+
+  function initialize(
     uint256 num,
     uint256 denom,
     uint256 roninChainId,
@@ -23,13 +24,12 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
     address[] memory governors,
     uint96[] memory voteWeights,
     GlobalProposal.TargetOption[] memory targetOptions,
-    address[] memory targets
-  )
-    payable
-    CoreGovernance(expiryDuration)
-    GlobalCoreGovernance(targetOptions, targets)
-    BridgeManager(num, denom, roninChainId, bridgeContract, callbackRegisters, bridgeOperators, governors, voteWeights)
-  { }
+    address[] memory targets) external
+ {
+    CoreGovernance.__init(expiryDuration);
+    GlobalCoreGovernance.__init(targetOptions, targets);
+    BridgeManager.__init(num, denom, roninChainId, bridgeContract, callbackRegisters, bridgeOperators, governors, voteWeights);
+  }
 
   /**
    * CURRENT NETWORK

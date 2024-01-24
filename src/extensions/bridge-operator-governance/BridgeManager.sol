@@ -38,7 +38,7 @@ abstract contract BridgeManager is IBridgeManager, HasContracts, BridgeManagerQu
   /**
    * @inheritdoc IBridgeManager
    */
-  bytes32 public immutable DOMAIN_SEPARATOR;
+  bytes32 public  DOMAIN_SEPARATOR;
 
   function _getBridgeManagerStorage() private pure returns (BridgeManagerStorage storage $) {
     assembly {
@@ -51,7 +51,31 @@ abstract contract BridgeManager is IBridgeManager, HasContracts, BridgeManagerQu
     _;
   }
 
-  constructor(
+  // constructor(
+  //   uint256 num,
+  //   uint256 denom,
+  //   uint256 roninChainId,
+  //   address bridgeContract,
+  //   address[] memory callbackRegisters,
+  //   address[] memory bridgeOperators,
+  //   address[] memory governors,
+  //   uint96[] memory voteWeights
+  // ) payable BridgeManagerQuorum(num, denom) BridgeManagerCallbackRegister(callbackRegisters) {
+  //   // _setContract(ContractType.BRIDGE, bridgeContract);
+
+  //   // DOMAIN_SEPARATOR = keccak256(
+  //   //   abi.encode(
+  //   //     keccak256("EIP712Domain(string name,string version,bytes32 salt)"),
+  //   //     keccak256("BridgeAdmin"), // name hash
+  //   //     keccak256("2"), // version hash
+  //   //     keccak256(abi.encode("BRIDGE_ADMIN", roninChainId)) // salt
+  //   //   )
+  //   // );
+
+  //   // _addBridgeOperators(voteWeights, governors, bridgeOperators);
+  // }
+
+    function __init(
     uint256 num,
     uint256 denom,
     uint256 roninChainId,
@@ -60,7 +84,10 @@ abstract contract BridgeManager is IBridgeManager, HasContracts, BridgeManagerQu
     address[] memory bridgeOperators,
     address[] memory governors,
     uint96[] memory voteWeights
-  ) payable BridgeManagerQuorum(num, denom) BridgeManagerCallbackRegister(callbackRegisters) {
+  )  internal {
+    BridgeManagerQuorum.__init(num, denom);
+    BridgeManagerCallbackRegister.__init(callbackRegisters);
+
     _setContract(ContractType.BRIDGE, bridgeContract);
 
     DOMAIN_SEPARATOR = keccak256(

@@ -24,7 +24,12 @@ abstract contract GlobalCoreGovernance is CoreGovernance {
   /// @dev Emitted when the target options are updated
   event TargetOptionUpdated(GlobalProposal.TargetOption indexed targetOption, address indexed addr);
 
-  constructor(GlobalProposal.TargetOption[] memory targetOptions, address[] memory addrs) {
+  // constructor(GlobalProposal.TargetOption[] memory targetOptions, address[] memory addrs) {
+  //   // _updateTargetOption(GlobalProposal.TargetOption.BridgeManager, address(this));
+  //   // _updateManyTargetOption(targetOptions, addrs);
+  // }
+
+   function __init(GlobalProposal.TargetOption[] memory targetOptions, address[] memory addrs)  internal {
     _updateTargetOption(GlobalProposal.TargetOption.BridgeManager, address(this));
     _updateManyTargetOption(targetOptions, addrs);
   }

@@ -100,7 +100,7 @@ contract BaseIntegration_Test is Base_Test {
     _deployContractsOnRonin();
     _deployContractsOnMainchain();
 
-    _initializeRonin();
+    // _initializeRonin();
     _initializeMainchain();
 
     _changeAdminOnRonin();
@@ -161,7 +161,9 @@ contract BaseIntegration_Test is Base_Test {
   }
 
   function _initializeMainchain() internal {
-    _mainchainPauseEnforcerInitialize();
+    _config.switchTo(Network.EthLocal.key());
+
+    _mainchainBridgeManagerInitialize();
     _constructForMainchainBridgeManager();
     _mainchainGatewayV3Initialize();
   }
@@ -463,6 +465,23 @@ contract BaseIntegration_Test is Base_Test {
       vm.prank(_param.roninBridgeManager.governors[0]);
       _mainchainBridgeManager.relayGlobalProposal(globalProposal, supports_, signatures);
     }
+  }
+
+  function _mainchainBridgeManagerInitialize() internal {
+    ISharedArgument.BridgeManagerParam memory param = _param.mainchainBridgeManager;
+
+    _mainchainBridgeManager.initialize(
+      param.num,
+      param.denom,
+      param.roninChainId,
+      param.bridgeContract,
+      param.callbackRegisters,
+      param.bridgeOperators,
+      param.governors,
+      param.voteWeights,
+      param.targetOptions,
+      param.targets
+    );
   }
 
   function _mainchainGatewayV3Initialize() internal {

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import { CoreGovernance } from "../extensions/sequential-governance/CoreGovernance.sol";
 import { GlobalCoreGovernance, GlobalGovernanceRelay } from "../extensions/sequential-governance/governance-relay/GlobalGovernanceRelay.sol";
 import { GovernanceRelay } from "../extensions/sequential-governance/governance-relay/GovernanceRelay.sol";
@@ -10,10 +11,30 @@ import { Proposal } from "../libraries/Proposal.sol";
 import { GlobalProposal } from "../libraries/GlobalProposal.sol";
 import "../utils/CommonErrors.sol";
 
-contract MainchainBridgeManager is BridgeManager, GovernanceRelay, GlobalGovernanceRelay {
+contract MainchainBridgeManager is Initializable, BridgeManager, GovernanceRelay, GlobalGovernanceRelay {
   uint256 private constant DEFAULT_EXPIRY_DURATION = 1 << 255;
 
-  constructor(
+  constructor()
+  //   uint256 num,
+  //   uint256 denom,
+  //   uint256 roninChainId,
+  //   address bridgeContract,
+  //   address[] memory callbackRegisters,
+  //   address[] memory bridgeOperators,
+  //   address[] memory governors,
+  //   uint96[] memory voteWeights,
+  //   GlobalProposal.TargetOption[] memory targetOptions,
+  //   address[] memory targets
+  // )
+  //   payable
+  //   CoreGovernance(DEFAULT_EXPIRY_DURATION)
+  //   GlobalCoreGovernance(targetOptions, targets)
+  //   BridgeManager(num, denom, roninChainId, bridgeContract, callbackRegisters, bridgeOperators, governors, voteWeights)
+  {
+    _disableInitializers();
+  }
+
+  function initialize(
     uint256 num,
     uint256 denom,
     uint256 roninChainId,
@@ -24,12 +45,11 @@ contract MainchainBridgeManager is BridgeManager, GovernanceRelay, GlobalGoverna
     uint96[] memory voteWeights,
     GlobalProposal.TargetOption[] memory targetOptions,
     address[] memory targets
-  )
-    payable
-    CoreGovernance(DEFAULT_EXPIRY_DURATION)
-    GlobalCoreGovernance(targetOptions, targets)
-    BridgeManager(num, denom, roninChainId, bridgeContract, callbackRegisters, bridgeOperators, governors, voteWeights)
-  { }
+  ) external initializer {
+    CoreGovernance.__init(DEFAULT_EXPIRY_DURATION);
+    GlobalCoreGovernance.__init(targetOptions, targets);
+    BridgeManager.__init(num, denom, roninChainId, bridgeContract, callbackRegisters, bridgeOperators, governors, voteWeights);
+  }
 
   /**
    * @dev See `GovernanceRelay-_relayProposal`.
