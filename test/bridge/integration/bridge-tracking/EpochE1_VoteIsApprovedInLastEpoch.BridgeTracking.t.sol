@@ -19,6 +19,11 @@ contract EpochE1_VoteIsApprovedInLastEpoch_BridgeTracking_Test is BaseIntegratio
     _config.switchTo(Network.RoninLocal.key());
     vm.coinbase(makeAddr("coin-base-addr"));
 
+    _operators.push(_param.roninBridgeManager.bridgeOperators[0]);
+    _operators.push(_param.roninBridgeManager.bridgeOperators[1]);
+    _receiptId = 1;
+    _receiptKind = IBridgeTracking.VoteKind.Withdrawal;
+
     // upgrade ronin gateway v3
     _mockRoninGatewayV3 = new MockGatewayForTracking(address(_bridgeTracking));
 
@@ -32,11 +37,6 @@ contract EpochE1_VoteIsApprovedInLastEpoch_BridgeTracking_Test is BaseIntegratio
     _wrapUpEpochAndMine();
 
     _period = _validatorSet.currentPeriod();
-    _receiptId = 1;
-    _receiptKind = IBridgeTracking.VoteKind.Withdrawal;
-
-    _operators.push(_param.roninBridgeManager.bridgeOperators[0]);
-    _operators.push(_param.roninBridgeManager.bridgeOperators[1]);
   }
 
   // Epoch e-1: Vote & Approve & Vote > Should not record when not approved yet. Vote in last epoch (e-1).
@@ -78,13 +78,13 @@ contract EpochE1_VoteIsApprovedInLastEpoch_BridgeTracking_Test is BaseIntegratio
   function test_epochE_notRecordForCurrentPeriod_WhenWrappingUpPeriod() public {
     test_epochE1_notRecordVoteAndBallot_voteInLastEpoch();
 
+    uint256 lastPeriod = _period;
     _setTimestampToPeriodEnding();
     _wrapUpEpochAndMine();
 
-    uint256 lastPeriod = _period;
     uint256 newPeriod = _validatorSet.currentPeriod();
     _period = newPeriod;
-    assertTrue(newPeriod != lastPeriod);
+    assertEq(newPeriod, lastPeriod + 1);
 
     assertEq(_bridgeTracking.totalVote(lastPeriod), 0);
     assertEq(_bridgeTracking.totalBallot(lastPeriod), 0);
@@ -193,17 +193,5 @@ contract EpochE1_VoteIsApprovedInLastEpoch_BridgeTracking_Test is BaseIntegratio
     assertEq(_bridgeTracking.totalBallotOf(newPeriod, _param.roninBridgeManager.bridgeOperators[3]), 0);
     assertEq(_bridgeTracking.totalBallotOf(newPeriod, _param.roninBridgeManager.bridgeOperators[4]), 0);
     assertEq(_bridgeTracking.totalBallotOf(newPeriod, _param.roninBridgeManager.bridgeOperators[5]), 0);
-  }
-
-  function _wrapUpEpochAndMine() internal {
-    _validatorSet.endEpoch();
-    vm.prank(block.coinbase);
-    _validatorSet.wrapUpEpoch();
-    // mine a dummy block
-    vm.roll(block.number + 1);
-  }
-
-  function _setTimestampToPeriodEnding() internal {
-    vm.warp(((block.timestamp / 86400) + 1) * 86400);
   }
 }

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import { console2 as console } from "forge-std/console2.sol";
 import { Base_Test } from "../../Base.t.sol";
 import { LibSharedAddress } from "foundry-deployment-kit/libraries/LibSharedAddress.sol";
 import { ISharedArgument } from "@ronin/script/interfaces/ISharedArgument.sol";
@@ -148,6 +149,8 @@ contract BaseIntegration_Test is Base_Test {
   function _initializeRonin() internal {
     _config.switchTo(Network.RoninLocal.key());
 
+    _validatorSet.setCurrentPeriod(block.timestamp / 1 days);
+
     _bridgeRewardInitialize();
     _bridgeTrackingInitialize();
     _bridgeSlashInitialize();
@@ -204,7 +207,6 @@ contract BaseIntegration_Test is Base_Test {
       param.rewardPerPeriod
     );
 
-    _validatorSet.setCurrentPeriod(10);
     vm.prank(_param.test.dposGA);
     _bridgeReward.initializeREP2();
   }
@@ -513,5 +515,25 @@ contract BaseIntegration_Test is Base_Test {
     vm.allowCheatcodes(LibSharedAddress.CONFIG);
     deployCodeTo("GeneralConfig.sol", type(GeneralConfig).creationCode, LibSharedAddress.CONFIG);
     _config = IGeneralConfig(LibSharedAddress.CONFIG);
+  }
+
+  function _wrapUpEpochAndMine() internal {
+    _wrapUpEpoch();
+    // mine a dummy block
+    vm.roll(block.number + 1);
+  }
+
+  function _wrapUpEpoch() internal {
+    uint256 multiplier = _validatorSet.numberOfBlocksInEpoch();
+    console.log(block.number);
+
+    vm.roll((block.number / multiplier + 1) * (multiplier) - 1);
+
+    vm.prank(block.coinbase);
+    _validatorSet.wrapUpEpoch();
+  }
+
+  function _setTimestampToPeriodEnding() internal {
+    vm.warp(((block.timestamp / 1 days) + 1) * 1 days);
   }
 }

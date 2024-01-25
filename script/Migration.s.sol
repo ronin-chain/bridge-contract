@@ -28,7 +28,7 @@ contract Migration is BaseMigrationV2, Utils {
       // Undefined
     } else if (network() == Network.RoninLocal.key() || network() == Network.EthLocal.key()) {
       // test
-      param.test.numberOfBlocksInEpoch = 600;
+      param.test.numberOfBlocksInEpoch = 200;
       param.test.proxyAdmin = makeAddr("proxy-admin");
       param.test.dposGA = makeAddr("governance-admin");
       param.test.mainchainChainId = Network.EthLocal.chainId();

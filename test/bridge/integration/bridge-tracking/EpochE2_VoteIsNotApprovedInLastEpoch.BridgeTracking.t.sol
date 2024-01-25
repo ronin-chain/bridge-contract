@@ -124,16 +124,4 @@ contract EpochE2_VoteIsNotApprovedInLastEpoch_BridgeTracking_Test is BaseIntegra
     assertEq(_bridgeTracking.totalBallotOf(newPeriod, _param.roninBridgeManager.bridgeOperators[2]), 0);
     assertEq(_bridgeTracking.totalBallotOf(newPeriod, _param.roninBridgeManager.bridgeOperators[3]), 0);
   }
-
-  function _wrapUpEpochAndMine() internal {
-    _validatorSet.endEpoch();
-    vm.prank(block.coinbase);
-    _validatorSet.wrapUpEpoch();
-    // mine a dummy block
-    vm.roll(block.number + 1);
-  }
-
-  function _setTimestampToPeriodEnding() internal {
-    vm.warp(((block.timestamp / 86400) + 1) * 86400);
-  }
 }
