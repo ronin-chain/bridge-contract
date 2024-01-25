@@ -21,55 +21,57 @@ contract Migration is BaseMigrationV2, Utils {
 
   function _sharedArguments() internal virtual override returns (bytes memory rawArgs) {
     ISharedArgument.SharedParameter memory param;
-    param.test.numberOfBlocksInEpoch = 600;
-    param.test.proxyAdmin = makeAddr("proxy-admin");
-    param.test.dposGA = makeAddr("governance-admin");
-    param.test.mainchainChainId = Network.EthLocal.chainId();
-    param.test.roninChainId = Network.RoninLocal.chainId();
-
-    // tokens
-    param.weth.name = "Wrapped WETH";
-    param.weth.symbol = "WETH";
-    param.wron.name = "Wrapped RON";
-    param.wron.symbol = "WRON";
-    param.axs.name = "Axie Infinity Shard";
-    param.axs.symbol = "AXS";
-    param.slp.name = "Smooth Love Potion";
-    param.slp.symbol = "SLP";
-    param.usdc.name = "USD Coin";
-    param.usdc.symbol = "USDC";
-
-    uint256 num = 6;
-    address[] memory operatorAddrs = new address[](num);
-    address[] memory governorAddrs = new address[](num);
-    uint256[] memory operatorPKs = new uint256[](num);
-    uint256[] memory governorPKs = new uint256[](num);
-    uint96[] memory voteWeights = new uint96[](num);
-    GlobalProposal.TargetOption[] memory options = new GlobalProposal.TargetOption[](0);
-    address[] memory targets = new address[](0);
-
-    for (uint256 i; i < num; i++) {
-      (address addrOperator, uint256 pkOperator) = makeAddrAndKey(string.concat("operator-", vm.toString(i + 1)));
-      (address addrGovernor, uint256 pkGovernor) = makeAddrAndKey(string.concat("governor-", vm.toString(i + 1)));
-
-      operatorAddrs[i] = addrOperator;
-      governorAddrs[i] = addrGovernor;
-      operatorPKs[i] = pkOperator;
-      governorPKs[i] = pkGovernor;
-      voteWeights[i] = 100;
-    }
-
-    LibArray.inlineSortByValue(operatorPKs, LibArray.toUint256s(operatorAddrs));
-    LibArray.inlineSortByValue(governorPKs, LibArray.toUint256s(governorAddrs));
-
-    param.test.operatorPKs = operatorPKs;
-    param.test.governorPKs = governorPKs;
 
     if (network() == Network.Goerli.key()) {
       // Undefined
     } else if (network() == DefaultNetwork.RoninTestnet.key()) {
       // Undefined
     } else if (network() == Network.RoninLocal.key() || network() == Network.EthLocal.key()) {
+      // test
+      param.test.numberOfBlocksInEpoch = 600;
+      param.test.proxyAdmin = makeAddr("proxy-admin");
+      param.test.dposGA = makeAddr("governance-admin");
+      param.test.mainchainChainId = Network.EthLocal.chainId();
+      param.test.roninChainId = Network.RoninLocal.chainId();
+
+      // tokens
+      param.weth.name = "Wrapped WETH";
+      param.weth.symbol = "WETH";
+      param.wron.name = "Wrapped RON";
+      param.wron.symbol = "WRON";
+      param.axs.name = "Axie Infinity Shard";
+      param.axs.symbol = "AXS";
+      param.slp.name = "Smooth Love Potion";
+      param.slp.symbol = "SLP";
+      param.usdc.name = "USD Coin";
+      param.usdc.symbol = "USDC";
+
+      uint256 num = 6;
+      address[] memory operatorAddrs = new address[](num);
+      address[] memory governorAddrs = new address[](num);
+      uint256[] memory operatorPKs = new uint256[](num);
+      uint256[] memory governorPKs = new uint256[](num);
+      uint96[] memory voteWeights = new uint96[](num);
+      GlobalProposal.TargetOption[] memory options = new GlobalProposal.TargetOption[](0);
+      address[] memory targets = new address[](0);
+
+      for (uint256 i; i < num; i++) {
+        (address addrOperator, uint256 pkOperator) = makeAddrAndKey(string.concat("operator-", vm.toString(i + 1)));
+        (address addrGovernor, uint256 pkGovernor) = makeAddrAndKey(string.concat("governor-", vm.toString(i + 1)));
+
+        operatorAddrs[i] = addrOperator;
+        governorAddrs[i] = addrGovernor;
+        operatorPKs[i] = pkOperator;
+        governorPKs[i] = pkGovernor;
+        voteWeights[i] = 100;
+      }
+
+      LibArray.inlineSortByValue(operatorPKs, LibArray.toUint256s(operatorAddrs));
+      LibArray.inlineSortByValue(governorPKs, LibArray.toUint256s(governorAddrs));
+
+      param.test.operatorPKs = operatorPKs;
+      param.test.governorPKs = governorPKs;
+
       // Bridge rewards
       param.bridgeReward.dposGA = param.test.dposGA;
       param.bridgeReward.rewardPerPeriod = 5_000;
@@ -78,6 +80,10 @@ contract Migration is BaseMigrationV2, Utils {
       param.bridgeSlash.dposGA = param.test.dposGA;
 
       // Bridge Tracking
+
+      // Ronin Gateway Pause Enforcer
+      param.roninPauseEnforcer.admin = makeAddr("pause-enforcer-admin");
+      param.roninPauseEnforcer.sentries = wrapAddress(makeAddr("pause-enforcer-sentry"));
 
       // Ronin Gateway V3
       param.roninGatewayV3.numerator = 3;
@@ -96,6 +102,11 @@ contract Migration is BaseMigrationV2, Utils {
       param.roninBridgeManager.voteWeights = voteWeights;
       param.roninBridgeManager.targetOptions = options;
       param.roninBridgeManager.targets = targets;
+
+      // Mainchain Gateway Pause Enforcer
+      param.mainchainPauseEnforcer.admin = makeAddr("pause-enforcer-admin");
+      param.mainchainPauseEnforcer.sentries = wrapAddress(makeAddr("pause-enforcer-sentry"));
+
       // Mainchain Gateway V3
       param.mainchainGatewayV3.roninChainId = param.test.roninChainId;
       param.mainchainGatewayV3.numerator = 1;

@@ -77,6 +77,12 @@ interface ISharedArgument is IGeneralConfig {
     uint256 rewardPerPeriod;
   }
 
+  struct PauseEnforcerParam {
+    address target;
+    address admin;
+    address[] sentries;
+  }
+
   struct MockWrappedTokenParam {
     string name;
     string symbol;
@@ -98,13 +104,18 @@ interface ISharedArgument is IGeneralConfig {
   }
 
   struct SharedParameter {
+    // mainchain
     BridgeManagerParam mainchainBridgeManager;
     MainchainGatewayV3Param mainchainGatewayV3;
+    PauseEnforcerParam mainchainPauseEnforcer;
+    // ronin
     BridgeManagerParam roninBridgeManager;
     RoninGatewayV3Param roninGatewayV3;
+    PauseEnforcerParam roninPauseEnforcer;
     BridgeSlashParam bridgeSlash;
     BridgeTrackingParam bridgeTracking;
     BridgeRewardParam bridgeReward;
+    // tokens
     MockWrappedTokenParam weth;
     MockWrappedTokenParam wron;
     MockERC20Param axs;

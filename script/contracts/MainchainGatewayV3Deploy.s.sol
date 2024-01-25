@@ -2,7 +2,6 @@
 pragma solidity ^0.8.19;
 
 import { MainchainGatewayV3 } from "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
-import { IWETH } from "src/interfaces/IWETH.sol";
 import { Contract } from "../utils/Contract.sol";
 import { ISharedArgument } from "../interfaces/ISharedArgument.sol";
 import { Migration } from "../Migration.s.sol";

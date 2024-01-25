@@ -29,14 +29,20 @@ import { ContractType } from "@ronin/contracts/utils/ContractType.sol";
 import { TransparentUpgradeableProxyV2 } from "@ronin/contracts/extensions/TransparentUpgradeableProxyV2.sol";
 import { MockValidatorContract_OnlyTiming_ForHardhatTest } from
   "@ronin/contracts/mocks/ronin/MockValidatorContract_OnlyTiming_ForHardhatTest.sol";
+import { PauseEnforcer } from "@ronin/contracts/ronin/gateway/PauseEnforcer.sol";
+import { IPauseTarget } from "@ronin/contracts/interfaces/IPauseTarget.sol";
+import { GatewayV3 } from "@ronin/contracts/extensions/GatewayV3.sol";
 
 import { RoninBridgeManagerDeploy } from "@ronin/script/contracts/RoninBridgeManagerDeploy.s.sol";
 import { RoninGatewayV3Deploy } from "@ronin/script/contracts/RoninGatewayV3Deploy.s.sol";
 import { BridgeTrackingDeploy } from "@ronin/script/contracts/BridgeTrackingDeploy.s.sol";
 import { BridgeSlashDeploy } from "@ronin/script/contracts/BridgeSlashDeploy.s.sol";
 import { BridgeRewardDeploy } from "@ronin/script/contracts/BridgeRewardDeploy.s.sol";
+import { RoninPauseEnforcerDeploy } from "@ronin/script/contracts/RoninPauseEnforcerDeploy.s.sol";
+
 import { MainchainGatewayV3Deploy } from "@ronin/script/contracts/MainchainGatewayV3Deploy.s.sol";
 import { MainchainBridgeManagerDeploy } from "@ronin/script/contracts/MainchainBridgeManagerDeploy.s.sol";
+import { MainchainPauseEnforcerDeploy } from "@ronin/script/contracts/MainchainPauseEnforcerDeploy.s.sol";
 import { WETHDeploy } from "@ronin/script/contracts/token/WETHDeploy.s.sol";
 import { WRONDeploy } from "@ronin/script/contracts/token/WRONDeploy.s.sol";
 import { AXSDeploy } from "@ronin/script/contracts/token/AXSDeploy.s.sol";
@@ -50,11 +56,14 @@ contract BaseIntegration_Test is Base_Test {
   IGeneralConfig _config;
   ISharedArgument.SharedParameter _param;
 
+  PauseEnforcer _roninPauseEnforcer;
   RoninBridgeManager _roninBridgeManager;
   RoninGatewayV3 _roninGatewayV3;
   BridgeTracking _bridgeTracking;
   BridgeSlash _bridgeSlash;
   BridgeReward _bridgeReward;
+
+  PauseEnforcer _mainchainPauseEnforcer;
   MainchainGatewayV3 _mainchainGatewayV3;
   MainchainBridgeManager _mainchainBridgeManager;
 
@@ -89,6 +98,9 @@ contract BaseIntegration_Test is Base_Test {
 
     _changeAdminOnRonin();
     _changeAdminOnMainchain();
+
+    _configEmergencyPauserForRoninGateway();
+    _configEmergencyPauserForMainchainGateway();
   }
 
   function _deployContractsOnRonin() internal {
@@ -99,6 +111,7 @@ contract BaseIntegration_Test is Base_Test {
     _bridgeTracking = new BridgeTrackingDeploy().run();
     _bridgeSlash = new BridgeSlashDeploy().run();
     _bridgeReward = new BridgeRewardDeploy().run();
+    _roninPauseEnforcer = new RoninPauseEnforcerDeploy().run();
     _roninBridgeManager = new RoninBridgeManagerDeploy().run();
 
     _roninWeth = new WETHDeploy().run();
@@ -118,6 +131,7 @@ contract BaseIntegration_Test is Base_Test {
     _config.createFork(Network.EthLocal.key());
     _config.switchTo(Network.EthLocal.key());
 
+    _mainchainPauseEnforcer = new MainchainPauseEnforcerDeploy().run();
     _mainchainGatewayV3 = new MainchainGatewayV3Deploy().run();
     _mainchainBridgeManager = new MainchainBridgeManagerDeploy().run();
 
@@ -137,6 +151,7 @@ contract BaseIntegration_Test is Base_Test {
     _bridgeRewardInitialize();
     _bridgeTrackingInitialize();
     _bridgeSlashInitialize();
+    _roninPauseEnforcerInitialize();
     _roninGatewayV3Initialize();
     _constructForRoninBridgeManager();
   }
@@ -144,6 +159,7 @@ contract BaseIntegration_Test is Base_Test {
   function _initializeMainchain() internal {
     _config.switchTo(Network.EthLocal.key());
 
+    _mainchainPauseEnforcerInitialize();
     _constructForMainchainBridgeManager();
     _mainchainGatewayV3Initialize();
   }
@@ -223,6 +239,14 @@ contract BaseIntegration_Test is Base_Test {
 
     vm.prank(_param.test.dposGA);
     _bridgeSlash.initializeREP2();
+  }
+
+  function _roninPauseEnforcerInitialize() internal {
+    _param.roninPauseEnforcer.target = address(_roninGatewayV3);
+
+    ISharedArgument.PauseEnforcerParam memory param = _param.roninPauseEnforcer;
+
+    _roninPauseEnforcer.initialize(IPauseTarget(param.target), param.admin, param.sentries);
   }
 
   function _roninGatewayV3Initialize() internal {
@@ -426,6 +450,14 @@ contract BaseIntegration_Test is Base_Test {
     _mainchainGatewayV3.initializeV2(address(_mainchainBridgeManager));
   }
 
+  function _mainchainPauseEnforcerInitialize() internal {
+    _param.mainchainPauseEnforcer.target = address(_mainchainGatewayV3);
+
+    ISharedArgument.PauseEnforcerParam memory param = _param.mainchainPauseEnforcer;
+
+    _mainchainPauseEnforcer.initialize(IPauseTarget(param.target), param.admin, param.sentries);
+  }
+
   function _changeAdminOnRonin() internal {
     _config.switchTo(Network.RoninLocal.key());
 
@@ -443,6 +475,37 @@ contract BaseIntegration_Test is Base_Test {
     vm.startPrank(_param.test.proxyAdmin);
     TransparentUpgradeableProxyV2(payable(address(_mainchainGatewayV3))).changeAdmin(address(_mainchainBridgeManager));
     vm.stopPrank();
+  }
+
+  function _configEmergencyPauserForRoninGateway() internal {
+    _config.switchTo(Network.RoninLocal.key());
+
+    bytes memory calldata_ = abi.encodeCall(GatewayV3.setEmergencyPauser, (address(_roninPauseEnforcer)));
+    _roninProposalUtils.functionDelegateCall(address(_roninGatewayV3), calldata_);
+  }
+
+  function _configEmergencyPauserForMainchainGateway() internal {
+    _config.switchTo(Network.EthLocal.key());
+
+    bytes memory calldata_ = abi.encodeCall(GatewayV3.setEmergencyPauser, (address(_mainchainPauseEnforcer)));
+    Proposal.ProposalDetail memory proposal = _mainchainProposalUtils.createProposal({
+      expiryTimestamp: block.timestamp + 1 minutes,
+      target: address(_mainchainGatewayV3),
+      value: 0,
+      calldata_: calldata_,
+      gasAmount: 1_000_000,
+      nonce: _mainchainBridgeManager.round(_param.test.mainchainChainId) + 1
+    });
+
+    SignatureConsumer.Signature[] memory signatures = _mainchainProposalUtils.generateSignatures(proposal);
+
+    Ballot.VoteType[] memory voteTypes = new Ballot.VoteType[](signatures.length);
+    for (uint256 i; i < signatures.length; i++) {
+      voteTypes[i] = Ballot.VoteType.For;
+    }
+
+    vm.prank(_param.mainchainBridgeManager.governors[0]);
+    _mainchainBridgeManager.relayProposal(proposal, voteTypes, signatures);
   }
 
   function _deployGeneralConfig() internal {

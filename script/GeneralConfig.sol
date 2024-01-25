@@ -71,6 +71,9 @@ contract GeneralConfig is BaseGeneralConfig, Utils {
     _contractNameMap[Contract.AXS.key()] = "MockERC20";
     _contractNameMap[Contract.SLP.key()] = "MockERC20";
     _contractNameMap[Contract.USDC.key()] = "MockERC20";
+
+    _contractNameMap[Contract.RoninPauseEnforcer.key()] = "PauseEnforcer";
+    _contractNameMap[Contract.MainchainPauseEnforcer.key()] = "PauseEnforcer";
   }
 
   function _mapContractName(Contract contractEnum) internal {
