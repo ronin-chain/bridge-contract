@@ -19,14 +19,14 @@ contract RoninBridgeAdminUtils is ProposalUtils {
     return block.timestamp + 10;
   }
 
-  function functionDelegateCall(address to, uint256 nonce, bytes memory data) public {
+  function functionDelegateCall(address to, bytes memory data) public {
     Proposal.ProposalDetail memory proposal = this.createProposal({
       expiryTimestamp: this.defaultExpiryTimestamp(),
       target: to,
       value: 0,
       calldata_: abi.encodeWithSignature("functionDelegateCall(bytes)", data),
       gasAmount: 2_000_000,
-      nonce: nonce
+      nonce: _contract.round(_roninChainId) + 1
     });
 
     SignatureConsumer.Signature[] memory signatures = this.generateSignatures(proposal);
@@ -39,14 +39,14 @@ contract RoninBridgeAdminUtils is ProposalUtils {
     _contract.proposeProposalStructAndCastVotes(proposal, supports_, signatures);
   }
 
-  function functionDelegateCallGlobal(GlobalProposal.TargetOption target, uint256 nonce, bytes memory data) public {
+  function functionDelegateCallGlobal(GlobalProposal.TargetOption target, bytes memory data) public {
     GlobalProposal.GlobalProposalDetail memory proposal = this.createGlobalProposal({
       expiryTimestamp: this.defaultExpiryTimestamp(),
       targetOption: target,
       value: 0,
       calldata_: abi.encodeWithSignature("functionDelegateCall(bytes)", data),
       gasAmount: 2_000_000,
-      nonce: nonce
+      nonce: _contract.round(0) + 1
     });
 
     SignatureConsumer.Signature[] memory signatures = this.generateSignaturesGlobal(proposal);
@@ -59,11 +59,7 @@ contract RoninBridgeAdminUtils is ProposalUtils {
     _contract.proposeGlobalProposalStructAndCastVotes(proposal, supports_, signatures);
   }
 
-  function functionDelegateCallsGlobal(
-    GlobalProposal.TargetOption[] memory targetOptions,
-    uint256 nonce,
-    bytes[] memory datas
-  ) public {
+  function functionDelegateCallsGlobal(GlobalProposal.TargetOption[] memory targetOptions, bytes[] memory datas) public {
     uint256 length = targetOptions.length;
     if (length != datas.length || length == 0) revert("Invalid length");
 
@@ -77,7 +73,7 @@ contract RoninBridgeAdminUtils is ProposalUtils {
     }
 
     GlobalProposal.GlobalProposalDetail memory proposal = GlobalProposal.GlobalProposalDetail({
-      nonce: nonce,
+      nonce: _contract.round(0) + 1,
       expiryTimestamp: this.defaultExpiryTimestamp(),
       targetOptions: targetOptions,
       values: values,
