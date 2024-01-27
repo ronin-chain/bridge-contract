@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 contract MockValidatorContract_OnlyTiming_ForHardhatTest {
   event WrappedUpEpoch(uint256 newPeriod, uint256 newEpoch, bool periodEnding);
+  event CurrentPeriodUpdated(uint256 previousPeriod, uint256 currentPeriod);
 
   uint256 public constant PERIOD_DURATION = 1 days;
   /// @dev The number of blocks in a epoch
@@ -21,7 +22,6 @@ contract MockValidatorContract_OnlyTiming_ForHardhatTest {
   }
 
   function wrapUpEpoch() external payable {
-    require(epochEndingAt(block.number), "Tach");
     uint256 _newPeriod = _computePeriod(block.timestamp);
     bool _periodEnding = _isPeriodEnding(_newPeriod);
 
@@ -33,7 +33,9 @@ contract MockValidatorContract_OnlyTiming_ForHardhatTest {
     }
 
     _periodOf[_nextEpoch] = _newPeriod;
-    _lastUpdatedPeriod = _newPeriod;
+
+    setCurrentPeriod(_newPeriod);
+
     emit WrappedUpEpoch(_newPeriod, _nextEpoch, _periodEnding);
   }
 
@@ -86,7 +88,9 @@ contract MockValidatorContract_OnlyTiming_ForHardhatTest {
     return _lastUpdatedPeriod;
   }
 
-  function setCurrentPeriod(uint256 period) external {
+  function setCurrentPeriod(uint256 period) public {
+    emit CurrentPeriodUpdated(_lastUpdatedPeriod, period);
+
     _lastUpdatedPeriod = period;
   }
 

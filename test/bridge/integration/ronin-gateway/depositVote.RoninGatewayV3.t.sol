@@ -89,9 +89,9 @@ contract DepositVote_RoninGatewayV3_Test is BaseIntegration_Test {
   }
 
   function test_bulkDeposit_100Txs() public {
-    _wrapUpEpochAndMine();
-    _wrapUpEpochAndMine();
     _setTimestampToPeriodEnding();
+    _wrapUpEpochAndMine();
+    _wrapUpEpochAndMine();
 
     vm.deal(address(_bridgeReward), 10 ether);
     address newBridgeOperator = makeAddr("new-bridge-operator");
@@ -124,6 +124,7 @@ contract DepositVote_RoninGatewayV3_Test is BaseIntegration_Test {
 
     vm.prank(_param.roninBridgeManager.governors[0]);
     _roninBridgeManager.updateBridgeOperator(newBridgeOperator);
+
     _param.roninBridgeManager.bridgeOperators[0] = newBridgeOperator;
 
     for (uint256 i; i < _numOperatorsForVoteExecuted; i++) {
@@ -131,9 +132,9 @@ contract DepositVote_RoninGatewayV3_Test is BaseIntegration_Test {
       _roninGatewayV3.tryBulkDepositFor(second50Receipts);
     }
 
-    _wrapUpEpochAndMine();
-    _wrapUpEpochAndMine();
     _setTimestampToPeriodEnding();
+    _wrapUpEpochAndMine();
+    _wrapUpEpochAndMine();
 
     sampleReceipt.id = 101;
 

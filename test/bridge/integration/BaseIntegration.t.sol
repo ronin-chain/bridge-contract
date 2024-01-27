@@ -33,6 +33,7 @@ import { MockValidatorContract_OnlyTiming_ForHardhatTest } from
 import { PauseEnforcer } from "@ronin/contracts/ronin/gateway/PauseEnforcer.sol";
 import { IPauseTarget } from "@ronin/contracts/interfaces/IPauseTarget.sol";
 import { GatewayV3 } from "@ronin/contracts/extensions/GatewayV3.sol";
+import { IBridgeManagerCallbackRegister } from "@ronin/contracts/interfaces/bridge/IBridgeManagerCallbackRegister.sol";
 
 import { RoninBridgeManagerDeploy } from "@ronin/script/contracts/RoninBridgeManagerDeploy.s.sol";
 import { RoninGatewayV3Deploy } from "@ronin/script/contracts/RoninGatewayV3Deploy.s.sol";
@@ -149,7 +150,7 @@ contract BaseIntegration_Test is Base_Test {
   function _initializeRonin() internal {
     _config.switchTo(Network.RoninLocal.key());
 
-    _validatorSet.setCurrentPeriod(block.timestamp / 1 days);
+    _validatorSet.setCurrentPeriod(block.timestamp / _validatorSet.PERIOD_DURATION() - 2);
 
     _bridgeRewardInitialize();
     _bridgeTrackingInitialize();
@@ -350,6 +351,26 @@ contract BaseIntegration_Test is Base_Test {
       vm.prank(_param.roninBridgeManager.governors[0]);
       _roninBridgeManager.proposeGlobalProposalStructAndCastVotes(globalProposal, supports_, signatures);
     }
+
+    {
+      // set callback register
+      bytes memory calldata_ =
+        abi.encodeCall(IBridgeManagerCallbackRegister.registerCallbacks, (param.callbackRegisters));
+      GlobalProposal.GlobalProposalDetail memory globalProposal = _roninProposalUtils.createGlobalProposal({
+        expiryTimestamp: block.timestamp + 10,
+        targetOption: GlobalProposal.TargetOption.BridgeManager,
+        value: 0,
+        calldata_: calldata_,
+        gasAmount: 500_000,
+        nonce: _roninNonce++
+      });
+
+      SignatureConsumer.Signature[] memory signatures =
+        _roninProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
+
+      vm.prank(_param.roninBridgeManager.governors[0]);
+      _roninBridgeManager.proposeGlobalProposalStructAndCastVotes(globalProposal, supports_, signatures);
+    }
   }
 
   function _constructForMainchainBridgeManager() internal {
@@ -525,12 +546,15 @@ contract BaseIntegration_Test is Base_Test {
 
   function _wrapUpEpoch() internal {
     uint256 multiplier = _validatorSet.numberOfBlocksInEpoch();
-    console.log(block.number);
+    console.log("Before roll block.number: ", block.number);
 
-    vm.roll((block.number / multiplier + 1) * (multiplier) - 1);
+    vm.roll((block.number / multiplier + 1) * multiplier - 1);
+    console.log("After roll block.number: ", block.number);
 
     vm.prank(block.coinbase);
+    console.log("Before wrap up", _validatorSet.currentPeriod());
     _validatorSet.wrapUpEpoch();
+    console.log("After wrap up", _validatorSet.currentPeriod());
   }
 
   function _setTimestampToPeriodEnding() internal {
