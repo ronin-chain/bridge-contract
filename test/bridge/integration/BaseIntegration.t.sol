@@ -86,9 +86,6 @@ contract BaseIntegration_Test is Base_Test {
   RoninBridgeAdminUtils _roninProposalUtils;
   ProposalUtils _mainchainProposalUtils;
 
-  uint256 _roninNonce = 1;
-  uint256 _mainchainNonce = 1;
-
   function setUp() public virtual {
     _deployGeneralConfig();
 
@@ -325,7 +322,7 @@ contract BaseIntegration_Test is Base_Test {
         value: 0,
         calldata_: abi.encodeCall(GlobalCoreGovernance.updateManyTargetOption, (param.targetOptions, param.targets)),
         gasAmount: 500_000,
-        nonce: _roninNonce++
+        nonce: _roninBridgeManager.round(0) + 1
       });
 
       SignatureConsumer.Signature[] memory signatures =
@@ -342,7 +339,7 @@ contract BaseIntegration_Test is Base_Test {
         value: 0,
         calldata_: abi.encodeCall(IHasContracts.setContract, (ContractType.BRIDGE, param.bridgeContract)),
         gasAmount: 500_000,
-        nonce: _roninNonce++
+        nonce: _roninBridgeManager.round(0) + 1
       });
 
       SignatureConsumer.Signature[] memory signatures =
@@ -362,7 +359,7 @@ contract BaseIntegration_Test is Base_Test {
         value: 0,
         calldata_: calldata_,
         gasAmount: 500_000,
-        nonce: _roninNonce++
+        nonce: _roninBridgeManager.round(0) + 1
       });
 
       SignatureConsumer.Signature[] memory signatures =
@@ -400,7 +397,7 @@ contract BaseIntegration_Test is Base_Test {
         value: 0,
         calldata_: abi.encodeCall(GlobalCoreGovernance.updateManyTargetOption, (param.targetOptions, param.targets)),
         gasAmount: 500_000,
-        nonce: _mainchainNonce++
+        nonce: _mainchainBridgeManager.round(0) + 1
       });
 
       SignatureConsumer.Signature[] memory signatures =
@@ -417,7 +414,27 @@ contract BaseIntegration_Test is Base_Test {
         value: 0,
         calldata_: abi.encodeCall(IHasContracts.setContract, (ContractType.BRIDGE, param.bridgeContract)),
         gasAmount: 500_000,
-        nonce: _mainchainNonce++
+        nonce: _mainchainBridgeManager.round(0) + 1
+      });
+
+      SignatureConsumer.Signature[] memory signatures =
+        _mainchainProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
+
+      vm.prank(_param.roninBridgeManager.governors[0]);
+      _mainchainBridgeManager.relayGlobalProposal(globalProposal, supports_, signatures);
+    }
+
+    {
+      // set callback register
+      bytes memory calldata_ =
+        abi.encodeCall(IBridgeManagerCallbackRegister.registerCallbacks, (param.callbackRegisters));
+      GlobalProposal.GlobalProposalDetail memory globalProposal = _mainchainProposalUtils.createGlobalProposal({
+        expiryTimestamp: block.timestamp + 10,
+        targetOption: GlobalProposal.TargetOption.BridgeManager,
+        value: 0,
+        calldata_: calldata_,
+        gasAmount: 500_000,
+        nonce: _mainchainBridgeManager.round(0) + 1
       });
 
       SignatureConsumer.Signature[] memory signatures =

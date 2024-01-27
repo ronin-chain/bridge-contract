@@ -62,8 +62,8 @@ contract VoteBridgeOperator_RoninBridgeManager_Test is BaseIntegration_Test {
       targetOption: GlobalProposal.TargetOption.BridgeManager,
       value: 0,
       calldata_: abi.encodeCall(IBridgeManager.addBridgeOperators, (_voteWeights, _addingGovernors, _addingOperators)),
-      gasAmount: 500_000,
-      nonce: _roninNonce++
+      gasAmount: 1_000_000,
+      nonce: _roninBridgeManager.round(0) + 1
     });
 
     SignatureConsumer.Signature[] memory signatures =
@@ -125,7 +125,7 @@ contract VoteBridgeOperator_RoninBridgeManager_Test is BaseIntegration_Test {
       value: 0,
       calldata_: abi.encodeCall(IBridgeManager.addBridgeOperators, (_voteWeights, _addingGovernors, _addingOperators)),
       gasAmount: 200_000 * numAddingOperators,
-      nonce: _roninNonce++
+      nonce: _roninBridgeManager.round(0) + 1
     });
 
     SignatureConsumer.Signature[] memory signatures =
