@@ -51,8 +51,8 @@ import { AXSDeploy } from "@ronin/script/contracts/token/AXSDeploy.s.sol";
 import { SLPDeploy } from "@ronin/script/contracts/token/SLPDeploy.s.sol";
 import { USDCDeploy } from "@ronin/script/contracts/token/USDCDeploy.s.sol";
 
-import { ProposalUtils } from "test/helpers/ProposalUtils.t.sol";
 import { RoninBridgeAdminUtils } from "test/helpers/RoninBridgeAdminUtils.t.sol";
+import { MainchainBridgeAdminUtils } from "test/helpers/MainchainBridgeAdminUtils.t.sol";
 
 contract BaseIntegration_Test is Base_Test {
   IGeneralConfig _config;
@@ -84,7 +84,7 @@ contract BaseIntegration_Test is Base_Test {
   MockValidatorContract_OnlyTiming_ForHardhatTest _validatorSet;
 
   RoninBridgeAdminUtils _roninProposalUtils;
-  ProposalUtils _mainchainProposalUtils;
+  MainchainBridgeAdminUtils _mainchainProposalUtils;
 
   function setUp() public virtual {
     _deployGeneralConfig();
@@ -100,6 +100,8 @@ contract BaseIntegration_Test is Base_Test {
 
     _configEmergencyPauserForRoninGateway();
     _configEmergencyPauserForMainchainGateway();
+
+    _configBridgeTrackingForRoninGateway();
   }
 
   function _deployContractsOnRonin() internal {
@@ -141,7 +143,12 @@ contract BaseIntegration_Test is Base_Test {
     _mainchainUsdc = new USDCDeploy().run();
 
     _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
-    _mainchainProposalUtils = new ProposalUtils(_param.test.roninChainId, _param.test.governorPKs);
+    _mainchainProposalUtils = new MainchainBridgeAdminUtils(
+      _param.test.roninChainId,
+      _param.test.governorPKs,
+      _mainchainBridgeManager,
+      _param.mainchainBridgeManager.governors[0]
+    );
   }
 
   function _initializeRonin() internal {
@@ -528,24 +535,17 @@ contract BaseIntegration_Test is Base_Test {
     _config.switchTo(Network.EthLocal.key());
 
     bytes memory calldata_ = abi.encodeCall(GatewayV3.setEmergencyPauser, (address(_mainchainPauseEnforcer)));
-    Proposal.ProposalDetail memory proposal = _mainchainProposalUtils.createProposal({
-      expiryTimestamp: block.timestamp + 1 minutes,
-      target: address(_mainchainGatewayV3),
-      value: 0,
-      calldata_: calldata_,
-      gasAmount: 1_000_000,
-      nonce: _mainchainBridgeManager.round(_param.test.mainchainChainId) + 1
-    });
+    _mainchainProposalUtils.functionDelegateCall(address(_mainchainGatewayV3), calldata_);
+  }
 
-    SignatureConsumer.Signature[] memory signatures = _mainchainProposalUtils.generateSignatures(proposal);
+  function _configBridgeTrackingForRoninGateway() internal {
+    _config.switchTo(Network.RoninLocal.key());
 
-    Ballot.VoteType[] memory voteTypes = new Ballot.VoteType[](signatures.length);
-    for (uint256 i; i < signatures.length; i++) {
-      voteTypes[i] = Ballot.VoteType.For;
-    }
+    bytes memory calldata_ =
+      abi.encodeCall(IHasContracts.setContract, (ContractType.BRIDGE_TRACKING, address(_bridgeTracking)));
+    _roninProposalUtils.functionDelegateCall(address(_roninGatewayV3), calldata_);
 
-    vm.prank(_param.mainchainBridgeManager.governors[0]);
-    _mainchainBridgeManager.relayProposal(proposal, voteTypes, signatures);
+    _config.switchTo(Network.EthLocal.key());
   }
 
   function _deployGeneralConfig() internal {

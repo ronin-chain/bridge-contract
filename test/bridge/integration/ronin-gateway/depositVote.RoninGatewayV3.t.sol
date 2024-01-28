@@ -22,10 +22,6 @@ contract DepositVote_RoninGatewayV3_Test is BaseIntegration_Test {
     super.setUp();
     _config.switchTo(Network.RoninLocal.key());
 
-    bytes memory calldata_ =
-      abi.encodeCall(IHasContracts.setContract, (ContractType.BRIDGE_TRACKING, address(_bridgeTracking)));
-    _roninProposalUtils.functionDelegateCallGlobal(GlobalProposal.TargetOption.GatewayContract, calldata_);
-
     vm.etch(address(_roninGatewayV3), address(new MockRoninGatewayV3Extended()).code);
 
     Transfer.Receipt memory receipt = Transfer.Receipt({

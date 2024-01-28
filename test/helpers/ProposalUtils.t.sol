@@ -38,7 +38,7 @@ contract ProposalUtils is Utils, Test {
   ) public view returns (Proposal.ProposalDetail memory proposal) {
     proposal = Proposal.ProposalDetail({
       nonce: nonce,
-      chainId: _roninChainId,
+      chainId: block.chainid,
       expiryTimestamp: expiryTimestamp,
       targets: wrapAddress(target),
       values: wrapUint(value),
