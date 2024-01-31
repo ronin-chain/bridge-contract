@@ -87,7 +87,7 @@ contract Migration__20240131_MapTokenPixelMainchain is BridgeMigration, Migratio
     calldatas[0] = proxyData;
     gasAmounts[0] = 1_000_000;
 
-    // ================ FARMLAND ERC-20 ======================
+    // ================ FARMLAND ERC-721 ======================
 
     mainchainTokens[0] = _farmlandMainchainToken;
     roninTokens[0] = _farmlandRoninToken;

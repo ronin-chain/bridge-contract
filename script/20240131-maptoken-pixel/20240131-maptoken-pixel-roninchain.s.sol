@@ -31,6 +31,8 @@ contract Migration__20240131_MapTokenPixelRoninchain is BridgeMigration, Migrati
     super.setUp();
     _roninBridgeManager = RoninBridgeManager(_config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
     _roninGatewayV3 = _config.getAddressFromCurrentNetwork(Contract.RoninGatewayV3.key());
+
+    _cheatWeightOperator(_governor);
   }
 
   function _cheatWeightOperator(address gov) internal {
@@ -43,8 +45,6 @@ contract Migration__20240131_MapTokenPixelRoninchain is BridgeMigration, Migrati
   }
 
   function run() public {
-    _cheatWeightOperator(_governor);
-
     address[] memory roninTokens = new address[](2);
     address[] memory mainchainTokens = new address[](2);
     uint256[] memory chainIds = new uint256[](2);
@@ -56,7 +56,7 @@ contract Migration__20240131_MapTokenPixelRoninchain is BridgeMigration, Migrati
     bytes[] memory calldatas = new bytes[](4);
     uint256[] memory gasAmounts = new uint256[](4);
 
-    // ============= MAP PIXEL TOKEN ===========
+    // ============= MAP PIXEL TOKEN AND FARMLAND ===========
 
     roninTokens[0] = _pixelRoninToken;
     mainchainTokens[0] = _pixelMainchainToken;
