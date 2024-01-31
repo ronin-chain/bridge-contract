@@ -12,7 +12,7 @@ contract Migration__MapToken_Pixel_Config {
   uint256 constant _highTierThreshold = 100_000_000 ether;
   uint256 constant _lockedThreshold = 400_000_000 ether;
   // The MAX_PERCENTAGE is 100_0000
-  uint256 constant _unlockFeePercentages = 10; // 0.001%
+  uint256 constant _unlockFeePercentages = 10; // 0.001%. Max percentage is 1e6 so 10 is 0.001% (`10 / 1e6 = 0.001 * 100`)
   uint256 constant _dailyWithdrawalLimit = 300_000_000 ether;
 
   uint256 constant _minThreshold = 10 ether;
