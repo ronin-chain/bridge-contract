@@ -96,7 +96,7 @@ contract Migration__20240131_MapTokenPixelRoninchain is BridgeMigration, Migrati
     uint256[] memory minThresholds = new uint256[](2);
 
     mainchainTokensToSetMinThreshold[0] = _pixelMainchainToken;
-    minThresholds[0] = _minThreshold;
+    minThresholds[0] = _pixelMinThreshold;
 
     mainchainTokensToSetMinThreshold[1] = _aggMainchainToken;
     minThresholds[1] = _aggMinThreshold;

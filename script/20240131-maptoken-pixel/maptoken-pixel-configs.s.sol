@@ -15,7 +15,7 @@ contract Migration__MapToken_Pixel_Config {
   uint256 constant _unlockFeePercentages = 10; // 0.001%. Max percentage is 1e6 so 10 is 0.001% (`10 / 1e6 = 0.001 * 100`)
   uint256 constant _dailyWithdrawalLimit = 300_000_000 ether;
 
-  uint256 constant _minThreshold = 10 ether;
+  uint256 constant _pixelMinThreshold = 10 ether;
 
   address constant _aggMainchainToken = address(0xFB0489e9753B045DdB35e39c6B0Cc02EC6b99AC5);
   uint256 constant _aggMinThreshold = 1000 ether;
