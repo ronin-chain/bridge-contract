@@ -115,12 +115,12 @@ contract Migration__20240131_MapTokenPixelMainchain is BridgeMigration, Migratio
     // =============== AXIE CHAT UPDATE ===========
     targets[2] = _mainchainBridgeManager;
     values[2] = 0;
-    calldatas[2] = _addAxieChatGovernorAddress();
+    calldatas[2] = _removeAxieChatGovernorAddress();
     gasAmounts[2] = 1_000_000;
 
     targets[3] = _mainchainBridgeManager;
     values[3] = 0;
-    calldatas[3] = _removeAxieChatGovernorAddress();
+    calldatas[3] = _addAxieChatGovernorAddress();
     gasAmounts[3] = 1_000_000;
 
     // ================ VERIFY AND EXECUTE PROPOSAL ===============
