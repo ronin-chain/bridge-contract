@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "../../BaseIntegration.t.sol";
+import "../BaseIntegration.t.sol";
 
 contract AccessControl_PauseEnforcer_Test is BaseIntegration_Test {
   function setUp() public virtual override {

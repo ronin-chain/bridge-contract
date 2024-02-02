@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import { Transfer } from "@ronin/contracts/libraries/Transfer.sol";
 import { GatewayV3 } from "@ronin/contracts/extensions/GatewayV3.sol";
-import "../../BaseIntegration.t.sol";
+import "../BaseIntegration.t.sol";
 
 contract EmergencyAction_PauseEnforcer_Test is BaseIntegration_Test {
   error ErrTargetIsNotOnPaused();
