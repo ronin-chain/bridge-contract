@@ -105,9 +105,6 @@ contract BaseIntegration_Test is Base_Test {
   }
 
   function _deployContractsOnRonin() internal {
-    _config.createFork(Network.RoninLocal.key());
-    _config.switchTo(Network.RoninLocal.key());
-
     _roninGatewayV3 = new RoninGatewayV3Deploy().run();
     _bridgeTracking = new BridgeTrackingDeploy().run();
     _bridgeSlash = new BridgeSlashDeploy().run();
@@ -122,16 +119,12 @@ contract BaseIntegration_Test is Base_Test {
     _roninUsdc = new USDCDeploy().run();
 
     _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
-    _roninProposalUtils = new RoninBridgeAdminUtils(
-      _param.test.roninChainId, _param.test.governorPKs, _roninBridgeManager, _param.roninBridgeManager.governors[0]
-    );
+    _roninProposalUtils =
+      new RoninBridgeAdminUtils(_param.test.governorPKs, _roninBridgeManager, _param.roninBridgeManager.governors[0]);
     _validatorSet = new MockValidatorContract_OnlyTiming_ForHardhatTest(_param.test.numberOfBlocksInEpoch);
   }
 
   function _deployContractsOnMainchain() internal {
-    _config.createFork(Network.EthLocal.key());
-    _config.switchTo(Network.EthLocal.key());
-
     _mainchainPauseEnforcer = new MainchainPauseEnforcerDeploy().run();
     _mainchainGatewayV3 = new MainchainGatewayV3Deploy().run();
     _mainchainBridgeManager = new MainchainBridgeManagerDeploy().run();
@@ -144,29 +137,24 @@ contract BaseIntegration_Test is Base_Test {
 
     _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
     _mainchainProposalUtils = new MainchainBridgeAdminUtils(
-      _param.test.roninChainId,
-      _param.test.governorPKs,
-      _mainchainBridgeManager,
-      _param.mainchainBridgeManager.governors[0]
+      _param.test.governorPKs, _mainchainBridgeManager, _param.mainchainBridgeManager.governors[0]
     );
   }
 
   function _initializeRonin() internal {
-    _config.switchTo(Network.RoninLocal.key());
-
-    _validatorSet.setCurrentPeriod(block.timestamp / _validatorSet.PERIOD_DURATION() - 2);
-
+    _moveToEndPeriodAndWrapUpEpoch();
+    _moveToEndPeriodAndWrapUpEpoch();
     _bridgeRewardInitialize();
+
     _bridgeTrackingInitialize();
     _bridgeSlashInitialize();
+
     _roninPauseEnforcerInitialize();
     _roninGatewayV3Initialize();
     _constructForRoninBridgeManager();
   }
 
   function _initializeMainchain() internal {
-    _config.switchTo(Network.EthLocal.key());
-
     _mainchainPauseEnforcerInitialize();
     _constructForMainchainBridgeManager();
     _mainchainGatewayV3Initialize();
@@ -264,7 +252,7 @@ contract BaseIntegration_Test is Base_Test {
     Token.Standard[] memory standards = new Token.Standard[](tokenNum);
     for (uint256 i; i < tokenNum; i++) {
       minimumThreshold[i] = 0;
-      chainIds[i] = _param.test.mainchainChainId;
+      chainIds[i] = block.chainid;
       standards[i] = Token.Standard.ERC20;
     }
 
@@ -485,7 +473,7 @@ contract BaseIntegration_Test is Base_Test {
     _mainchainGatewayV3.initialize(
       param.roleSetter,
       IWETH(param.wrappedToken),
-      param.roninChainId,
+      block.chainid,
       param.numerator,
       param.highTierVWNumerator,
       param.denominator,
@@ -506,8 +494,6 @@ contract BaseIntegration_Test is Base_Test {
   }
 
   function _changeAdminOnRonin() internal {
-    _config.switchTo(Network.RoninLocal.key());
-
     vm.startPrank(_param.test.proxyAdmin);
     TransparentUpgradeableProxyV2(payable(address(_roninGatewayV3))).changeAdmin(address(_roninBridgeManager));
     TransparentUpgradeableProxyV2(payable(address(_bridgeReward))).changeAdmin(address(_roninBridgeManager));
@@ -517,35 +503,25 @@ contract BaseIntegration_Test is Base_Test {
   }
 
   function _changeAdminOnMainchain() internal {
-    _config.switchTo(Network.EthLocal.key());
-
     vm.startPrank(_param.test.proxyAdmin);
     TransparentUpgradeableProxyV2(payable(address(_mainchainGatewayV3))).changeAdmin(address(_mainchainBridgeManager));
     vm.stopPrank();
   }
 
   function _configEmergencyPauserForRoninGateway() internal {
-    _config.switchTo(Network.RoninLocal.key());
-
     bytes memory calldata_ = abi.encodeCall(GatewayV3.setEmergencyPauser, (address(_roninPauseEnforcer)));
     _roninProposalUtils.functionDelegateCall(address(_roninGatewayV3), calldata_);
   }
 
   function _configEmergencyPauserForMainchainGateway() internal {
-    _config.switchTo(Network.EthLocal.key());
-
     bytes memory calldata_ = abi.encodeCall(GatewayV3.setEmergencyPauser, (address(_mainchainPauseEnforcer)));
     _mainchainProposalUtils.functionDelegateCall(address(_mainchainGatewayV3), calldata_);
   }
 
   function _configBridgeTrackingForRoninGateway() internal {
-    _config.switchTo(Network.RoninLocal.key());
-
     bytes memory calldata_ =
       abi.encodeCall(IHasContracts.setContract, (ContractType.BRIDGE_TRACKING, address(_bridgeTracking)));
     _roninProposalUtils.functionDelegateCall(address(_roninGatewayV3), calldata_);
-
-    _config.switchTo(Network.EthLocal.key());
   }
 
   function _deployGeneralConfig() internal {
@@ -561,15 +537,26 @@ contract BaseIntegration_Test is Base_Test {
     vm.roll(block.number + 1);
   }
 
+  function _moveToEndPeriodAndWrapUpEpoch() internal {
+    _fastForwardToNextDay();
+    _wrapUpEpoch();
+  }
+
   function _wrapUpEpoch() internal {
-    uint256 multiplier = _validatorSet.numberOfBlocksInEpoch();
-    vm.roll((block.number / multiplier + 1) * multiplier - 1);
-
-    vm.prank(block.coinbase);
     _validatorSet.wrapUpEpoch();
+    vm.roll(block.number + _validatorSet.numberOfBlocksInEpoch());
   }
 
-  function _setTimestampToPeriodEnding() internal {
-    vm.warp(((block.timestamp / 1 days) + 1) * 1 days);
+  function _fastForwardToNextDay() internal {
+    uint256 numberOfBlocksInEpoch = _validatorSet.numberOfBlocksInEpoch();
+
+    uint256 epochEndingBlockNumber = block.number + (numberOfBlocksInEpoch - 1) - (block.number % numberOfBlocksInEpoch);
+    uint256 nextDayTimestamp = block.timestamp + 1 days;
+
+    // fast forward to next day
+    vm.warp(nextDayTimestamp);
+    vm.roll(epochEndingBlockNumber);
   }
+
+  function test_setUpIntegration() public { }
 }

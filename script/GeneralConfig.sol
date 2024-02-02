@@ -36,24 +36,6 @@ contract GeneralConfig is BaseGeneralConfig, Utils {
       Network.RoninDevnet.envLabel(),
       Network.RoninDevnet.explorer()
     );
-
-    setNetworkInfo(
-      Network.RoninLocal.chainId(),
-      Network.RoninLocal.key(),
-      Network.RoninLocal.chainAlias(),
-      Network.RoninLocal.deploymentDir(),
-      Network.RoninLocal.envLabel(),
-      Network.RoninLocal.explorer()
-    );
-
-    setNetworkInfo(
-      Network.EthLocal.chainId(),
-      Network.EthLocal.key(),
-      Network.EthLocal.chainAlias(),
-      Network.EthLocal.deploymentDir(),
-      Network.EthLocal.envLabel(),
-      Network.EthLocal.explorer()
-    );
   }
 
   function _setUpContracts() internal virtual override {
@@ -82,8 +64,8 @@ contract GeneralConfig is BaseGeneralConfig, Utils {
 
   function getSender() public view virtual override returns (address payable sender) {
     sender = _option.trezor ? payable(_trezorSender) : payable(_envSender);
-    bool isLocalNetwork = getCurrentNetwork() == DefaultNetwork.Local.key()
-      || getCurrentNetwork() == Network.RoninLocal.key() || getCurrentNetwork() == Network.EthLocal.key();
+    bool isLocalNetwork = getCurrentNetwork() == DefaultNetwork.Local.key();
+
     if (sender == address(0x0) && isLocalNetwork) sender = payable(DEFAULT_SENDER);
     require(sender != address(0x0), "GeneralConfig: Sender is address(0x0)");
   }

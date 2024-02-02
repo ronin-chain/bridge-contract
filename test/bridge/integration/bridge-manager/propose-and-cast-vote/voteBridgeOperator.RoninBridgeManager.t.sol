@@ -55,8 +55,6 @@ contract VoteBridgeOperator_RoninBridgeManager_Test is BaseIntegration_Test {
   }
 
   function test_voteAddBridgeOperatorsProposal() public {
-    _config.switchTo(Network.RoninLocal.key());
-
     _globalProposal = _roninProposalUtils.createGlobalProposal({
       expiryTimestamp: block.timestamp + _proposalExpiryDuration,
       targetOption: GlobalProposal.TargetOption.BridgeManager,
@@ -88,8 +86,6 @@ contract VoteBridgeOperator_RoninBridgeManager_Test is BaseIntegration_Test {
   function test_relayAddBridgeOperator() public {
     test_voteAddBridgeOperatorsProposal();
 
-    _config.switchTo(Network.EthLocal.key());
-
     // before relay
     assertEq(_mainchainBridgeManager.globalProposalRelayed(_globalProposal.nonce), false);
     assertEq(_mainchainBridgeManager.getBridgeOperators(), _beforeRelayedOperators);
@@ -116,8 +112,6 @@ contract VoteBridgeOperator_RoninBridgeManager_Test is BaseIntegration_Test {
   function test_voteForLargeNumberOfOperators(uint256 seed) public {
     uint256 numAddingOperators = seed % 10 + 10;
     _generateAddingOperators(numAddingOperators);
-
-    _config.switchTo(Network.RoninLocal.key());
 
     _globalProposal = _roninProposalUtils.createGlobalProposal({
       expiryTimestamp: block.timestamp + _proposalExpiryDuration,
@@ -150,7 +144,6 @@ contract VoteBridgeOperator_RoninBridgeManager_Test is BaseIntegration_Test {
   function test_relayExpiredProposal() public {
     test_voteAddBridgeOperatorsProposal();
 
-    _config.switchTo(Network.EthLocal.key());
     vm.warp(block.timestamp + _proposalExpiryDuration + 1);
 
     // before relay

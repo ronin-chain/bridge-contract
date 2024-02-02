@@ -5,6 +5,9 @@ import { IBridgeTracking } from "@ronin/contracts/interfaces/bridge/IBridgeTrack
 import { MockGatewayForTracking } from "@ronin/contracts/mocks/MockGatewayForTracking.sol";
 import "../BaseIntegration.t.sol";
 
+import { EpochE2_VoteIsNotApprovedInLastEpoch_BridgeTracking_Test } from
+  "./EpochE2_VoteIsNotApprovedInLastEpoch.BridgeTracking.t.sol";
+
 // Epoch e-1 test: Vote is approved in the last epoch of period
 contract EpochE1_VoteIsApprovedInLastEpoch_BridgeTracking_Test is BaseIntegration_Test {
   MockGatewayForTracking _mockRoninGatewayV3;
@@ -16,7 +19,7 @@ contract EpochE1_VoteIsApprovedInLastEpoch_BridgeTracking_Test is BaseIntegratio
 
   function setUp() public virtual override {
     super.setUp();
-    _config.switchTo(Network.RoninLocal.key());
+
     vm.coinbase(makeAddr("coin-base-addr"));
 
     _operators.push(_param.roninBridgeManager.bridgeOperators[0]);
@@ -33,14 +36,16 @@ contract EpochE1_VoteIsApprovedInLastEpoch_BridgeTracking_Test is BaseIntegratio
 
     vm.deal(address(_bridgeReward), 10 ether);
 
-    _setTimestampToPeriodEnding();
-    _wrapUpEpochAndMine();
-
+    _moveToEndPeriodAndWrapUpEpoch();
     _period = _validatorSet.currentPeriod();
   }
 
   // Epoch e-1: Vote & Approve & Vote > Should not record when not approved yet. Vote in last epoch (e-1).
-  function test_epochE1_notRecordVoteAndBallot_receiptWithoutApproval() public {
+  function test_epochEMinus1_notRecordVoteAndBallot_receiptWithoutApproval() public {
+    _wrapUpEpoch();
+    _wrapUpEpoch();
+    _wrapUpEpoch();
+
     _mockRoninGatewayV3.sendBallot(_receiptKind, _receiptId, _operators);
 
     assertEq(_bridgeTracking.totalVote(_period), 0);
@@ -50,8 +55,8 @@ contract EpochE1_VoteIsApprovedInLastEpoch_BridgeTracking_Test is BaseIntegratio
   }
 
   // Epoch e-1: Vote & Approve & Vote > Should not record when approve. Approve in last epoch (e-1).
-  function test_epochE2_notRecordVoteAndBallot_approveInLastEpoch() public {
-    test_epochE1_notRecordVoteAndBallot_receiptWithoutApproval();
+  function test_epochEMinus1_notRecordVoteAndBallot_approveInLastEpoch() public {
+    test_epochEMinus1_notRecordVoteAndBallot_receiptWithoutApproval();
 
     _mockRoninGatewayV3.sendApprovedVote(_receiptKind, _receiptId);
 
@@ -62,8 +67,8 @@ contract EpochE1_VoteIsApprovedInLastEpoch_BridgeTracking_Test is BaseIntegratio
   }
 
   // Epoch e-1: Vote & Approve & Vote > Should not record even after approved. Vote in last epoch (e-1).
-  function test_epochE1_notRecordVoteAndBallot_voteInLastEpoch() public {
-    test_epochE2_notRecordVoteAndBallot_approveInLastEpoch();
+  function test_epochEMinus1_notRecordVoteAndBallot_voteInLastEpoch() public {
+    test_epochEMinus1_notRecordVoteAndBallot_approveInLastEpoch();
 
     _mockRoninGatewayV3.sendBallot(_receiptKind, _receiptId, wrapAddress(_param.roninBridgeManager.bridgeOperators[2]));
 
@@ -76,11 +81,10 @@ contract EpochE1_VoteIsApprovedInLastEpoch_BridgeTracking_Test is BaseIntegratio
 
   // Epoch e: vote > Should not record for current period metric when wrapping up period. Query in next epoch (e), for current period (p-1): return 0.
   function test_epochE_notRecordForCurrentPeriod_WhenWrappingUpPeriod() public {
-    test_epochE1_notRecordVoteAndBallot_voteInLastEpoch();
+    test_epochEMinus1_notRecordVoteAndBallot_voteInLastEpoch();
 
     uint256 lastPeriod = _period;
-    _setTimestampToPeriodEnding();
-    _wrapUpEpochAndMine();
+    _moveToEndPeriodAndWrapUpEpoch();
 
     uint256 newPeriod = _validatorSet.currentPeriod();
     _period = newPeriod;
@@ -130,7 +134,7 @@ contract EpochE1_VoteIsApprovedInLastEpoch_BridgeTracking_Test is BaseIntegratio
   }
 
   // Epoch 2e-1: vote > Should record new ballot for the buffer metric
-  function test_epoch2E_1_recordNewBallotForBufferMetric() public {
+  function test_epoch2EMinus1_recordNewBallotForBufferMetric() public {
     test_epochE_recordNewBallotForBufferMetric();
 
     _mockRoninGatewayV3.sendBallot(_receiptKind, _receiptId, wrapAddress(_param.roninBridgeManager.bridgeOperators[4]));
@@ -144,8 +148,7 @@ contract EpochE1_VoteIsApprovedInLastEpoch_BridgeTracking_Test is BaseIntegratio
     assertEq(_bridgeTracking.totalBallotOf(_period, _param.roninBridgeManager.bridgeOperators[3]), expectedTotalVotes);
     assertEq(_bridgeTracking.totalBallotOf(_period, _param.roninBridgeManager.bridgeOperators[4]), expectedTotalVotes);
 
-    _setTimestampToPeriodEnding();
-    _wrapUpEpochAndMine();
+    _moveToEndPeriodAndWrapUpEpoch();
 
     assertEq(_bridgeTracking.totalVote(_period), expectedTotalVotes);
     assertEq(_bridgeTracking.totalBallot(_period), expectedTotalVotes * 5);
@@ -157,8 +160,8 @@ contract EpochE1_VoteIsApprovedInLastEpoch_BridgeTracking_Test is BaseIntegratio
   }
 
   // Epoch 3e: vote > Should not record new ballot. And the period metric is finalized as in epoch 2e-1.
-  function test_epoch3E_notRecordNewBallot_periodMetricIsFinalizedAsInEpoch2E_1() public {
-    test_epoch2E_1_recordNewBallotForBufferMetric();
+  function test_epoch3E_notRecordNewBallot_periodMetricIsFinalizedAsInepoch2EMinus1() public {
+    test_epoch2EMinus1_recordNewBallotForBufferMetric();
 
     _mockRoninGatewayV3.sendBallot(_receiptKind, _receiptId, wrapAddress(_param.roninBridgeManager.bridgeOperators[5]));
 
@@ -175,10 +178,9 @@ contract EpochE1_VoteIsApprovedInLastEpoch_BridgeTracking_Test is BaseIntegratio
 
   // Epoch 3e: vote > Should the metric of the new period get reset.
   function test_epoch3E_metricOfNewPeriodGetReset() public {
-    test_epoch3E_notRecordNewBallot_periodMetricIsFinalizedAsInEpoch2E_1();
+    test_epoch3E_notRecordNewBallot_periodMetricIsFinalizedAsInepoch2EMinus1();
 
-    _setTimestampToPeriodEnding();
-    _wrapUpEpochAndMine();
+    _moveToEndPeriodAndWrapUpEpoch();
 
     uint256 lastPeriod = _period;
     uint256 newPeriod = _validatorSet.currentPeriod();

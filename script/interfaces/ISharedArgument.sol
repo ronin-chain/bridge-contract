@@ -97,8 +97,6 @@ interface ISharedArgument is IGeneralConfig {
     address proxyAdmin;
     uint256 numberOfBlocksInEpoch;
     address dposGA;
-    uint256 mainchainChainId;
-    uint256 roninChainId;
     uint256[] operatorPKs;
     uint256[] governorPKs;
   }

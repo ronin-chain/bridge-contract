@@ -18,19 +18,14 @@ contract DepositVote_RoninGatewayV3_Test is BaseIntegration_Test {
 
   function setUp() public virtual override {
     super.setUp();
-    _config.switchTo(Network.RoninLocal.key());
 
     vm.etch(address(_roninGatewayV3), address(new MockRoninGatewayV3Extended()).code);
 
     Transfer.Receipt memory receipt = Transfer.Receipt({
       id: 0,
       kind: Transfer.Kind.Deposit,
-      ronin: Token.Owner({ addr: makeAddr("recipient"), tokenAddr: address(_roninWeth), chainId: _param.test.roninChainId }),
-      mainchain: Token.Owner({
-        addr: makeAddr("requester"),
-        tokenAddr: address(_mainchainWeth),
-        chainId: _param.test.mainchainChainId
-      }),
+      ronin: Token.Owner({ addr: makeAddr("recipient"), tokenAddr: address(_roninWeth), chainId: block.chainid }),
+      mainchain: Token.Owner({ addr: makeAddr("requester"), tokenAddr: address(_mainchainWeth), chainId: block.chainid }),
       info: Token.Info({ erc: Token.Standard.ERC20, id: 0, quantity: 100 })
     });
 

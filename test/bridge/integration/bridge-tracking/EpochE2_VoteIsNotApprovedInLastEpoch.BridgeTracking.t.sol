@@ -16,7 +16,7 @@ contract EpochE2_VoteIsNotApprovedInLastEpoch_BridgeTracking_Test is BaseIntegra
 
   function setUp() public virtual override {
     super.setUp();
-    _config.switchTo(Network.RoninLocal.key());
+
     vm.coinbase(makeAddr("coin-base-addr"));
 
     // upgrade ronin gateway v3
@@ -28,8 +28,7 @@ contract EpochE2_VoteIsNotApprovedInLastEpoch_BridgeTracking_Test is BaseIntegra
 
     vm.deal(address(_bridgeReward), 10 ether);
 
-    _setTimestampToPeriodEnding();
-    _wrapUpEpochAndMine();
+    // _moveToEndPeriodAndWrapUpEpoch();
 
     _period = _validatorSet.currentPeriod();
     _receiptId = 0;
@@ -49,7 +48,7 @@ contract EpochE2_VoteIsNotApprovedInLastEpoch_BridgeTracking_Test is BaseIntegra
     assertEq(_bridgeTracking.totalBallotOf(_period, _param.roninBridgeManager.bridgeOperators[1]), 0);
   }
 
-  // Epoch e-2: Vote & Approve & Vote. > Should be able to approve the receipts and not record the approved receipts once the epoch is not yet wrapped up
+  // Epoch e-2: Vote & Approve & Vote. > Should be able to approve the receipts and Should not record the approved receipts once the epoch is not yet wrapped up
   function test_epochE2_recordVoteAndBallot_receiptIsApproved() public {
     test_epochE2_notRecordVoteAndBallot_receiptWithoutApproval();
 
@@ -60,7 +59,7 @@ contract EpochE2_VoteIsNotApprovedInLastEpoch_BridgeTracking_Test is BaseIntegra
     assertEq(_bridgeTracking.totalBallotOf(_period, _param.roninBridgeManager.bridgeOperators[1]), 0);
   }
 
-  // Epoch e-1: Continue voting for the vote of e-2 > Should be able to record the approved votes/ballots when the epoch is wrapped up
+  // Epoch e-1: Continue voting for the vote of e-2 > Should be able to record the approved votes/ballots when the epoch is wrapped up (value from buffer metric)
   function test_epochE1_continueVotingForVoteOfE2() public {
     test_epochE2_recordVoteAndBallot_receiptIsApproved();
 
@@ -92,8 +91,7 @@ contract EpochE2_VoteIsNotApprovedInLastEpoch_BridgeTracking_Test is BaseIntegra
   function test_epochE_continueVotingForVoteInE2_notRecordInNextPeriod() public {
     test_epochE1_recordForWhoVoteLately_onceRequestIsApproved();
 
-    _setTimestampToPeriodEnding();
-    _wrapUpEpochAndMine();
+    _moveToEndPeriodAndWrapUpEpoch();
 
     uint256 lastPeriod = _period;
     uint256 newPeriod = _validatorSet.currentPeriod();

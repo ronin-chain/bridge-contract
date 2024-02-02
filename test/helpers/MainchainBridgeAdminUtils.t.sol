@@ -8,9 +8,7 @@ contract MainchainBridgeAdminUtils is ProposalUtils {
   MainchainBridgeManager _contract;
   address _sender;
 
-  constructor(uint256 roninChainId, uint256[] memory signerPKs, MainchainBridgeManager contract_, address sender)
-    ProposalUtils(roninChainId, signerPKs)
-  {
+  constructor(uint256[] memory signerPKs, MainchainBridgeManager contract_, address sender) ProposalUtils(signerPKs) {
     _contract = contract_;
     _sender = sender;
   }
@@ -26,7 +24,7 @@ contract MainchainBridgeAdminUtils is ProposalUtils {
       value: 0,
       calldata_: abi.encodeWithSignature("functionDelegateCall(bytes)", data),
       gasAmount: 2_000_000,
-      nonce: _contract.round(_roninChainId) + 1
+      nonce: _contract.round(block.chainid) + 1
     });
 
     SignatureConsumer.Signature[] memory signatures = this.generateSignatures(proposal);
