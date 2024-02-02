@@ -563,15 +563,10 @@ contract BaseIntegration_Test is Base_Test {
 
   function _wrapUpEpoch() internal {
     uint256 multiplier = _validatorSet.numberOfBlocksInEpoch();
-    console.log("Before roll block.number: ", block.number);
-
     vm.roll((block.number / multiplier + 1) * multiplier - 1);
-    console.log("After roll block.number: ", block.number);
 
     vm.prank(block.coinbase);
-    console.log("Before wrap up", _validatorSet.currentPeriod());
     _validatorSet.wrapUpEpoch();
-    console.log("After wrap up", _validatorSet.currentPeriod());
   }
 
   function _setTimestampToPeriodEnding() internal {

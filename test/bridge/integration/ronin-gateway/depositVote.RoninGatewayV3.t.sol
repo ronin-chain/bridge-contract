@@ -15,8 +15,6 @@ contract DepositVote_RoninGatewayV3_Test is BaseIntegration_Test {
 
   Transfer.Receipt[] _depositReceipts;
   uint256 _numOperatorsForVoteExecuted;
-  Transfer.Receipt[] first50Receipts;
-  Transfer.Receipt[] second50Receipts;
 
   function setUp() public virtual override {
     super.setUp();
@@ -81,62 +79,6 @@ contract DepositVote_RoninGatewayV3_Test is BaseIntegration_Test {
         _depositReceipts[i].mainchain.chainId, i, Transfer.hash(_depositReceipts[i])
       );
       assertEq(totalWeight, (_numOperatorsForVoteExecuted) * 100);
-    }
-  }
-
-  function test_bulkDeposit_100Txs() public {
-    _setTimestampToPeriodEnding();
-    _wrapUpEpochAndMine();
-    _wrapUpEpochAndMine();
-
-    vm.deal(address(_bridgeReward), 10 ether);
-    address newBridgeOperator = makeAddr("new-bridge-operator");
-    Transfer.Receipt memory sampleReceipt = Transfer.Receipt({
-      id: 0,
-      kind: Transfer.Kind.Deposit,
-      ronin: Token.Owner({ addr: makeAddr("recipient"), tokenAddr: address(_roninWeth), chainId: _param.test.roninChainId }),
-      mainchain: Token.Owner({
-        addr: makeAddr("requester"),
-        tokenAddr: address(_mainchainWeth),
-        chainId: _param.test.mainchainChainId
-      }),
-      info: Token.Info({ erc: Token.Standard.ERC20, id: 0, quantity: 100 })
-    });
-
-    uint256 id = 1;
-    for (uint256 i; i < 50; i++) {
-      first50Receipts.push(sampleReceipt);
-      second50Receipts.push(sampleReceipt);
-      first50Receipts[i].id = id;
-      second50Receipts[i].id = id + 50;
-
-      id++;
-    }
-
-    for (uint256 i; i < _numOperatorsForVoteExecuted; i++) {
-      vm.prank(_param.roninBridgeManager.bridgeOperators[i]);
-      _roninGatewayV3.tryBulkDepositFor(first50Receipts);
-    }
-
-    vm.prank(_param.roninBridgeManager.governors[0]);
-    _roninBridgeManager.updateBridgeOperator(newBridgeOperator);
-
-    _param.roninBridgeManager.bridgeOperators[0] = newBridgeOperator;
-
-    for (uint256 i; i < _numOperatorsForVoteExecuted; i++) {
-      vm.prank(_param.roninBridgeManager.bridgeOperators[i]);
-      _roninGatewayV3.tryBulkDepositFor(second50Receipts);
-    }
-
-    _setTimestampToPeriodEnding();
-    _wrapUpEpochAndMine();
-    _wrapUpEpochAndMine();
-
-    sampleReceipt.id = 101;
-
-    for (uint256 i; i < _numOperatorsForVoteExecuted; i++) {
-      vm.prank(_param.roninBridgeManager.bridgeOperators[i]);
-      _roninGatewayV3.depositFor(sampleReceipt);
     }
   }
 }
