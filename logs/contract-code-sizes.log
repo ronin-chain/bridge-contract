@@ -13,6 +13,7 @@
 | ERC1967Proxy                                    | 0.177     | 24.399      |
 | ERC20                                           | 2.173     | 22.403      |
 | ERC20PresetMinterPauser                         | 6.368     | 18.208      |
+| ERC721                                          | 4.363     | 20.213      |
 | EnumerableSet                                   | 0.086     | 24.49       |
 | ErrorHandler                                    | 0.086     | 24.49       |
 | GeneralConfig                                   | 20.136    | 4.44        |
@@ -39,7 +40,7 @@
 | MockBridgeSlash                                 | 1.388     | 23.188      |
 | MockBridgeTracking                              | 1.897     | 22.679      |
 | MockERC20                                       | 2.442     | 22.134      |
-| MockERC721                                      | 3.827     | 20.749      |
+| MockERC721                                      | 4.741     | 19.835      |
 | MockGatewayForTracking                          | 1.616     | 22.96       |
 | MockRoninBridgeManager                          | 24.601    | -0.025      |
 | MockRoninGatewayV3Extended                      | 20.048    | 4.528       |
