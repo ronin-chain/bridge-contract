@@ -17,6 +17,8 @@ import { BridgeReward } from "@ronin/contracts/ronin/gateway/BridgeReward.sol";
 import { MainchainGatewayV3 } from "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
 import { MainchainBridgeManager } from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
 import { MockERC20 } from "@ronin/contracts/mocks/token/MockERC20.sol";
+import { MockERC721 } from "@ronin/contracts/mocks/token/MockERC721.sol";
+
 import { MockWrappedToken } from "@ronin/contracts/mocks/token/MockWrappedToken.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
 import { Proposal } from "@ronin/contracts/libraries/Proposal.sol";
@@ -50,6 +52,7 @@ import { WRONDeploy } from "@ronin/script/contracts/token/WRONDeploy.s.sol";
 import { AXSDeploy } from "@ronin/script/contracts/token/AXSDeploy.s.sol";
 import { SLPDeploy } from "@ronin/script/contracts/token/SLPDeploy.s.sol";
 import { USDCDeploy } from "@ronin/script/contracts/token/USDCDeploy.s.sol";
+import { MockERC721Deploy } from "@ronin/script/contracts/token/MockERC721Deploy.s.sol";
 
 import { RoninBridgeAdminUtils } from "test/helpers/RoninBridgeAdminUtils.t.sol";
 import { MainchainBridgeAdminUtils } from "test/helpers/MainchainBridgeAdminUtils.t.sol";
@@ -74,12 +77,13 @@ contract BaseIntegration_Test is Base_Test {
   MockERC20 _roninAxs;
   MockERC20 _roninSlp;
   MockERC20 _roninUsdc;
+  MockERC721 _roninMockERC721;
 
   MockWrappedToken _mainchainWeth;
-  MockWrappedToken _mainchainWron;
   MockERC20 _mainchainAxs;
   MockERC20 _mainchainSlp;
   MockERC20 _mainchainUsdc;
+  MockERC721 _mainchainMockERC721;
 
   MockValidatorContract_OnlyTiming_ForHardhatTest _validatorSet;
 
@@ -117,6 +121,7 @@ contract BaseIntegration_Test is Base_Test {
     _roninAxs = new AXSDeploy().run();
     _roninSlp = new SLPDeploy().run();
     _roninUsdc = new USDCDeploy().run();
+    _roninMockERC721 = new MockERC721Deploy().run();
 
     _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
     _roninProposalUtils =
@@ -130,10 +135,10 @@ contract BaseIntegration_Test is Base_Test {
     _mainchainBridgeManager = new MainchainBridgeManagerDeploy().run();
 
     _mainchainWeth = new WETHDeploy().run();
-    _mainchainWron = new WRONDeploy().run();
     _mainchainAxs = new AXSDeploy().run();
     _mainchainSlp = new SLPDeploy().run();
     _mainchainUsdc = new USDCDeploy().run();
+    _mainchainMockERC721 = new MockERC721Deploy().run();
 
     _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
     _mainchainProposalUtils = new MainchainBridgeAdminUtils(
@@ -158,28 +163,6 @@ contract BaseIntegration_Test is Base_Test {
     _mainchainPauseEnforcerInitialize();
     _constructForMainchainBridgeManager();
     _mainchainGatewayV3Initialize();
-  }
-
-  function _getMainchainAndRoninTokens()
-    internal
-    view
-    returns (address[] memory mainchainTokens, address[] memory roninTokens)
-  {
-    uint256 tokenNum = 6;
-    mainchainTokens = new address[](tokenNum);
-    roninTokens = new address[](tokenNum);
-
-    mainchainTokens[0] = address(_mainchainWeth);
-    mainchainTokens[1] = address(_mainchainWron);
-    mainchainTokens[2] = address(_mainchainAxs);
-    mainchainTokens[3] = address(_mainchainSlp);
-    mainchainTokens[4] = address(_mainchainUsdc);
-
-    roninTokens[0] = address(_roninWeth);
-    roninTokens[1] = address(_roninWron);
-    roninTokens[2] = address(_roninAxs);
-    roninTokens[3] = address(_roninSlp);
-    roninTokens[4] = address(_roninUsdc);
   }
 
   function _bridgeRewardInitialize() internal {
@@ -246,14 +229,16 @@ contract BaseIntegration_Test is Base_Test {
 
   function _roninGatewayV3Initialize() internal {
     (address[] memory mainchainTokens, address[] memory roninTokens) = _getMainchainAndRoninTokens();
-    uint256 tokenNum = mainchainTokens.length;
+    uint256 tokenNum = mainchainTokens.length; // reserve slot for ERC721Tokens
     uint256[] memory minimumThreshold = new uint256[](tokenNum);
     uint256[] memory chainIds = new uint256[](tokenNum);
     Token.Standard[] memory standards = new Token.Standard[](tokenNum);
     for (uint256 i; i < tokenNum; i++) {
-      minimumThreshold[i] = 0;
+      bool isERC721 = i == mainchainTokens.length - 1; // last item is ERC721
+
+      minimumThreshold[i] = 20;
       chainIds[i] = block.chainid;
-      standards[i] = Token.Standard.ERC20;
+      standards[i] = isERC721 ? Token.Standard.ERC721 : Token.Standard.ERC20;
     }
 
     // Ronin Gateway V3
@@ -447,20 +432,22 @@ contract BaseIntegration_Test is Base_Test {
     uint256[] memory lockedThreshold = new uint256[](tokenNum);
     uint256[] memory unlockFeePercentages = new uint256[](tokenNum);
     uint256[] memory dailyWithdrawalLimits = new uint256[](tokenNum);
-
-    highTierThreshold[0] = 10;
-    lockedThreshold[0] = 20;
-    unlockFeePercentages[0] = 100_000;
-    dailyWithdrawalLimits[0] = 12;
-
     Token.Standard[] memory standards = new Token.Standard[](tokenNum);
+
     for (uint256 i; i < tokenNum; i++) {
-      standards[i] = Token.Standard.ERC20;
+      bool isERC721 = i == mainchainTokens.length - 1; // last item is ERC721
+
+      highTierThreshold[i] = 10;
+      lockedThreshold[i] = 20;
+      unlockFeePercentages[i] = 100_000;
+      dailyWithdrawalLimits[i] = 12;
+      standards[i] = isERC721 ? Token.Standard.ERC721 : Token.Standard.ERC20;
     }
 
     // Mainchain Gateway V3
-    _param.mainchainGatewayV3.addresses[0] = mainchainTokens;
-    _param.mainchainGatewayV3.addresses[1] = roninTokens;
+    _param.mainchainGatewayV3.wrappedToken = address(_mainchainWeth);
+    _param.mainchainGatewayV3.addresses[0] = mainchainTokens; // (ERC20 + ERC721)
+    _param.mainchainGatewayV3.addresses[1] = roninTokens; // (ERC20 + ERC721)
     _param.mainchainGatewayV3.addresses[2] = getEmptyAddressArray();
     _param.mainchainGatewayV3.thresholds[0] = highTierThreshold;
     _param.mainchainGatewayV3.thresholds[1] = lockedThreshold;
@@ -491,6 +478,28 @@ contract BaseIntegration_Test is Base_Test {
     ISharedArgument.PauseEnforcerParam memory param = _param.mainchainPauseEnforcer;
 
     _mainchainPauseEnforcer.initialize(IPauseTarget(param.target), param.admin, param.sentries);
+  }
+
+  function _getMainchainAndRoninTokens()
+    internal
+    view
+    returns (address[] memory mainchainTokens, address[] memory roninTokens)
+  {
+    uint256 tokenNum = 5;
+    mainchainTokens = new address[](tokenNum);
+    roninTokens = new address[](tokenNum);
+
+    mainchainTokens[0] = address(_mainchainWeth);
+    mainchainTokens[1] = address(_mainchainAxs);
+    mainchainTokens[2] = address(_mainchainSlp);
+    mainchainTokens[3] = address(_mainchainUsdc);
+    mainchainTokens[4] = address(_mainchainMockERC721);
+
+    roninTokens[0] = address(_roninWeth);
+    roninTokens[1] = address(_roninAxs);
+    roninTokens[2] = address(_roninSlp);
+    roninTokens[3] = address(_roninUsdc);
+    roninTokens[4] = address(_roninMockERC721);
   }
 
   function _changeAdminOnRonin() internal {
@@ -557,6 +566,4 @@ contract BaseIntegration_Test is Base_Test {
     vm.warp(nextDayTimestamp);
     vm.roll(epochEndingBlockNumber);
   }
-
-  function test_setUpIntegration() public { }
 }

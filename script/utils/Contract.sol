@@ -9,6 +9,7 @@ enum Contract {
   AXS,
   SLP,
   USDC,
+  MockERC721,
   BridgeTracking,
   BridgeSlash,
   BridgeReward,
@@ -32,6 +33,7 @@ function name(Contract contractEnum) pure returns (string memory) {
   if (contractEnum == Contract.AXS) return "AXS";
   if (contractEnum == Contract.SLP) return "SLP";
   if (contractEnum == Contract.USDC) return "USDC";
+  if (contractEnum == Contract.MockERC721) return "MockERC721";
 
   if (contractEnum == Contract.BridgeTracking) return "BridgeTracking";
   if (contractEnum == Contract.BridgeSlash) return "BridgeSlash";

@@ -12,7 +12,7 @@ contract EmergencyAction_PauseEnforcer_Test is BaseIntegration_Test {
     super.setUp();
   }
 
-  // Should be able to emergency pause
+  // Emergency pause & emergency unpause > Should be able to emergency pause
   function test_EmergencyPause_RoninGatewayV3() public {
     vm.prank(_param.roninPauseEnforcer.sentries[0]);
     _roninPauseEnforcer.triggerPause();
@@ -21,7 +21,7 @@ contract EmergencyAction_PauseEnforcer_Test is BaseIntegration_Test {
     assertEq(_roninGatewayV3.paused(), true);
   }
 
-  // Should the gateway cannot interacted when on pause
+  // Emergency pause & emergency unpause > Should the gateway cannot interacted when on pause
   function test_RevertWhen_InteractWithGateway_AfterPause() public {
     test_EmergencyPause_RoninGatewayV3();
     Transfer.Receipt memory receipt = Transfer.Receipt({
@@ -37,7 +37,7 @@ contract EmergencyAction_PauseEnforcer_Test is BaseIntegration_Test {
     _roninGatewayV3.depositFor(receipt);
   }
 
-  // Should not be able to emergency pause for a second time
+  // Emergency pause & emergency unpause > Should not be able to emergency pause for a second time
   function test_RevertWhen_PauseAgain() public {
     test_EmergencyPause_RoninGatewayV3();
 
@@ -47,7 +47,7 @@ contract EmergencyAction_PauseEnforcer_Test is BaseIntegration_Test {
     _roninPauseEnforcer.triggerPause();
   }
 
-  // Should be able to emergency unpause
+  // Emergency pause & emergency unpause > Should be able to emergency unpause
   function test_EmergencyUnpause_RoninGatewayV3() public {
     test_EmergencyPause_RoninGatewayV3();
 
@@ -58,7 +58,7 @@ contract EmergencyAction_PauseEnforcer_Test is BaseIntegration_Test {
     assertEq(_roninGatewayV3.paused(), false);
   }
 
-  // Should the gateway can be interacted after unpause
+  // Emergency pause & emergency unpause > Should the gateway can be interacted after unpause
   function test_InteractWithGateway_AfterUnpause() public {
     test_EmergencyUnpause_RoninGatewayV3();
     Transfer.Receipt memory receipt = Transfer.Receipt({

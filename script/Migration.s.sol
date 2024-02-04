@@ -43,6 +43,8 @@ contract Migration is BaseMigrationV2, Utils {
       param.slp.symbol = "SLP";
       param.usdc.name = "USD Coin";
       param.usdc.symbol = "USDC";
+      param.mockErc721.name = "Mock ERC721";
+      param.mockErc721.symbol = "M_ERC721";
 
       uint256 num = 6;
       address[] memory operatorAddrs = new address[](num);

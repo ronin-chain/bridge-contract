@@ -13,7 +13,7 @@ contract NormalPause_GatewayV3_Test is BaseIntegration_Test {
     super.setUp();
   }
 
-  // Should gateway admin can pause the gateway through voting
+  // Normal pause & emergency unpause > Should gateway admin can pause the gateway through voting
   function test_GovernanceAdmin_PauseGateway_ThroughoutVoting() public {
     bytes memory calldata_ = abi.encodeCall(GatewayV3.pause, ());
     _roninProposalUtils.functionDelegateCall(address(_roninGatewayV3), calldata_);
@@ -22,7 +22,7 @@ contract NormalPause_GatewayV3_Test is BaseIntegration_Test {
     assertEq(_roninGatewayV3.paused(), true);
   }
 
-  // Should not be able to emergency unpause
+  // Normal pause & emergency unpause > Should not be able to emergency unpause
   function test_RevertWhen_EmergencyUnpause() public {
     test_GovernanceAdmin_PauseGateway_ThroughoutVoting();
 
@@ -32,7 +32,7 @@ contract NormalPause_GatewayV3_Test is BaseIntegration_Test {
     _roninPauseEnforcer.triggerUnpause();
   }
 
-  // Should not be able to override by emergency pause and emergency unpause
+  // Normal pause & emergency unpause > Should not be able to override by emergency pause and emergency unpause
   function test_RevertWhen_OverrideByEmergencyPauseOrUnPause() public {
     test_GovernanceAdmin_PauseGateway_ThroughoutVoting();
 
@@ -47,7 +47,7 @@ contract NormalPause_GatewayV3_Test is BaseIntegration_Test {
     _roninPauseEnforcer.triggerUnpause();
   }
 
-  // Should gateway admin can unpause the gateway through voting
+  // Normal pause & emergency unpause > Should gateway admin can unpause the gateway through voting
   function test_GovernanceAdmin_UnPauseGateway_ThroughoutVoting() public {
     test_GovernanceAdmin_PauseGateway_ThroughoutVoting();
 
