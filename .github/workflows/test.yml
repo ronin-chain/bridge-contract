@@ -42,7 +42,5 @@ jobs:
 
       - name: Run Forge tests
         run: |
-          anvil --chain-id 2024 --port 8546 &
-          anvil --chain-id 2 --port 8547 &
           forge test -vvv
         id: test

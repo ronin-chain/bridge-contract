@@ -16,7 +16,6 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
 
   function setUp() public virtual override {
     super.setUp();
-    _config.switchTo(Network.EthLocal.key());
 
     _domainSeparator = _mainchainGatewayV3.DOMAIN_SEPARATOR();
 
@@ -24,10 +23,10 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
     _withdrawalReceipt.kind = Transfer.Kind.Withdrawal;
     _withdrawalReceipt.ronin.addr = makeAddr("requester");
     _withdrawalReceipt.ronin.tokenAddr = address(_roninWeth);
-    _withdrawalReceipt.ronin.chainId = _param.test.roninChainId;
+    _withdrawalReceipt.ronin.chainId = block.chainid;
     _withdrawalReceipt.mainchain.addr = makeAddr("recipient");
     _withdrawalReceipt.mainchain.tokenAddr = address(_mainchainWeth);
-    _withdrawalReceipt.mainchain.chainId = _param.test.mainchainChainId;
+    _withdrawalReceipt.mainchain.chainId = block.chainid;
     _withdrawalReceipt.info.erc = Token.Standard.ERC20;
     _withdrawalReceipt.info.id = 0;
     _withdrawalReceipt.info.quantity = 0;

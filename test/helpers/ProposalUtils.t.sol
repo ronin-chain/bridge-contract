@@ -15,12 +15,15 @@ contract ProposalUtils is Utils, Test {
   using GlobalProposal for GlobalProposal.GlobalProposalDetail;
   using Proposal for Proposal.ProposalDetail;
 
-  uint256 _roninChainId;
+  uint256[] _signerPKs;
   bytes32 _domain;
 
-  constructor(uint256 roninChainId) {
-    _roninChainId = roninChainId;
-    _domain = getBridgeManagerDomain(roninChainId);
+  constructor(uint256[] memory signerPKs) {
+    _domain = getBridgeManagerDomain();
+
+    for (uint256 i; i < signerPKs.length; i++) {
+      _signerPKs.push(signerPKs[i]);
+    }
   }
 
   function createProposal(
@@ -33,7 +36,7 @@ contract ProposalUtils is Utils, Test {
   ) public view returns (Proposal.ProposalDetail memory proposal) {
     proposal = Proposal.ProposalDetail({
       nonce: nonce,
-      chainId: _roninChainId,
+      chainId: block.chainid,
       expiryTimestamp: expiryTimestamp,
       targets: wrapAddress(target),
       values: wrapUint(value),
@@ -80,6 +83,14 @@ contract ProposalUtils is Utils, Test {
     return generateSignatures(proposal, signerPKs, Ballot.VoteType.For);
   }
 
+  function generateSignatures(Proposal.ProposalDetail memory proposal)
+    public
+    view
+    returns (SignatureConsumer.Signature[] memory sigs)
+  {
+    return generateSignatures(proposal, _signerPKs, Ballot.VoteType.For);
+  }
+
   function generateSignaturesGlobal(
     GlobalProposal.GlobalProposalDetail memory proposal,
     uint256[] memory signerPKs,
@@ -97,18 +108,21 @@ contract ProposalUtils is Utils, Test {
     return generateSignaturesGlobal(proposal, signerPKs, Ballot.VoteType.For);
   }
 
-  function defaultExpiryTimestamp() public view returns (uint256) { }
+  function generateSignaturesGlobal(GlobalProposal.GlobalProposalDetail memory proposal)
+    public
+    view
+    returns (SignatureConsumer.Signature[] memory sigs)
+  {
+    return generateSignaturesGlobal(proposal, _signerPKs, Ballot.VoteType.For);
+  }
 
-  function functionDelegateCallGlobal() public view { }
-  function upgradeGlobal() public view { }
-
-  function getBridgeManagerDomain(uint256 roninChainId) public pure returns (bytes32) {
+  function getBridgeManagerDomain() public view returns (bytes32) {
     return keccak256(
       abi.encode(
         keccak256("EIP712Domain(string name,string version,bytes32 salt)"),
         keccak256("BridgeAdmin"), // name hash
         keccak256("2"), // version hash
-        keccak256(abi.encode("BRIDGE_ADMIN", roninChainId)) // salt
+        keccak256(abi.encode("BRIDGE_ADMIN", block.chainid)) // salt
       )
     );
   }
