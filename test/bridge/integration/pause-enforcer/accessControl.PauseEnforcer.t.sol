@@ -8,6 +8,7 @@ contract AccessControl_PauseEnforcer_Test is BaseIntegration_Test {
     super.setUp();
   }
 
+  // Access control > Should admin of pause enforcer can be change
   function test_changeAdmin_OfPauseEnforcer() public {
     address newEnforcerAdmin = makeAddr("new-enforcer-admin");
 
@@ -17,6 +18,7 @@ contract AccessControl_PauseEnforcer_Test is BaseIntegration_Test {
     assertEq(_roninPauseEnforcer.hasRole(0x0, newEnforcerAdmin), true);
   }
 
+  // Access control > Should previous admin of pause enforcer can be revoked
   function test_renounceAdminRole_PreviousAdmin() public {
     test_changeAdmin_OfPauseEnforcer();
 

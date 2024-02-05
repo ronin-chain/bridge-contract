@@ -54,6 +54,7 @@ contract VoteBridgeOperator_RoninBridgeManager_Test is BaseIntegration_Test {
     _generateAddingOperators(_addingOperatorNum);
   }
 
+  // Should be able to vote bridge operators
   function test_voteAddBridgeOperatorsProposal() public {
     _globalProposal = _roninProposalUtils.createGlobalProposal({
       expiryTimestamp: block.timestamp + _proposalExpiryDuration,
@@ -83,6 +84,7 @@ contract VoteBridgeOperator_RoninBridgeManager_Test is BaseIntegration_Test {
     assertEq(_roninBridgeManager.getBridgeOperators(), _afterRelayedOperators);
   }
 
+  // Should be able relay the vote of bridge operators
   function test_relayAddBridgeOperator() public {
     test_voteAddBridgeOperatorsProposal();
 
@@ -98,6 +100,7 @@ contract VoteBridgeOperator_RoninBridgeManager_Test is BaseIntegration_Test {
     assertEq(_mainchainBridgeManager.getBridgeOperators(), _afterRelayedOperators);
   }
 
+  // Should not able to relay again
   function test_RevertWhen_RelayAgain() public {
     test_relayAddBridgeOperator();
 
@@ -109,6 +112,7 @@ contract VoteBridgeOperator_RoninBridgeManager_Test is BaseIntegration_Test {
     _mainchainBridgeManager.relayGlobalProposal(_globalProposal, _supports, _signatures);
   }
 
+  // Should be able to vote for a larger number of bridge operators
   function test_voteForLargeNumberOfOperators(uint256 seed) public {
     uint256 numAddingOperators = seed % 10 + 10;
     _generateAddingOperators(numAddingOperators);
@@ -141,6 +145,7 @@ contract VoteBridgeOperator_RoninBridgeManager_Test is BaseIntegration_Test {
     assertEq(_roninBridgeManager.getBridgeOperators(), _afterRelayedOperators);
   }
 
+  // Should the approved proposal can be relayed on mainchain (even when the time of expiry is passed)
   function test_relayExpiredProposal() public {
     test_voteAddBridgeOperatorsProposal();
 
