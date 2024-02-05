@@ -43,64 +43,88 @@ contract UpdateOperator_RoninBridgeManager_Test is BaseIntegration_Test {
 
   function test_updateOperator_and_wrapUpEpoch() public {
     console.log("=============== Test Update Operator ===========");
-    _depositFor();
-
-    _moveToEndPeriodAndWrapUpEpoch();
 
     _depositFor();
-
     _moveToEndPeriodAndWrapUpEpoch();
-
-    console.log(
-      "totalVote of period",
-      _validatorSet.currentPeriod() - 1,
-      _bridgeTracking.totalVote(_validatorSet.currentPeriod() - 1)
-    );
 
     console.log("=============== First 50 Receipts ===========");
     _bulkDepositFor(first50Receipts);
 
     console.log("=============== Update bridge operator ===========");
-    vm.prank(_param.roninBridgeManager.governors[0]);
-    _roninBridgeManager.updateBridgeOperator(_newBridgeOperator);
-    _param.roninBridgeManager.bridgeOperators[0] = _newBridgeOperator;
+    _updateBridgeOperator();
 
     console.log("=============== Second 50 Receipts ===========");
     _bulkDepositFor(second50Receipts);
+    _wrapUpEpoch();
 
     _moveToEndPeriodAndWrapUpEpoch();
-
-    console.log(
-      "totalVote of period",
-      _validatorSet.currentPeriod() - 1,
-      _bridgeTracking.totalVote(_validatorSet.currentPeriod() - 1)
-    );
-    console.log(
-      "totalVote of period", _validatorSet.currentPeriod(), _bridgeTracking.totalVote(_validatorSet.currentPeriod())
-    );
 
     console.log("=============== Check slash and reward behavior  ===========");
     _depositFor();
+    logBridgeTracking();
 
-    _moveToEndPeriodAndWrapUpEpoch();
+    logBridgeSlash();
+  }
 
-    _depositFor();
+  function _updateBridgeOperator() internal {
+    vm.prank(_param.roninBridgeManager.governors[0]);
+    address previousOperator = _param.roninBridgeManager.bridgeOperators[0];
+    _roninBridgeManager.updateBridgeOperator(_newBridgeOperator);
+    _param.roninBridgeManager.bridgeOperators[0] = _newBridgeOperator;
+
+    console.log(
+      "Update operator: ",
+      string(abi.encodePacked(vm.toString(previousOperator), " => ", vm.toString(_newBridgeOperator)))
+    );
   }
 
   function _depositFor() internal {
+    console.log(">> depositFor ....");
     Transfer.Receipt memory sampleReceipt = first50Receipts[0];
     sampleReceipt.id = ++id + 50;
     for (uint256 i; i < _numOperatorsForVoteExecuted; i++) {
-      console.log("Operator vote: ", i);
+      console.log(" -> Operator vote:", _param.roninBridgeManager.bridgeOperators[i]);
       vm.prank(_param.roninBridgeManager.bridgeOperators[i]);
       _roninGatewayV3.depositFor(sampleReceipt);
     }
   }
 
   function _bulkDepositFor(Transfer.Receipt[] memory receipts) internal {
+    console.log(">> bulkDepositFor ....");
     for (uint256 i; i < _numOperatorsForVoteExecuted; i++) {
+      console.log(" -> Operator vote:", _param.roninBridgeManager.bridgeOperators[i]);
       vm.prank(_param.roninBridgeManager.bridgeOperators[i]);
       _roninGatewayV3.tryBulkDepositFor(receipts);
+    }
+  }
+
+  function logBridgeTracking() public {
+    console.log(">> logBridgeTracking ....");
+    uint256 currentPeriod = _validatorSet.currentPeriod();
+    uint256 lastSyncedPeriod = uint256(vm.load(address(_bridgeTracking), bytes32(uint256(11))));
+    console.log(" -> current period:", currentPeriod);
+    console.log("  -> total votes:", _bridgeTracking.totalVote(currentPeriod));
+    console.log("  -> total ballot:", _bridgeTracking.totalBallot(currentPeriod));
+    for (uint256 i; i < _numOperatorsForVoteExecuted; i++) {
+      address operator = _param.roninBridgeManager.bridgeOperators[i];
+      console.log("  -> total ballot of:", operator, _bridgeTracking.totalBallotOf(currentPeriod, operator));
+    }
+
+    console.log(" -> lastSynced period:", lastSyncedPeriod);
+    console.log("  -> total votes:", _bridgeTracking.totalVote(lastSyncedPeriod));
+    console.log("  -> total ballot:", _bridgeTracking.totalBallot(lastSyncedPeriod));
+    for (uint256 i; i < _numOperatorsForVoteExecuted; i++) {
+      address operator = _param.roninBridgeManager.bridgeOperators[i];
+      console.log("  -> total ballot of:", operator, _bridgeTracking.totalBallotOf(lastSyncedPeriod, operator));
+    }
+  }
+
+  function logBridgeSlash() public {
+    console.log(">> logBridgeSlash ....");
+
+    uint256[] memory periods = _bridgeSlash.getSlashUntilPeriodOf(_param.roninBridgeManager.bridgeOperators);
+    for (uint256 i; i < _param.roninBridgeManager.bridgeOperators.length; i++) {
+      console.log(" -> slash operator until:", _param.roninBridgeManager.bridgeOperators[i], periods[i]);
     }
   }
 }

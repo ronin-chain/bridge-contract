@@ -547,13 +547,29 @@ contract BaseIntegration_Test is Base_Test {
   }
 
   function _moveToEndPeriodAndWrapUpEpoch() internal {
+    console.log(">> Move to end period ... ");
+    uint256 prevPeriod = _validatorSet.currentPeriod();
+
     _fastForwardToNextDay();
     _wrapUpEpoch();
+    uint256 afterPeriod = _validatorSet.currentPeriod();
+
+    console.log(
+      " -> period changes: ", string(abi.encodePacked(vm.toString(prevPeriod), " => ", vm.toString(afterPeriod)))
+    );
   }
 
   function _wrapUpEpoch() internal {
+    console.log(">> Wrap up epoch ... ");
+    uint256 prevEpoch = _validatorSet.epochOf(block.number);
+
     _validatorSet.wrapUpEpoch();
     vm.roll(block.number + _validatorSet.numberOfBlocksInEpoch());
+
+    uint256 afterEpoch = _validatorSet.epochOf(block.number);
+    console.log(
+      " -> epoch changes: ", string(abi.encodePacked(vm.toString(prevEpoch), " => ", vm.toString(afterEpoch)))
+    );
   }
 
   function _fastForwardToNextDay() internal {
