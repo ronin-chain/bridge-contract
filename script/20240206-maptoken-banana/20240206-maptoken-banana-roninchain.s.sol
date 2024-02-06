@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import {console2} from "forge-std/console2.sol";
 import {StdStyle} from "forge-std/StdStyle.sol";
 import {BaseMigration} from "foundry-deployment-kit/BaseMigration.s.sol";
+import {DefaultNetwork} from "foundry-deployment-kit/utils/DefaultNetwork.sol";
 
 import {RoninBridgeManager} from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import {IRoninGatewayV3} from "@ronin/contracts/interfaces/IRoninGatewayV3.sol";
@@ -51,7 +52,7 @@ contract Migration__20240206_MapTokenBananaRoninChain is
     vm.store(address(_roninBridgeManager), $, newOpAndWeight);
   }
 
-  function run() public {
+  function run() public onlyOn(DefaultNetwork.RoninMainnet.key()) {
     address[] memory roninTokens = new address[](3);
     address[] memory mainchainTokens = new address[](3);
     uint256[] memory chainIds = new uint256[](3);
@@ -128,6 +129,7 @@ contract Migration__20240206_MapTokenBananaRoninChain is
 
     _verifyRoninProposalGasAmount(targets, values, calldatas, gasAmounts);
 
+    console2.log("Nonce:", vm.getNonce(_governor));
     vm.broadcast(_governor);
     _roninBridgeManager.propose(block.chainid, expiredTime, targets, values, calldatas, gasAmounts);
 

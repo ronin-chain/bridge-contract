@@ -11,6 +11,7 @@ import {Token} from "@ronin/contracts/libraries/Token.sol";
 import {Contract} from "../utils/Contract.sol";
 import {BridgeMigration} from "../BridgeMigration.sol";
 import {Network} from "../utils/Network.sol";
+import {DefaultNetwork} from "foundry-deployment-kit/utils/DefaultNetwork.sol";
 import {Contract} from "../utils/Contract.sol";
 import {IGeneralConfigExtended} from "../IGeneralConfigExtended.sol";
 
@@ -39,7 +40,7 @@ contract Migration__20240206_MapTokenBananaMainchain is
       _config.getAddress(_config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).key(), Contract.MainchainBridgeManager.key());
   }
 
-  function run() public {
+  function run() public onlyOn(DefaultNetwork.RoninMainnet.key()) {
     address[] memory mainchainTokens = new address[](1);
     address[] memory roninTokens = new address[](1);
     Token.Standard[] memory standards = new Token.Standard[](1);
@@ -143,6 +144,7 @@ contract Migration__20240206_MapTokenBananaMainchain is
 
     uint256 chainId = _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).chainId();
 
+    console2.log("Nonce:", vm.getNonce(_governor));
     vm.broadcast(_governor);
     _roninBridgeManager.propose(chainId, expiredTime, targets, values, calldatas, gasAmounts);
   }
