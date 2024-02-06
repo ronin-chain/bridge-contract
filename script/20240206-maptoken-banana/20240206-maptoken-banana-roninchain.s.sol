@@ -37,6 +37,14 @@ contract Migration__20240206_MapTokenBananaRoninChain is
   RoninBridgeManager internal _roninBridgeManager;
   address internal _roninGatewayV3;
 
+  address pixelRoninToken = 0x7EAe20d11Ef8c779433Eb24503dEf900b9d28ad7;
+  address pixelMainchainToken = 0x3429d03c6F7521AeC737a0BBF2E5ddcef2C3Ae31;
+  uint256 pixelMinThreshold = 10 ether;
+
+  address aggRoninToken = 0x294311a8C37F0744F99EB152c419D4D3D6FEC1C7;
+  address aggMainchainToken = 0xFB0489e9753B045DdB35e39c6B0Cc02EC6b99AC5;
+  uint256 aggMinThreshold = 1000 ether;
+
   function setUp() public override {
     super.setUp();
     _roninBridgeManager = RoninBridgeManager(_config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
@@ -87,7 +95,8 @@ contract Migration__20240206_MapTokenBananaRoninChain is
     //   uint256[] calldata chainIds,
     //   Token.Standard[] calldata _standards
     // )
-    bytes memory innerData = abi.encodeCall(IRoninGatewayV3.mapTokens, (roninTokens, mainchainTokens, chainIds, standards));
+    bytes memory innerData =
+      abi.encodeCall(IRoninGatewayV3.mapTokens, (roninTokens, mainchainTokens, chainIds, standards));
     bytes memory proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
 
     targets[0] = _roninGatewayV3;
@@ -106,19 +115,11 @@ contract Migration__20240206_MapTokenBananaRoninChain is
     roninTokensToSetMinThreshold[0] = _bananaRoninToken;
     minThresholds[0] = _bananaMinThreshold;
 
-    address pixelRoninToken = 0x7EAe20d11Ef8c779433Eb24503dEf900b9d28ad7;
-    address pixelMainchainToken = 0x3429d03c6F7521AeC737a0BBF2E5ddcef2C3Ae31;
-    address pixelMinThreshold = 10 ether;
-
     roninTokensToSetMinThreshold[1] = pixelRoninToken;
     minThresholds[1] = pixelMinThreshold;
-
+    
     roninTokensToSetMinThreshold[2] = pixelMainchainToken;
     minThresholds[2] = 0;
-
-    address aggRoninToken = 0x294311a8c37f0744f99eb152c419d4d3d6fec1c7;
-    address aggMainchainToken = 0xFB0489e9753B045DdB35e39c6B0Cc02EC6b99AC5;
-    address aggMinThreshold = 1000 ether;
 
     roninTokensToSetMinThreshold[3] = aggRoninToken;
     minThresholds[3] = aggMinThreshold;
@@ -152,7 +153,6 @@ contract Migration__20240206_MapTokenBananaRoninChain is
     console2.log("Nonce:", vm.getNonce(_governor));
     vm.broadcast(_governor);
     _roninBridgeManager.propose(block.chainid, expiredTime, targets, values, calldatas, gasAmounts);
-
 
     // ============= LOCAL SIMULATION ==================
     _cheatWeightOperator(_governor);
