@@ -95,18 +95,38 @@ contract Migration__20240206_MapTokenBananaRoninChain is
     calldatas[0] = proxyData;
     gasAmounts[0] = 1_000_000;
 
-    // ============= SET MIN THRESHOLD FOR BANANA ============
+    // ============= SET MIN THRESHOLD FOR BANANA, PIXEL, AGG ============
     // function setMinimumThresholds(
     //   address[] calldata _tokens,
     //   uint256[] calldata _thresholds
     // );
-    address[] memory mainchainTokensToSetMinThreshold = new address[](1);
-    uint256[] memory minThresholds = new uint256[](1);
+    address[] memory roninTokensToSetMinThreshold = new address[](5);
+    uint256[] memory minThresholds = new uint256[](5);
 
-    mainchainTokensToSetMinThreshold[0] = _bananaMainchainToken;
+    roninTokensToSetMinThreshold[0] = _bananaRoninToken;
     minThresholds[0] = _bananaMinThreshold;
 
-    innerData = abi.encodeCall(MinimumWithdrawal.setMinimumThresholds, (mainchainTokensToSetMinThreshold, minThresholds));
+    address pixelRoninToken = 0x7EAe20d11Ef8c779433Eb24503dEf900b9d28ad7;
+    address pixelMainchainToken = 0x3429d03c6F7521AeC737a0BBF2E5ddcef2C3Ae31;
+    address pixelMinThreshold = 10 ether;
+
+    roninTokensToSetMinThreshold[1] = pixelRoninToken;
+    minThresholds[1] = pixelMinThreshold;
+
+    roninTokensToSetMinThreshold[2] = pixelMainchainToken;
+    minThresholds[2] = 0;
+
+    address aggRoninToken = 0x294311a8c37f0744f99eb152c419d4d3d6fec1c7;
+    address aggMainchainToken = 0xFB0489e9753B045DdB35e39c6B0Cc02EC6b99AC5;
+    address aggMinThreshold = 1000 ether;
+
+    roninTokensToSetMinThreshold[3] = aggRoninToken;
+    minThresholds[3] = aggMinThreshold;
+
+    roninTokensToSetMinThreshold[4] = aggMainchainToken;
+    minThresholds[4] = 0;
+
+    innerData = abi.encodeCall(MinimumWithdrawal.setMinimumThresholds, (roninTokensToSetMinThreshold, minThresholds));
     proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
 
     targets[1] = _roninGatewayV3;
