@@ -8,7 +8,7 @@ import { Token } from "@ronin/contracts/libraries/Token.sol";
 import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/SignatureConsumer.sol";
 import "../../BaseIntegration.t.sol";
 
-contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
+contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test{
   using Transfer for Transfer.Receipt;
 
   Transfer.Receipt _withdrawalReceipt;
@@ -39,7 +39,7 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
   function test_submitWithdrawal_Native() public {
     _withdrawalReceipt.info.quantity = 10;
 
-    SignatureConsumer.Signature[] memory signatures = _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs);
+    SignatureConsumer.Signature[] memory signatures = _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs, _domainSeparator);
 
     _mainchainGatewayV3.submitWithdrawal(_withdrawalReceipt, signatures);
   }
@@ -49,7 +49,7 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
     _withdrawalReceipt.ronin.tokenAddr = address(_roninAxs);
     _withdrawalReceipt.mainchain.tokenAddr = address(_mainchainAxs);
 
-    SignatureConsumer.Signature[] memory signatures = _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs);
+    SignatureConsumer.Signature[] memory signatures = _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs, _domainSeparator);
 
     _mainchainGatewayV3.submitWithdrawal(_withdrawalReceipt, signatures);
   }
@@ -59,28 +59,8 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
     _withdrawalReceipt.mainchain.tokenAddr = address(_mainchainAxs);
     _withdrawalReceipt.info.quantity = seed % 1_000_000;
 
-    SignatureConsumer.Signature[] memory signatures = _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs);
+    SignatureConsumer.Signature[] memory signatures = _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs, _domainSeparator);
 
     _mainchainGatewayV3.submitWithdrawal(_withdrawalReceipt, signatures);
   }
-
-  function _generateSignaturesFor(
-    Transfer.Receipt memory receipt,
-    uint256[] memory signerPKs
-  ) internal view returns (SignatureConsumer.Signature[] memory sigs) {
-    sigs = new SignatureConsumer.Signature[](signerPKs.length);
-
-    for (uint256 i; i < signerPKs.length; i++) {
-      bytes32 digest = keccak256(abi.encodePacked("\x19\x01", _domainSeparator, receipt.hash()));
-
-      sigs[i] = _sign(signerPKs[i], digest);
-    }
-  }
-
-  function _sign(uint256 pk, bytes32 digest) internal pure returns (SignatureConsumer.Signature memory sig) {
-    (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk, digest);
-    sig.v = v;
-    sig.r = r;
-    sig.s = s;
-  }
-}
+ }
