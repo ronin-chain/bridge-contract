@@ -26,6 +26,8 @@ contract BridgeReward is IBridgeReward, BridgeTrackingHelper, HasContracts, RONT
   TUint256Slot private constant $_TOTAL_REWARDS_TOPPED_UP = TUint256Slot.wrap(0x9a8c9f129792436c37b7bd2d79c56132fc05bf26cc8070794648517c2a0c6c64);
   /// @dev value is equal to keccak256("@ronin.dpos.gateway.BridgeReward.totalRewardScattered.slot") - 1
   TUint256Slot private constant $_TOTAL_REWARDS_SCATTERED = TUint256Slot.wrap(0x3663384f6436b31a97d9c9a02f64ab8b73ead575c5b6224fa0800a6bd57f62f4);
+  /// @dev value is equal to keccak256("@ronin.dpos.gateway.BridgeReward.maxRewardingPeriodCount.slot") - 1
+  TUint256Slot private constant $_MAX_REWARDING_PERIOD_COUNT = TUint256Slot.wrap(0xaf260ffaff563b9407c1c5fe4aec2be8632142d158c44bb0ce4d471cb4883b8c);
 
   address private immutable _self;
 
@@ -62,6 +64,10 @@ contract BridgeReward is IBridgeReward, BridgeTrackingHelper, HasContracts, RONT
     _setContract(ContractType.GOVERNANCE_ADMIN, address(0));
   }
 
+  function initializeV2() external reinitializer(2) {
+    $_MAX_REWARDING_PERIOD_COUNT.store(5);
+  }
+
   /**
    * @inheritdoc IBridgeReward
    */
@@ -72,21 +78,39 @@ contract BridgeReward is IBridgeReward, BridgeTrackingHelper, HasContracts, RONT
   /**
    * @inheritdoc IBridgeReward
    */
-  function syncReward(uint256 periodLength) external {
+  function syncReward(uint256 periodCount) external {
     if (!_isBridgeOperator(msg.sender)) revert ErrUnauthorizedCall(msg.sig);
 
     uint256 latestRewardedPeriod = getLatestRewardedPeriod();
     uint256 currentPeriod = IRoninValidatorSet(getContract(ContractType.VALIDATOR)).currentPeriod();
+    if (latestRewardedPeriod + periodCount > currentPeriod) revert ErrInvalidArguments(msg.sig);
+    if (currentPeriod <= latestRewardedPeriod) revert ErrInvalidArguments(msg.sig);
+
+    _syncRewardBatch(latestRewardedPeriod, periodCount);
+  }
+
+  /**
+   * @inheritdoc IBridgeReward
+   */
+  function execSyncReward() external onlyContract(ContractType.BRIDGE_TRACKING) {
+    uint256 latestRewardedPeriod = getLatestRewardedPeriod();
+    uint256 currentPeriod = IRoninValidatorSet(getContract(ContractType.VALIDATOR)).currentPeriod();
 
     if (currentPeriod <= latestRewardedPeriod) revert ErrInvalidArguments(msg.sig);
-    if (latestRewardedPeriod + periodLength > currentPeriod) revert ErrInvalidArguments(msg.sig);
 
-    $_LATEST_REWARDED_PERIOD.addAssign(periodLength);
+    // Restrict number of period to reward in a transaction, to avoid consume too much gas
+    uint toRewardPeriodCount = currentPeriod - latestRewardedPeriod;
+    toRewardPeriodCount = Math.min(toRewardPeriodCount, $_MAX_REWARDING_PERIOD_COUNT);
 
+    _syncRewardBatch(latestRewardedPeriod, toRewardPeriodCount);
+  }
+
+  function _syncRewardBatch(uint256 latestRewardedPeriod, uint256 periodCount) internal {
     address[] memory operators = IBridgeManager(getContract(ContractType.BRIDGE_MANAGER)).getBridgeOperators();
     IBridgeTracking bridgeTrackingContract = IBridgeTracking(getContract(ContractType.BRIDGE_TRACKING));
 
-    for (uint256 i = 1; i <= periodLength; i++) {
+    for (uint256 i = 1; i <= periodCount; i++) {
+      $_LATEST_REWARDED_PERIOD.addAssign(1);
       _syncReward({
         operators: operators,
         ballots: bridgeTrackingContract.getManyTotalBallots(latestRewardedPeriod, operators),
@@ -95,32 +119,6 @@ contract BridgeReward is IBridgeReward, BridgeTrackingHelper, HasContracts, RONT
         period: latestRewardedPeriod + i
       });
     }
-  }
-
-  /**
-   * @inheritdoc IBridgeReward
-   *
-   * @dev The `period` a.k.a. `latestSyncedPeriod` must equal to `latestRewardedPeriod` + 1.
-   */
-  function execSyncReward(
-    address[] calldata operators,
-    uint256[] calldata ballots,
-    uint256 totalBallot,
-    uint256 totalVote,
-    uint256 period
-  ) external onlyContract(ContractType.BRIDGE_TRACKING) {
-    if (operators.length != ballots.length) revert ErrLengthMismatch(msg.sig);
-    if (operators.length == 0) return;
-
-    // Only sync the period that is after the latest rewarded period, i.e. `latestSyncedPeriod == latestRewardedPeriod + 1`.
-    unchecked {
-      uint256 latestRewardedPeriod = getLatestRewardedPeriod();
-      if (period < latestRewardedPeriod + 1) revert ErrInvalidArguments(msg.sig);
-      else if (period > latestRewardedPeriod + 1) revert ErrSyncTooFarPeriod(period, latestRewardedPeriod);
-    }
-    $_LATEST_REWARDED_PERIOD.store(period);
-
-    _syncReward({ operators: operators, ballots: ballots, totalBallot: totalBallot, totalVote: totalVote, period: period });
   }
 
   /**
@@ -167,7 +165,7 @@ contract BridgeReward is IBridgeReward, BridgeTrackingHelper, HasContracts, RONT
     bool shouldSlash;
     uint256 sumRewards;
 
-    for (uint256 i; i < numBridgeOperators; ) {
+    for (uint256 i; i < numBridgeOperators;) {
       (reward, shouldSlash) = _calcRewardAndCheckSlashedStatus({
         shouldShareEqually: shouldShareEqually,
         numBridgeOperators: numBridgeOperators,

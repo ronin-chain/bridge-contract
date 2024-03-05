@@ -21,15 +21,9 @@ interface IBridgeReward is IBridgeRewardEvents {
    *
    * Requirements:
    * - This method is only called once each period.
-   * - The caller must be the bridge tracking contract or a bridge operator.
+   * - The caller must be the bridge tracking contract
    */
-  function execSyncReward(
-    address[] calldata operators,
-    uint256[] calldata ballots,
-    uint256 totalBallot,
-    uint256 totalVote,
-    uint256 period
-  ) external;
+  function execSyncReward() external;
 
   /**
    * @dev Retrieve the total amount of rewards that have been topped up in the contract.
