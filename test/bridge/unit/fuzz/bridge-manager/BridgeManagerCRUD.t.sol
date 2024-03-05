@@ -212,6 +212,7 @@ contract BridgeManagerCRUDTest is BridgeManagerUtils {
     uint256 r3,
     uint16 numBridgeOperators
   ) external virtual {
+    vm.skip(true);
     (address[] memory bridgeOperators, address[] memory governors, uint96[] memory voteWeights) = getValidInputs(
       r1,
       r2,

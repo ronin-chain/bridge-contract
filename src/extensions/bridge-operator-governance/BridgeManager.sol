@@ -118,31 +118,7 @@ abstract contract BridgeManager is IQuorum, IBridgeManager, BridgeManagerCallbac
    * their operator address blank null `address(0)`, consider add authorization check.
    */
   function updateBridgeOperator(address newBridgeOperator) external onlyGovernor {
-    _requireNonZeroAddress(newBridgeOperator);
-
-    // Queries the previous bridge operator
-    mapping(address => BridgeOperatorInfo) storage _gorvernorToBridgeOperatorInfo = _getGovernorToBridgeOperatorInfo();
-    address currentBridgeOperator = _gorvernorToBridgeOperatorInfo[msg.sender].addr;
-    if (currentBridgeOperator == newBridgeOperator) {
-      revert ErrBridgeOperatorAlreadyExisted(newBridgeOperator);
-    }
-
-    // Tries replace the bridge operator
-    EnumerableSet.AddressSet storage _bridgeOperatorSet = _getBridgeOperatorSet();
-    bool updated = _bridgeOperatorSet.remove(currentBridgeOperator) && _bridgeOperatorSet.add(newBridgeOperator);
-    if (!updated) revert ErrBridgeOperatorUpdateFailed(newBridgeOperator);
-
-    mapping(address => address) storage _governorOf = _getGovernorOf();
-    delete _governorOf[currentBridgeOperator];
-    _governorOf[newBridgeOperator] = msg.sender;
-    _gorvernorToBridgeOperatorInfo[msg.sender].addr = newBridgeOperator;
-
-    _notifyRegisters(
-      IBridgeManagerCallback.onBridgeOperatorUpdated.selector,
-      abi.encode(currentBridgeOperator, newBridgeOperator)
-    );
-
-    emit BridgeOperatorUpdated(msg.sender, currentBridgeOperator, newBridgeOperator);
+    revert("Not supported");
   }
 
   /**
