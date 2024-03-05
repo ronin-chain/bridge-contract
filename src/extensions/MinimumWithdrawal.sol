@@ -11,8 +11,8 @@ abstract contract MinimumWithdrawal is HasProxyAdmin {
   /// @dev Emitted when the minimum thresholds are updated
   event MinimumThresholdsUpdated(address[] tokens, uint256[] threshold);
 
-  /// @dev Mapping from token address => minimum thresholds
-  mapping(address => uint256) public minimumThreshold;
+  /// @dev Mapping from mainchain token address => minimum thresholds
+  mapping(address mainchainToken => uint256) public minimumThreshold;
 
   /**
    * @dev This empty reserved space is put in place to allow future versions to add new
