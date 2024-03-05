@@ -78,7 +78,7 @@ contract UpdateOperator_RoninBridgeManager_Test is BaseIntegration_Test {
   function _updateBridgeOperator() internal {
     vm.prank(_param.roninBridgeManager.governors[0]);
     address previousOperator = _param.roninBridgeManager.bridgeOperators[0];
-    _roninBridgeManager.updateBridgeOperator(_newBridgeOperator);
+    _roninBridgeManager.updateBridgeOperator(previousOperator, _newBridgeOperator);
     _param.roninBridgeManager.bridgeOperators[0] = _newBridgeOperator;
 
     console.log(
