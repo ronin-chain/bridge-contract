@@ -108,4 +108,29 @@ contract RequestDepositFor_MainchainGatewayV3_Test is BaseIntegration_Test {
     assertEq(_mainchainMockERC721.ownerOf(tokenId), address(_mainchainGatewayV3));
     assertEq(_mainchainGatewayV3.depositCount(), 1);
   }
+
+  // test deposit > should be able to unwrap and deposit native.
+  function test_unwrapAndDepositNative() public {
+    vm.skip(true);
+    vm.startPrank(_sender);
+    _mainchainWeth.deposit{ value: _quantity }();
+    _mainchainWeth.approve(address(_mainchainGatewayV3), _quantity);
+    vm.stopPrank();
+
+    _depositRequest.tokenAddr = address(_mainchainWeth);
+
+    LibTransfer.Receipt memory receipt = _depositRequest.into_deposit_receipt(
+      _sender, _mainchainGatewayV3.depositCount(), address(_roninWeth), block.chainid
+    );
+    vm.expectEmit(address(_mainchainGatewayV3));
+    emit DepositRequested(receipt.hash(), receipt);
+
+    assertEq(address(_mainchainWeth).balance, _quantity);
+
+    vm.prank(_sender);
+    _mainchainGatewayV3.requestDepositFor(_depositRequest);
+
+    assertEq(address(_mainchainGatewayV3).balance, _quantity);
+    assertEq(_mainchainGatewayV3.depositCount(), 1);
+  }
 }
