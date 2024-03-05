@@ -582,4 +582,34 @@ contract BaseIntegration_Test is Base_Test {
     vm.warp(nextDayTimestamp);
     vm.roll(epochEndingBlockNumber);
   }
+
+  function logBridgeTracking() public view {
+    console.log(">> logBridgeTracking ....");
+    uint256 currentPeriod = _validatorSet.currentPeriod();
+    uint256 lastSyncedPeriod = uint256(vm.load(address(_bridgeTracking), bytes32(uint256(11))));
+    console.log(" -> current period:", currentPeriod);
+    console.log("  -> total votes:", _bridgeTracking.totalVote(currentPeriod));
+    console.log("  -> total ballot:", _bridgeTracking.totalBallot(currentPeriod));
+    for (uint256 i; i < _param.roninBridgeManager.bridgeOperators.length; i++) {
+      address operator = _param.roninBridgeManager.bridgeOperators[i];
+      console.log("  -> total ballot of:", operator, _bridgeTracking.totalBallotOf(currentPeriod, operator));
+    }
+
+    console.log(" -> lastSynced period:", lastSyncedPeriod);
+    console.log("  -> total votes:", _bridgeTracking.totalVote(lastSyncedPeriod));
+    console.log("  -> total ballot:", _bridgeTracking.totalBallot(lastSyncedPeriod));
+    for (uint256 i; i < _param.roninBridgeManager.bridgeOperators.length; i++) {
+      address operator = _param.roninBridgeManager.bridgeOperators[i];
+      console.log("  -> total ballot of:", operator, _bridgeTracking.totalBallotOf(lastSyncedPeriod, operator));
+    }
+  }
+
+  function logBridgeSlash() public view {
+    console.log(">> logBridgeSlash ....");
+
+    uint256[] memory periods = _bridgeSlash.getSlashUntilPeriodOf(_param.roninBridgeManager.bridgeOperators);
+    for (uint256 i; i < _param.roninBridgeManager.bridgeOperators.length; i++) {
+      console.log(" -> slash operator until:", _param.roninBridgeManager.bridgeOperators[i], periods[i]);
+    }
+  }
 }
