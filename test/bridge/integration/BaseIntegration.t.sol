@@ -29,6 +29,7 @@ import { Ballot } from "@ronin/contracts/libraries/Ballot.sol";
 import { Transfer as LibTransfer } from "@ronin/contracts/libraries/Transfer.sol";
 import { GlobalCoreGovernance } from "@ronin/contracts/extensions/sequential-governance/GlobalCoreGovernance.sol";
 import { IHasContracts } from "@ronin/contracts/interfaces/collections/IHasContracts.sol";
+import { IBridgeManagerCallbackRegister } from "@ronin/contracts/interfaces/bridge/IBridgeManagerCallbackRegister.sol";
 import { ContractType } from "@ronin/contracts/utils/ContractType.sol";
 import { TransparentUpgradeableProxyV2 } from "@ronin/contracts/extensions/TransparentUpgradeableProxyV2.sol";
 import { MockValidatorContract_OnlyTiming_ForHardhatTest } from "@ronin/contracts/mocks/ronin/MockValidatorContract_OnlyTiming_ForHardhatTest.sol";
@@ -482,6 +483,7 @@ contract BaseIntegration_Test is Base_Test {
     );
 
     _mainchainGatewayV3.initializeV2(address(_mainchainBridgeManager));
+    _mainchainGatewayV3.initializeV3(_param.mainchainBridgeManager.bridgeOperators, _param.mainchainBridgeManager.voteWeights);
   }
 
   function _mainchainPauseEnforcerInitialize() internal {
