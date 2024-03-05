@@ -1,0 +1,5 @@
+src/mocks/token/MockERC20.sol:MockERC20:_balances (storage_slot: 0) (offset: 0) (type: mapping(address => uint256)) (numberOfBytes: 32)
+src/mocks/token/MockERC20.sol:MockERC20:_allowances (storage_slot: 1) (offset: 0) (type: mapping(address => mapping(address => uint256))) (numberOfBytes: 32)
+src/mocks/token/MockERC20.sol:MockERC20:_totalSupply (storage_slot: 2) (offset: 0) (type: uint256) (numberOfBytes: 32)
+src/mocks/token/MockERC20.sol:MockERC20:_name (storage_slot: 3) (offset: 0) (type: string) (numberOfBytes: 32)
+src/mocks/token/MockERC20.sol:MockERC20:_symbol (storage_slot: 4) (offset: 0) (type: string) (numberOfBytes: 32)

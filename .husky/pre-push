@@ -9,8 +9,7 @@ stashed=true
 if [[ $output == *"No local changes to save"* ]]; then
   stashed=false
 fi
-
-forge build --sizes 2>&1 | sed -n '/Contract/,$p' > logs/contract-code-sizes.log
+forge build --skip test script  --sizes 2>&1 | sed -n '/Contract/,$p' > logs/contract-code-sizes.log
 .husky/generate-layout.sh
 
 git add logs

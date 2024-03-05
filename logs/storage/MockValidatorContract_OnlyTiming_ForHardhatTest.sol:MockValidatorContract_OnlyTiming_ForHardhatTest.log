@@ -2,5 +2,4 @@ src/mocks/ronin/MockValidatorContract_OnlyTiming_ForHardhatTest.sol:MockValidato
 src/mocks/ronin/MockValidatorContract_OnlyTiming_ForHardhatTest.sol:MockValidatorContract_OnlyTiming_ForHardhatTest:_lastUpdatedBlock (storage_slot: 1) (offset: 0) (type: uint256) (numberOfBytes: 32)
 src/mocks/ronin/MockValidatorContract_OnlyTiming_ForHardhatTest.sol:MockValidatorContract_OnlyTiming_ForHardhatTest:_lastUpdatedPeriod (storage_slot: 2) (offset: 0) (type: uint256) (numberOfBytes: 32)
 src/mocks/ronin/MockValidatorContract_OnlyTiming_ForHardhatTest.sol:MockValidatorContract_OnlyTiming_ForHardhatTest:_currentPeriodStartAtBlock (storage_slot: 3) (offset: 0) (type: uint256) (numberOfBytes: 32)
-src/mocks/ronin/MockValidatorContract_OnlyTiming_ForHardhatTest.sol:MockValidatorContract_OnlyTiming_ForHardhatTest:_epochs (storage_slot: 4) (offset: 0) (type: uint256[]) (numberOfBytes: 32)
-src/mocks/ronin/MockValidatorContract_OnlyTiming_ForHardhatTest.sol:MockValidatorContract_OnlyTiming_ForHardhatTest:_periodOf (storage_slot: 5) (offset: 0) (type: mapping(uint256 => uint256)) (numberOfBytes: 32)
+src/mocks/ronin/MockValidatorContract_OnlyTiming_ForHardhatTest.sol:MockValidatorContract_OnlyTiming_ForHardhatTest:_periodOf (storage_slot: 4) (offset: 0) (type: mapping(uint256 => uint256)) (numberOfBytes: 32)

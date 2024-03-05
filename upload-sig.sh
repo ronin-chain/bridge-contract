@@ -1,0 +1,1 @@
+source lib/foundry-deployment-kit/upload-sig.sh

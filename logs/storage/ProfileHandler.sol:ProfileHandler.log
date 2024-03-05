@@ -1,3 +1,0 @@
-src/ronin/profile/ProfileHandler.sol:ProfileHandler:_id2Profile (storage_slot: 0) (offset: 0) (type: mapping(address => struct IProfile.CandidateProfile)) (numberOfBytes: 32)
-src/ronin/profile/ProfileHandler.sol:ProfileHandler:_registry (storage_slot: 1) (offset: 0) (type: mapping(uint256 => bool)) (numberOfBytes: 32)
-src/ronin/profile/ProfileHandler.sol:ProfileHandler:__gap (storage_slot: 2) (offset: 0) (type: bytes32[49]) (numberOfBytes: 1568)

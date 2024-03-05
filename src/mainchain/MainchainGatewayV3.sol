@@ -93,7 +93,7 @@ contract MainchainGatewayV3 is
     }
 
     // Grant role for withdrawal unlocker
-    for (uint256 _i; _i < _addresses[2].length; ) {
+    for (uint256 _i; _i < _addresses[2].length;) {
       _grantRole(WITHDRAWAL_UNLOCKER_ROLE, _addresses[2][_i]);
 
       unchecked {
@@ -109,7 +109,7 @@ contract MainchainGatewayV3 is
   /**
    * @dev Receives ether without doing anything. Use this function to topup native token.
    */
-  function receiveEther() external payable {}
+  function receiveEther() external payable { }
 
   /**
    * @inheritdoc IMainchainGatewayV3
@@ -135,10 +135,12 @@ contract MainchainGatewayV3 is
   /**
    * @inheritdoc IMainchainGatewayV3
    */
-  function submitWithdrawal(
-    Transfer.Receipt calldata _receipt,
-    Signature[] calldata _signatures
-  ) external virtual whenNotPaused returns (bool _locked) {
+  function submitWithdrawal(Transfer.Receipt calldata _receipt, Signature[] calldata _signatures)
+    external
+    virtual
+    whenNotPaused
+    returns (bool _locked)
+  {
     return _submitWithdrawal(_receipt, _signatures);
   }
 
@@ -227,10 +229,11 @@ contract MainchainGatewayV3 is
     address[] calldata _roninTokens,
     Token.Standard[] calldata _standards
   ) internal virtual {
-    if (!(_mainchainTokens.length == _roninTokens.length && _mainchainTokens.length == _standards.length))
+    if (!(_mainchainTokens.length == _roninTokens.length && _mainchainTokens.length == _standards.length)) {
       revert ErrLengthMismatch(msg.sig);
+    }
 
-    for (uint256 _i; _i < _mainchainTokens.length; ) {
+    for (uint256 _i; _i < _mainchainTokens.length;) {
       _roninToken[_mainchainTokens[_i]].tokenAddr = _roninTokens[_i];
       _roninToken[_mainchainTokens[_i]].erc = _standards[_i];
 
@@ -256,10 +259,11 @@ contract MainchainGatewayV3 is
    * Emits the `Withdrew` once the assets are released.
    *
    */
-  function _submitWithdrawal(
-    Transfer.Receipt calldata _receipt,
-    Signature[] memory _signatures
-  ) internal virtual returns (bool _locked) {
+  function _submitWithdrawal(Transfer.Receipt calldata _receipt, Signature[] memory _signatures)
+    internal
+    virtual
+    returns (bool _locked)
+  {
     uint256 _id = _receipt.id;
     uint256 _quantity = _receipt.info.quantity;
     address _tokenAddr = _receipt.mainchain.tokenAddr;
@@ -293,7 +297,7 @@ contract MainchainGatewayV3 is
       address _lastSigner;
       Signature memory _sig;
       uint256 _weight;
-      for (uint256 _i; _i < _signatures.length; ) {
+      for (uint256 _i; _i < _signatures.length;) {
         _sig = _signatures[_i];
         _signer = ecrecover(_receiptDigest, _sig.v, _sig.r, _sig.s);
         if (_lastSigner >= _signer) revert ErrInvalidOrder(msg.sig);
@@ -339,16 +343,16 @@ contract MainchainGatewayV3 is
    */
   function _requestDepositFor(Transfer.Request memory _request, address _requester) internal virtual {
     MappedToken memory _token;
-    address _weth = address(wrappedNativeToken);
+    address _roninWeth = address(wrappedNativeToken);
 
     _request.info.validate();
     if (_request.tokenAddr == address(0)) {
       if (_request.info.quantity != msg.value) revert ErrInvalidRequest();
 
-      _token = getRoninToken(_weth);
+      _token = getRoninToken(_roninWeth);
       if (_token.erc != _request.info.erc) revert ErrInvalidTokenStandard();
 
-      _request.tokenAddr = _weth;
+      _request.tokenAddr = _roninWeth;
     } else {
       if (msg.value != 0) revert ErrInvalidRequest();
 
@@ -357,18 +361,14 @@ contract MainchainGatewayV3 is
 
       _request.info.transferFrom(_requester, address(this), _request.tokenAddr);
       // Withdraw if token is WETH
-      if (_weth == _request.tokenAddr) {
-        IWETH(_weth).withdraw(_request.info.quantity);
+      if (_roninWeth == _request.tokenAddr) {
+        IWETH(_roninWeth).withdraw(_request.info.quantity);
       }
     }
 
     uint256 _depositId = depositCount++;
-    Transfer.Receipt memory _receipt = _request.into_deposit_receipt(
-      _requester,
-      _depositId,
-      _token.tokenAddr,
-      roninChainId
-    );
+    Transfer.Receipt memory _receipt =
+      _request.into_deposit_receipt(_requester, _depositId, _token.tokenAddr, roninChainId);
 
     emit DepositRequested(_receipt.hash(), _receipt);
   }
@@ -376,11 +376,11 @@ contract MainchainGatewayV3 is
   /**
    * @dev Returns the minimum vote weight for the token.
    */
-  function _computeMinVoteWeight(
-    Token.Standard _erc,
-    address _token,
-    uint256 _quantity
-  ) internal virtual returns (uint256 _weight, bool _locked) {
+  function _computeMinVoteWeight(Token.Standard _erc, address _token, uint256 _quantity)
+    internal
+    virtual
+    returns (uint256 _weight, bool _locked)
+  {
     uint256 _totalWeight = _getTotalWeight();
     _weight = _minimumVoteWeight(_totalWeight);
     if (_erc == Token.Standard.ERC20) {

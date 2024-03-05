@@ -1,0 +1,6 @@
+src/mocks/token/MockERC721.sol:MockERC721:_name (storage_slot: 0) (offset: 0) (type: string) (numberOfBytes: 32)
+src/mocks/token/MockERC721.sol:MockERC721:_symbol (storage_slot: 1) (offset: 0) (type: string) (numberOfBytes: 32)
+src/mocks/token/MockERC721.sol:MockERC721:_owners (storage_slot: 2) (offset: 0) (type: mapping(uint256 => address)) (numberOfBytes: 32)
+src/mocks/token/MockERC721.sol:MockERC721:_balances (storage_slot: 3) (offset: 0) (type: mapping(address => uint256)) (numberOfBytes: 32)
+src/mocks/token/MockERC721.sol:MockERC721:_tokenApprovals (storage_slot: 4) (offset: 0) (type: mapping(uint256 => address)) (numberOfBytes: 32)
+src/mocks/token/MockERC721.sol:MockERC721:_operatorApprovals (storage_slot: 5) (offset: 0) (type: mapping(address => mapping(address => bool))) (numberOfBytes: 32)
