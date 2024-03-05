@@ -28,6 +28,11 @@ evm_version = 'shanghai'
 line_length = 120
 tab_width = 2
 bracket_spacing = true
+int_types = 'preserve'
+multiline_func_header = 'params_first'
+
+[profile.local.fuzz]
+runs = 10
 
 [profile.default.fuzz]
 runs = 256
