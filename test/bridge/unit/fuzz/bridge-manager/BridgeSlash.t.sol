@@ -110,9 +110,6 @@ contract BridgeSlashTest is IBridgeSlashEvents, BridgeManagerUtils {
     uint256 numBridgeOperators,
     uint256 period
   ) external {
-    address[] memory currentOperators = IBridgeManager(_bridgeManagerContract).getBridgeOperators();
-    vm.prank(_bridgeManagerContract, _bridgeManagerContract);
-    IBridgeManager(_bridgeManagerContract).removeBridgeOperators(currentOperators);
     // Assume the input values are not equal to the default values
     vm.assume(r1 != DEFAULT_R1 && r2 != DEFAULT_R2 && r3 != DEFAULT_R3);
     // Bound the period between 1 and the maximum value of uint64
