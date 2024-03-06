@@ -79,18 +79,6 @@ contract DepositAndRecord_Gateway_Test is BaseIntegration_Test {
     }
   }
 
-  function _updateBridgeOperator() internal {
-    vm.prank(_param.roninBridgeManager.governors[0]);
-    address previousOperator = _param.roninBridgeManager.bridgeOperators[0];
-    _roninBridgeManager.updateBridgeOperator(_newBridgeOperator);
-    _param.roninBridgeManager.bridgeOperators[0] = _newBridgeOperator;
-
-    console.log(
-      "Update operator: ",
-      string(abi.encodePacked(vm.toString(previousOperator), " => ", vm.toString(_newBridgeOperator)))
-    );
-  }
-
   function _depositFor() internal {
     console.log(">> depositFor ....");
     _sampleReceipt.id = ++_id;

@@ -42,6 +42,8 @@ contract UpdateOperator_RoninBridgeManager_Test is BaseIntegration_Test {
   }
 
   function test_updateOperator_and_wrapUpEpoch() public {
+    // Disable test due to not supporting update operator
+    vm.skip(true);
     console.log("=============== Test Update Operator ===========");
 
     _depositFor();
