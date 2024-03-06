@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import { IBridgeManager } from "../interfaces/bridge/IBridgeManager.sol";
 import { IBridgeManagerCallback } from "../interfaces/bridge/IBridgeManagerCallback.sol";
 import { HasContracts, ContractType } from "../extensions/collections/HasContracts.sol";
-import "../extensions/WETHVault.sol";
+import "../extensions/WethMediator.sol";
 import "../extensions/WithdrawalLimitation.sol";
 import "../libraries/Transfer.sol";
 import "../interfaces/IMainchainGatewayV3.sol";
@@ -41,7 +41,7 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
 
   uint96 private _totalOperatorWeight;
   mapping(address operator => uint96 weight) private _operatorWeight;
-  WETHVault public wethVault;
+  WethMediator public wethMediator;
 
   fallback() external payable {
     // _fallback();
@@ -110,8 +110,8 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
     _totalOperatorWeight = totalWeight;
   }
 
-  function initializeV4(address payable wethVault_) external reinitializer(4) {
-    wethVault = WETHVault(wethVault_);
+  function initializeV4(address payable wethMediator_) external reinitializer(4) {
+    wethMediator = WethMediator(wethMediator_);
   }
 
   /**
@@ -343,11 +343,11 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
       _request.info.transferFrom(_requester, address(this), _request.tokenAddr);
 
       // Withdraw if token is WETH
-      // The withdraw of WETH must go via `WethVault`, because `WETH.withdraw` only sends 2300 gas, which is insufficient when recipient is a proxy.
+      // The withdraw of WETH must go via `WethMediator`, because `WETH.withdraw` only sends 2300 gas, which is insufficient when recipient is a proxy.
       if (_roninWeth == _request.tokenAddr) {
-        IWETH(_roninWeth).transfer(address(wethVault), _request.info.quantity);
-        wethVault.transferToVault(_request.info.quantity);
-        wethVault.withdrawToOwner(_request.info.quantity);
+        IWETH(_roninWeth).transfer(address(wethMediator), _request.info.quantity);
+        wethMediator.transferToVault(_request.info.quantity);
+        wethMediator.withdrawToOwner(_request.info.quantity);
       }
     }
 

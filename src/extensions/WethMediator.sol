@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "../interfaces/IWETH.sol";
 
-contract WETHVault is Ownable {
+contract WethMediator is Ownable {
   IWETH public weth;
 
   error ErrInsufficientBalance();
