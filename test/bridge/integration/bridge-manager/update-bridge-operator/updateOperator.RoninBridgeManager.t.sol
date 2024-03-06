@@ -37,8 +37,7 @@ contract UpdateOperator_RoninBridgeManager_Test is BaseIntegration_Test {
       id++;
     }
 
-    _numOperatorsForVoteExecuted =
-      _param.roninBridgeManager.bridgeOperators.length * _param.roninBridgeManager.num / _param.roninBridgeManager.denom;
+    _numOperatorsForVoteExecuted = (_roninBridgeManager.minimumVoteWeight() - 1) / 100 + 1;
   }
 
   function test_updateOperator_and_wrapUpEpoch() public {

@@ -33,8 +33,8 @@ contract DepositVote_RoninGatewayV3_Test is BaseIntegration_Test {
     receipt.id = 1;
     _depositReceipts.push(receipt);
 
-    _numOperatorsForVoteExecuted =
-      _param.roninBridgeManager.bridgeOperators.length * _param.roninBridgeManager.num / _param.roninBridgeManager.denom;
+
+    _numOperatorsForVoteExecuted = (_roninBridgeManager.minimumVoteWeight() - 1) / 100 + 1;
   }
 
   // @dev Should be able to bulk deposits using bridge operator accounts
@@ -45,8 +45,7 @@ contract DepositVote_RoninGatewayV3_Test is BaseIntegration_Test {
     }
 
     for (uint256 i = 0; i < _depositReceipts.length; i++) {
-      (VoteStatusConsumer.VoteStatus status,,,) =
-        _roninGatewayV3.depositVote(_depositReceipts[i].mainchain.chainId, _depositReceipts[i].id);
+      (VoteStatusConsumer.VoteStatus status,,,) = _roninGatewayV3.depositVote(_depositReceipts[i].mainchain.chainId, _depositReceipts[i].id);
 
       assertEq(uint256(uint8(status)), uint256(uint8(VoteStatusConsumer.VoteStatus.Pending)));
 
@@ -61,12 +60,22 @@ contract DepositVote_RoninGatewayV3_Test is BaseIntegration_Test {
   function test_tryBulkDepositFor_Executed() public {
     test_tryBulkDepositFor_NotExecuted();
 
+    console.log("_numOperatorsForVoteExecuted", _numOperatorsForVoteExecuted);
+
+    console.log("vote #15");
+    // Let the last operator to vote to execute
     vm.prank(_param.roninBridgeManager.bridgeOperators[_numOperatorsForVoteExecuted - 1]);
     _roninGatewayV3.tryBulkDepositFor(_depositReceipts);
 
+    // for (uint i; i < 7; i++) {
+    //   console.log("vote #", 15 + i);
+    //   vm.prank(_param.roninBridgeManager.bridgeOperators[_numOperatorsForVoteExecuted + i]);
+    //   _roninGatewayV3.tryBulkDepositFor(_depositReceipts);
+    // }
+
     for (uint256 i = 0; i < _depositReceipts.length; i++) {
-      (VoteStatusConsumer.VoteStatus status,,,) =
-        _roninGatewayV3.depositVote(_depositReceipts[i].mainchain.chainId, _depositReceipts[i].id);
+      // Let the pending operator to vote after executed to tracking
+      (VoteStatusConsumer.VoteStatus status,,,) = _roninGatewayV3.depositVote(_depositReceipts[i].mainchain.chainId, _depositReceipts[i].id);
 
       assertEq(uint256(uint8(status)), uint256(uint8(VoteStatusConsumer.VoteStatus.Executed)));
 
