@@ -10,7 +10,7 @@ contract MockDiscardEther {
     _fallback();
   }
 
-  function _fallback() internal view {
+  function _fallback() internal pure {
     revert("Not receive ether");
   }
 }
