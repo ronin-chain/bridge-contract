@@ -6,18 +6,12 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import { IBridgeManager } from "../interfaces/bridge/IBridgeManager.sol";
 import { IBridgeManagerCallback } from "../interfaces/bridge/IBridgeManagerCallback.sol";
 import { HasContracts, ContractType } from "../extensions/collections/HasContracts.sol";
+import "../extensions/WETHVault.sol";
 import "../extensions/WithdrawalLimitation.sol";
 import "../libraries/Transfer.sol";
 import "../interfaces/IMainchainGatewayV3.sol";
 
-contract MainchainGatewayV3 is
-  WithdrawalLimitation,
-  Initializable,
-  AccessControlEnumerable,
-  IMainchainGatewayV3,
-  HasContracts,
-  IBridgeManagerCallback
-{
+contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessControlEnumerable, IMainchainGatewayV3, HasContracts, IBridgeManagerCallback {
   using Token for Token.Info;
   using Transfer for Transfer.Request;
   using Transfer for Transfer.Receipt;
@@ -47,13 +41,14 @@ contract MainchainGatewayV3 is
 
   uint96 private _totalOperatorWeight;
   mapping(address operator => uint96 weight) private _operatorWeight;
+  WETHVault public wethVault;
 
   fallback() external payable {
-    _fallback();
+    // _fallback();
   }
 
   receive() external payable {
-    _fallback();
+    // _fallback();
   }
 
   /**
@@ -115,10 +110,14 @@ contract MainchainGatewayV3 is
     _totalOperatorWeight = totalWeight;
   }
 
+  function initializeV4(address payable wethVault_) external reinitializer(4) {
+    wethVault = WETHVault(wethVault_);
+  }
+
   /**
    * @dev Receives ether without doing anything. Use this function to topup native token.
    */
-  function receiveEther() external payable {}
+  function receiveEther() external payable { }
 
   /**
    * @inheritdoc IMainchainGatewayV3
@@ -144,10 +143,7 @@ contract MainchainGatewayV3 is
   /**
    * @inheritdoc IMainchainGatewayV3
    */
-  function submitWithdrawal(
-    Transfer.Receipt calldata _receipt,
-    Signature[] calldata _signatures
-  ) external virtual whenNotPaused returns (bool _locked) {
+  function submitWithdrawal(Transfer.Receipt calldata _receipt, Signature[] calldata _signatures) external virtual whenNotPaused returns (bool _locked) {
     return _submitWithdrawal(_receipt, _signatures);
   }
 
@@ -184,11 +180,7 @@ contract MainchainGatewayV3 is
   /**
    * @inheritdoc IMainchainGatewayV3
    */
-  function mapTokens(
-    address[] calldata _mainchainTokens,
-    address[] calldata _roninTokens,
-    Token.Standard[] calldata _standards
-  ) external virtual onlyAdmin {
+  function mapTokens(address[] calldata _mainchainTokens, address[] calldata _roninTokens, Token.Standard[] calldata _standards) external virtual onlyAdmin {
     if (_mainchainTokens.length == 0) revert ErrEmptyArray();
     _mapTokens(_mainchainTokens, _roninTokens, _standards);
   }
@@ -349,9 +341,13 @@ contract MainchainGatewayV3 is
       if (_token.erc != _request.info.erc) revert ErrInvalidTokenStandard();
 
       _request.info.transferFrom(_requester, address(this), _request.tokenAddr);
+
       // Withdraw if token is WETH
+      // The withdraw of WETH must go via `WethVault`, because `WETH.withdraw` only sends 2300 gas, which is insufficient when recipient is a proxy.
       if (_roninWeth == _request.tokenAddr) {
-        IWETH(_roninWeth).withdraw(_request.info.quantity);
+        IWETH(_roninWeth).transfer(address(wethVault), _request.info.quantity);
+        wethVault.transferToVault(_request.info.quantity);
+        wethVault.withdrawToOwner(_request.info.quantity);
       }
     }
 
@@ -416,15 +412,24 @@ contract MainchainGatewayV3 is
   }
 
   /**
-   * @dev Receives ETH from WETH or creates deposit request.
+   * @dev Receives ETH from WETH or creates deposit request if sender is not WETH.
    */
-  function _fallback() internal virtual whenNotPaused {
-    if (msg.sender != address(wrappedNativeToken)) {
-      Transfer.Request memory _request;
-      _request.recipientAddr = msg.sender;
-      _request.info.quantity = msg.value;
-      _requestDepositFor(_request, _request.recipientAddr);
+  function _fallback() internal virtual {
+    if (msg.sender == address(wrappedNativeToken)) {
+      return;
     }
+
+    _createDepositOnFallback();
+  }
+
+  /**
+   * @dev Creates deposit request.
+   */
+  function _createDepositOnFallback() internal virtual whenNotPaused {
+    Transfer.Request memory _request;
+    _request.recipientAddr = msg.sender;
+    _request.info.quantity = msg.value;
+    _requestDepositFor(_request, _request.recipientAddr);
   }
 
   /**
@@ -484,10 +489,7 @@ contract MainchainGatewayV3 is
   /**
    * @inheritdoc IBridgeManagerCallback
    */
-  function onBridgeOperatorsRemoved(
-    address[] calldata operators,
-    bool[] calldata removeds
-  ) external onlyContract(ContractType.BRIDGE_MANAGER) returns (bytes4) {
+  function onBridgeOperatorsRemoved(address[] calldata operators, bool[] calldata removeds) external onlyContract(ContractType.BRIDGE_MANAGER) returns (bytes4) {
     uint length = operators.length;
     if (length != removeds.length) revert ErrLengthMismatch(msg.sig);
     if (length == 0) {
