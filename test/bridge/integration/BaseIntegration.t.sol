@@ -576,7 +576,7 @@ contract BaseIntegration_Test is Base_Test {
     LibTransfer.Receipt memory receipt,
     uint256[] memory signerPKs,
     bytes32 domainSeparator
-  ) internal view returns (SignatureConsumer.Signature[] memory sigs) {
+  ) internal pure  returns (SignatureConsumer.Signature[] memory sigs) {
     sigs = new SignatureConsumer.Signature[](signerPKs.length);
 
     for (uint256 i; i < signerPKs.length; i++) {

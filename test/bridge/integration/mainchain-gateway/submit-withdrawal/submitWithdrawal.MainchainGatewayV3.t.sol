@@ -57,7 +57,9 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test{
   function testFuzz_submitWithdrawal_ERC20(uint seed) external {
     _withdrawalReceipt.ronin.tokenAddr = address(_roninAxs);
     _withdrawalReceipt.mainchain.tokenAddr = address(_mainchainAxs);
-    _withdrawalReceipt.info.quantity = seed % 1_000_000;
+
+    // Make sure quantity > 0
+    _withdrawalReceipt.info.quantity = seed % 1_000_000 + 1;
 
     SignatureConsumer.Signature[] memory signatures = _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs, _domainSeparator);
 

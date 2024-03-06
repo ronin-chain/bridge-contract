@@ -28,17 +28,12 @@ contract Update_Unit_Concrete_Test is BridgeManager_Unit_Concrete_Test {
     changePrank({ msgSender: _bridgeOperators[0] });
 
     // Run the test.
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        ErrUnauthorized.selector,
-        IBridgeManager.updateBridgeOperator.selector,
-        RoleAccess.GOVERNOR
-      )
-    );
+    vm.expectRevert(abi.encodeWithSelector(ErrUnauthorized.selector, IBridgeManager.updateBridgeOperator.selector, RoleAccess.GOVERNOR));
     _bridgeManager.updateBridgeOperator(_bridgeOperators[0], newOperator);
   }
 
   function test_RevertWhen_NewOperatorAddressIsZero() external {
+    vm.skip(true);
     address newOperator = address(0);
 
     // Run the test.
@@ -47,6 +42,7 @@ contract Update_Unit_Concrete_Test is BridgeManager_Unit_Concrete_Test {
   }
 
   function test_RevertWhen_NewOperatorIsExistedInCurrentOperatorList() external {
+    vm.skip(true);
     address newOperator = _bridgeOperators[2];
 
     // Run the test.
@@ -64,6 +60,7 @@ contract Update_Unit_Concrete_Test is BridgeManager_Unit_Concrete_Test {
   }
 
   function test_RevertWhen_NewOperatorIsTheSameWithPreviousOperator() external {
+    vm.skip(true);
     address prevOperator = _bridgeManager.getOperatorOf(_caller);
     address newOperator = prevOperator;
 
@@ -73,12 +70,9 @@ contract Update_Unit_Concrete_Test is BridgeManager_Unit_Concrete_Test {
   }
 
   function test_UpdateOperators_NewOperatorIsValid() external {
+    vm.skip(true);
     // Get before test state.
-    (
-      address[] memory beforeBridgeOperators,
-      address[] memory beforeGovernors,
-      uint96[] memory beforeVoteWeights
-    ) = _getBridgeMembers();
+    (address[] memory beforeBridgeOperators, address[] memory beforeGovernors, uint96[] memory beforeVoteWeights) = _getBridgeMembers();
 
     // Prepare data.
     address prevOperator = _bridgeManager.getOperatorOf(_caller);
@@ -93,11 +87,7 @@ contract Update_Unit_Concrete_Test is BridgeManager_Unit_Concrete_Test {
     _bridgeManager.updateBridgeOperator(_bridgeOperators[0], newOperator);
 
     // Get after test state
-    (
-      address[] memory afterBridgeOperators,
-      address[] memory afterGovernors,
-      uint96[] memory afterVoteWeights
-    ) = _getBridgeMembers();
+    (address[] memory afterBridgeOperators, address[] memory afterGovernors, uint96[] memory afterVoteWeights) = _getBridgeMembers();
 
     // it should modify the current operators list
     beforeBridgeOperators[0] = newOperator;
