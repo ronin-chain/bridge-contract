@@ -166,7 +166,7 @@ contract BaseIntegration_Test is Base_Test {
   }
 
   function _getMainchainAndRoninTokens() internal view returns (address[] memory mainchainTokens, address[] memory roninTokens) {
-    uint256 tokenNum = 4;
+    uint256 tokenNum = 5;
     mainchainTokens = new address[](tokenNum);
     roninTokens = new address[](tokenNum);
 
@@ -174,11 +174,13 @@ contract BaseIntegration_Test is Base_Test {
     mainchainTokens[1] = address(_mainchainAxs);
     mainchainTokens[2] = address(_mainchainSlp);
     mainchainTokens[3] = address(_mainchainUsdc);
+    mainchainTokens[4] = address(_mainchainMockERC721);
 
     roninTokens[0] = address(_roninWeth);
     roninTokens[1] = address(_roninAxs);
     roninTokens[2] = address(_roninSlp);
     roninTokens[3] = address(_roninUsdc);
+    roninTokens[4] = address(_roninMockERC721);
   }
 
   function _bridgeRewardInitialize() internal {
