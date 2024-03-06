@@ -57,6 +57,8 @@ contract GeneralConfig is BaseGeneralConfig, Utils {
 
     _contractNameMap[Contract.RoninPauseEnforcer.key()] = "PauseEnforcer";
     _contractNameMap[Contract.MainchainPauseEnforcer.key()] = "PauseEnforcer";
+
+    _contractNameMap[Contract.MainchainWETHVault.key()] = "WETHVault";
   }
 
   function _mapContractName(Contract contractEnum) internal {

@@ -16,6 +16,7 @@ import { BridgeSlash } from "@ronin/contracts/ronin/gateway/BridgeSlash.sol";
 import { BridgeReward } from "@ronin/contracts/ronin/gateway/BridgeReward.sol";
 import { MainchainGatewayV3 } from "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
 import { MainchainBridgeManager } from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
+import { WETHVault } from "@ronin/contracts/extensions/WETHVault.sol";
 import { MockERC20 } from "@ronin/contracts/mocks/token/MockERC20.sol";
 import { MockERC721 } from "@ronin/contracts/mocks/token/MockERC721.sol";
 
@@ -48,6 +49,7 @@ import { RoninPauseEnforcerDeploy } from "@ronin/script/contracts/RoninPauseEnfo
 import { MainchainGatewayV3Deploy } from "@ronin/script/contracts/MainchainGatewayV3Deploy.s.sol";
 import { MainchainBridgeManagerDeploy } from "@ronin/script/contracts/MainchainBridgeManagerDeploy.s.sol";
 import { MainchainPauseEnforcerDeploy } from "@ronin/script/contracts/MainchainPauseEnforcerDeploy.s.sol";
+import { MainchainWethVaultDeploy } from "@ronin/script/contracts/MainchainWethVaultDeploy.s.sol";
 import { WETHDeploy } from "@ronin/script/contracts/token/WETHDeploy.s.sol";
 import { WRONDeploy } from "@ronin/script/contracts/token/WRONDeploy.s.sol";
 import { AXSDeploy } from "@ronin/script/contracts/token/AXSDeploy.s.sol";
@@ -74,6 +76,7 @@ contract BaseIntegration_Test is Base_Test {
   PauseEnforcer _mainchainPauseEnforcer;
   MainchainGatewayV3 _mainchainGatewayV3;
   MainchainBridgeManager _mainchainBridgeManager;
+  WETHVault _mainchainWethVault;
 
   MockWrappedToken _roninWeth;
   MockWrappedToken _roninWron;
@@ -135,6 +138,7 @@ contract BaseIntegration_Test is Base_Test {
     _mainchainPauseEnforcer = new MainchainPauseEnforcerDeploy().run();
     _mainchainGatewayV3 = new MainchainGatewayV3Deploy().run();
     _mainchainBridgeManager = new MainchainBridgeManagerDeploy().run();
+    _mainchainWethVault = new MainchainWethVaultDeploy().run();
 
     _mainchainWeth = new WETHDeploy().run();
     _mainchainAxs = new AXSDeploy().run();
@@ -163,6 +167,7 @@ contract BaseIntegration_Test is Base_Test {
     _mainchainPauseEnforcerInitialize();
     _constructForMainchainBridgeManager();
     _mainchainGatewayV3Initialize();
+    _constructForMainchainWethVault();
   }
 
   function _getMainchainAndRoninTokens() internal view returns (address[] memory mainchainTokens, address[] memory roninTokens) {
@@ -428,6 +433,13 @@ contract BaseIntegration_Test is Base_Test {
     }
   }
 
+  function _constructForMainchainWethVault() internal {
+    vm.startPrank(_config.getSender());
+    _mainchainWethVault.setWeth(address(_mainchainWeth));
+    _mainchainWethVault.transferOwnership(address(_mainchainGatewayV3));
+    vm.stopPrank();
+  }
+
   function _mainchainGatewayV3Initialize() internal {
     (address[] memory mainchainTokens, address[] memory roninTokens) = _getMainchainAndRoninTokens();
     uint256 tokenNum = mainchainTokens.length;
@@ -486,13 +498,13 @@ contract BaseIntegration_Test is Base_Test {
 
     _mainchainGatewayV3.initializeV2(address(_mainchainBridgeManager));
     _mainchainGatewayV3.initializeV3(_param.mainchainBridgeManager.bridgeOperators, _param.mainchainBridgeManager.voteWeights);
+    _mainchainGatewayV3.initializeV4(payable(address(_mainchainWethVault)));
   }
 
   function _mainchainPauseEnforcerInitialize() internal {
     _param.mainchainPauseEnforcer.target = address(_mainchainGatewayV3);
 
     ISharedArgument.PauseEnforcerParam memory param = _param.mainchainPauseEnforcer;
-
     _mainchainPauseEnforcer.initialize(IPauseTarget(param.target), param.admin, param.sentries);
   }
 
@@ -576,7 +588,7 @@ contract BaseIntegration_Test is Base_Test {
     LibTransfer.Receipt memory receipt,
     uint256[] memory signerPKs,
     bytes32 domainSeparator
-  ) internal pure  returns (SignatureConsumer.Signature[] memory sigs) {
+  ) internal pure returns (SignatureConsumer.Signature[] memory sigs) {
     sigs = new SignatureConsumer.Signature[](signerPKs.length);
 
     for (uint256 i; i < signerPKs.length; i++) {
