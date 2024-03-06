@@ -202,7 +202,7 @@ abstract contract BridgeManager is IBridgeManager, HasContracts, BridgeManagerQu
   /**
    * @inheritdoc IBridgeManager
    */
-  function updateBridgeOperator(address currOperator, address newOperator) external onlyGovernor {
+  function updateBridgeOperator(address, /* currOperator */ address /* newOperator */ ) external view onlyGovernor {
     revert("Not supported");
   }
 
