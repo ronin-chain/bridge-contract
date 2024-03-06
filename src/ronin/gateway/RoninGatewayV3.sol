@@ -157,10 +157,10 @@ contract RoninGatewayV3 is
 
     uint256 _withdrawalId;
     _executedReceipts = new bool[](_withdrawalIds.length);
-    IBridgeTracking _bridgeTrackingContract = IBridgeTracking(getContract(ContractType.BRIDGE_TRACKING));
+    IBridgeTracking bridgeTrackingContract = IBridgeTracking(getContract(ContractType.BRIDGE_TRACKING));
     for (uint256 _i; _i < _withdrawalIds.length;) {
       _withdrawalId = _withdrawalIds[_i];
-      _bridgeTrackingContract.recordVote(IBridgeTracking.VoteKind.MainchainWithdrawal, _withdrawalId, _governor);
+      bridgeTrackingContract.recordVote(IBridgeTracking.VoteKind.MainchainWithdrawal, _withdrawalId, _governor);
       if (mainchainWithdrew(_withdrawalId)) {
         _executedReceipts[_i] = true;
       } else {
@@ -170,7 +170,7 @@ contract RoninGatewayV3 is
         VoteStatus _status = _castIsolatedVote(_vote, _governor, _minVoteWeight, _hash);
         if (_status == VoteStatus.Approved) {
           _vote.status = VoteStatus.Executed;
-          _bridgeTrackingContract.handleVoteApproved(IBridgeTracking.VoteKind.MainchainWithdrawal, _withdrawalId);
+          bridgeTrackingContract.handleVoteApproved(IBridgeTracking.VoteKind.MainchainWithdrawal, _withdrawalId);
           emit MainchainWithdrew(_hash, _withdrawal);
         }
       }
@@ -371,16 +371,16 @@ contract RoninGatewayV3 is
     emit DepositVoted(operator, id, receipt.mainchain.chainId, _receiptHash);
 
     // Transfer assets and handle when the vote is approved.
-    IBridgeTracking _bridgeTrackingContract = IBridgeTracking(getContract(ContractType.BRIDGE_TRACKING));
+    IBridgeTracking bridgeTrackingContract = IBridgeTracking(getContract(ContractType.BRIDGE_TRACKING));
     if (status == VoteStatus.Approved) {
       _proposal.status = VoteStatus.Executed;
       receipt.info.handleAssetTransfer(payable(receipt.ronin.addr), receipt.ronin.tokenAddr, IWETH(address(0)));
-      _bridgeTrackingContract.handleVoteApproved(IBridgeTracking.VoteKind.Deposit, receipt.id);
+      bridgeTrackingContract.handleVoteApproved(IBridgeTracking.VoteKind.Deposit, receipt.id);
       emit Deposited(_receiptHash, receipt);
     }
 
     // Announce to BridgeTracking to record the vote, after marking the VoteStatus as Executed.
-    _bridgeTrackingContract.recordVote(IBridgeTracking.VoteKind.Deposit, receipt.id, operator);
+    bridgeTrackingContract.recordVote(IBridgeTracking.VoteKind.Deposit, receipt.id, operator);
   }
 
   /**
