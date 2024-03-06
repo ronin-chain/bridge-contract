@@ -283,7 +283,7 @@ abstract contract BridgeManager is IBridgeManager, HasContracts, BridgeManagerQu
 
     $._totalWeight += accumulatedWeight;
 
-    _notifyRegisters(IBridgeManagerCallback.onBridgeOperatorsAdded.selector, abi.encode(newOperators, addeds));
+    _notifyRegisters(IBridgeManagerCallback.onBridgeOperatorsAdded.selector, abi.encode(newOperators, voteWeights, addeds));
 
     emit BridgeOperatorsAdded(addeds, voteWeights, newGovernors, newOperators);
   }
