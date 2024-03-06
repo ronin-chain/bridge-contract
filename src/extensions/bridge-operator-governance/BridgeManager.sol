@@ -28,6 +28,8 @@ abstract contract BridgeManager is IBridgeManager, HasContracts, BridgeManagerQu
     mapping(address operator => uint96 weight) _operatorWeight;
     /// @dev Total weight of all governors / operators.
     uint256 _totalWeight;
+    /// @dev The minimum number of governors that must exist in the contract, to avoid the contract become non-accessible.
+    uint256 _minRequiredGovernor;
   }
 
   // keccak256(abi.encode(uint256(keccak256("ronin.storage.BridgeManagerStorageLocation")) - 1)) & ~bytes32(uint256(0xff))
@@ -71,6 +73,7 @@ abstract contract BridgeManager is IBridgeManager, HasContracts, BridgeManagerQu
     );
 
     _addBridgeOperators(voteWeights, governors, bridgeOperators);
+    _setMinRequiredGovernor(3);
   }
 
   // ===================== CONFIG ========================
@@ -81,6 +84,20 @@ abstract contract BridgeManager is IBridgeManager, HasContracts, BridgeManagerQu
   function setContract(ContractType contractType, address addr) external override onlySelfCall {
     _requireHasCode(addr);
     _setContract(contractType, addr);
+  }
+
+  /**
+   * @inheritdoc IBridgeManager
+   */
+  function setMinRequiredGovernor(uint min) external override onlySelfCall {
+    _setMinRequiredGovernor(min);
+  }
+
+  function _setMinRequiredGovernor(uint min) internal {
+    if (min < 3) revert ErrInvalidInput();
+    BridgeManagerStorage storage $ = _getBridgeManagerStorage();
+    $._minRequiredGovernor = min;
+    emit MinRequiredGovernorUpdated(min);
   }
 
   /**
@@ -289,6 +306,9 @@ abstract contract BridgeManager is IBridgeManager, HasContracts, BridgeManagerQu
 
     // simply skip remove operations if inputs are empty.
     if (length == 0) return removeds;
+    if ($._governors.length - length < $._minRequiredGovernor) {
+      revert ErrBelowMinRequiredGovernors();
+    }
 
     address iGovernor;
     address iOperator;

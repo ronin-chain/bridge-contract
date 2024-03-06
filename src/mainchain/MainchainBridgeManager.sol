@@ -29,7 +29,7 @@ contract MainchainBridgeManager is BridgeManager, GovernanceRelay, GlobalGoverna
     CoreGovernance(DEFAULT_EXPIRY_DURATION)
     GlobalCoreGovernance(targetOptions, targets)
     BridgeManager(num, denom, roninChainId, bridgeContract, callbackRegisters, bridgeOperators, governors, voteWeights)
-  {}
+  { }
 
   /**
    * @dev See `GovernanceRelay-_relayProposal`.
@@ -56,13 +56,7 @@ contract MainchainBridgeManager is BridgeManager, GovernanceRelay, GlobalGoverna
     Ballot.VoteType[] calldata supports_,
     Signature[] calldata signatures
   ) external onlyGovernor {
-    _relayGlobalProposal({
-      globalProposal: globalProposal,
-      supports_: supports_,
-      signatures: signatures,
-      domainSeparator: DOMAIN_SEPARATOR,
-      creator: msg.sender
-    });
+    _relayGlobalProposal({ globalProposal: globalProposal, supports_: supports_, signatures: signatures, domainSeparator: DOMAIN_SEPARATOR, creator: msg.sender });
   }
 
   /**
