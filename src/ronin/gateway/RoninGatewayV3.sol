@@ -152,31 +152,30 @@ contract RoninGatewayV3 is
     onlyBridgeOperator
     returns (bool[] memory _executedReceipts)
   {
-    address _governor = msg.sender;
-    uint256 _minVoteWeight = minimumVoteWeight();
+    address governor = msg.sender;
+    uint256 minVoteWeight = minimumVoteWeight();
 
-    uint256 _withdrawalId;
-    _executedReceipts = new bool[](_withdrawalIds.length);
+    uint256 withdrawalId;
+    uint length = _withdrawalIds.length;
+
+    _executedReceipts = new bool[](length);
     IBridgeTracking bridgeTrackingContract = IBridgeTracking(getContract(ContractType.BRIDGE_TRACKING));
-    for (uint256 _i; _i < _withdrawalIds.length;) {
-      _withdrawalId = _withdrawalIds[_i];
-      bridgeTrackingContract.recordVote(IBridgeTracking.VoteKind.MainchainWithdrawal, _withdrawalId, _governor);
-      if (mainchainWithdrew(_withdrawalId)) {
-        _executedReceipts[_i] = true;
+
+    for (uint256 i; i < length; i++) {
+      withdrawalId = _withdrawalIds[i];
+      bridgeTrackingContract.recordVote(IBridgeTracking.VoteKind.MainchainWithdrawal, withdrawalId, governor);
+      if (mainchainWithdrew(withdrawalId)) {
+        _executedReceipts[i] = true;
       } else {
-        IsolatedGovernance.Vote storage _vote = mainchainWithdrewVote[_withdrawalId];
-        Transfer.Receipt memory _withdrawal = withdrawal[_withdrawalId];
+        IsolatedGovernance.Vote storage _vote = mainchainWithdrewVote[withdrawalId];
+        Transfer.Receipt memory _withdrawal = withdrawal[withdrawalId];
         bytes32 _hash = _withdrawal.hash();
-        VoteStatus _status = _castIsolatedVote(_vote, _governor, _minVoteWeight, _hash);
+        VoteStatus _status = _castIsolatedVote(_vote, governor, minVoteWeight, _hash);
         if (_status == VoteStatus.Approved) {
           _vote.status = VoteStatus.Executed;
-          bridgeTrackingContract.handleVoteApproved(IBridgeTracking.VoteKind.MainchainWithdrawal, _withdrawalId);
+          bridgeTrackingContract.handleVoteApproved(IBridgeTracking.VoteKind.MainchainWithdrawal, withdrawalId);
           emit MainchainWithdrew(_hash, _withdrawal);
         }
-      }
-
-      unchecked {
-        ++_i;
       }
     }
   }
@@ -190,11 +189,12 @@ contract RoninGatewayV3 is
     onlyBridgeOperator
     returns (bool[] memory _executedReceipts)
   {
-    _executedReceipts = new bool[](receipts.length);
+    uint length = receipts.length;
+    _executedReceipts = new bool[](length);
     uint256 minVoteWeight = minimumVoteWeight();
 
     Transfer.Receipt memory iReceipt;
-    for (uint i; i < receipts.length; ++i) {
+    for (uint i; i < length; ++i) {
       iReceipt = receipts[i];
       if (depositVote[iReceipt.mainchain.chainId][iReceipt.id].status == VoteStatus.Executed) {
         _executedReceipts[i] = true;
@@ -214,14 +214,12 @@ contract RoninGatewayV3 is
   /**
    * @inheritdoc IRoninGatewayV3
    */
-  function bulkRequestWithdrawalFor(Transfer.Request[] calldata _requests, uint256 _chainId) external whenNotPaused {
-    if (_requests.length == 0) revert ErrEmptyArray();
+  function bulkRequestWithdrawalFor(Transfer.Request[] calldata requests, uint256 chainId) external whenNotPaused {
+    uint length = requests.length;
+    if (length == 0) revert ErrEmptyArray();
 
-    for (uint256 _i; _i < _requests.length;) {
-      _requestWithdrawalFor(_requests[_i], msg.sender, _chainId);
-      unchecked {
-        ++_i;
-      }
+    for (uint i; i < length; ++i) {
+      _requestWithdrawalFor(requests[i], msg.sender, chainId);
     }
   }
 
@@ -248,7 +246,8 @@ contract RoninGatewayV3 is
   ) external whenNotPaused onlyBridgeOperator {
     address operator = msg.sender;
 
-    if (!(withdrawals.length > 0 && withdrawals.length == signatures.length)) {
+    uint length = withdrawals.length;
+    if (!(length > 0 && length == signatures.length)) {
       revert ErrLengthMismatch(msg.sig);
     }
 
@@ -256,9 +255,9 @@ contract RoninGatewayV3 is
 
     uint256 id;
     IBridgeTracking _bridgeTrackingContract = IBridgeTracking(getContract(ContractType.BRIDGE_TRACKING));
-    for (uint256 _i; _i < withdrawals.length;) {
-      id = withdrawals[_i];
-      _withdrawalSig[id][operator] = signatures[_i];
+    for (uint i; i < length; ++i) {
+      id = withdrawals[i];
+      _withdrawalSig[id][operator] = signatures[i];
       _bridgeTrackingContract.recordVote(IBridgeTracking.VoteKind.Withdrawal, id, operator);
 
       IsolatedGovernance.Vote storage _proposal = withdrawalStatVote[id];
@@ -266,10 +265,6 @@ contract RoninGatewayV3 is
       if (_status == VoteStatus.Approved) {
         _proposal.status = VoteStatus.Executed;
         _bridgeTrackingContract.handleVoteApproved(IBridgeTracking.VoteKind.Withdrawal, id);
-      }
-
-      unchecked {
-        ++_i;
       }
     }
   }
