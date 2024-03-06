@@ -203,25 +203,7 @@ abstract contract BridgeManager is IBridgeManager, HasContracts, BridgeManagerQu
    * @inheritdoc IBridgeManager
    */
   function updateBridgeOperator(address currOperator, address newOperator) external onlyGovernor {
-    _requireNonZeroAddress(newOperator);
-
-    BridgeManagerStorage storage $ = _getBridgeManagerStorage();
-    if (currOperator == newOperator || $._governorWeight[newOperator] > 0 || $._operatorWeight[newOperator] > 0) {
-      revert ErrBridgeOperatorAlreadyExisted(newOperator);
-    }
-
-    // Query the index of the operator in the array
-    (address requiredGovernor, uint idx) = _getGovernorOf(currOperator);
-    if (requiredGovernor != msg.sender) revert ErrGovernorNotMatch(requiredGovernor, msg.sender);
-
-    // Replace the bridge operator: (1) change in the array, (2) update weight of two addresses, (3) notify register
-    $._operators[idx] = newOperator;
-    $._operatorWeight[newOperator] = $._operatorWeight[currOperator];
-    delete $._operatorWeight[currOperator];
-
-    _notifyRegisters(IBridgeManagerCallback.onBridgeOperatorUpdated.selector, abi.encode(currOperator, newOperator));
-
-    emit BridgeOperatorUpdated(msg.sender, currOperator, newOperator);
+    revert("Not supported");
   }
 
   /**
@@ -412,7 +394,7 @@ abstract contract BridgeManager is IBridgeManager, HasContracts, BridgeManagerQu
    * @inheritdoc IBridgeManager
    * @custom:deprecated Deprecated due to high gas consume in new design.
    */
-  function getBridgeOperatorOf(address[] memory /*governors*/) external pure returns (address[] memory /*bridgeOperators*/) {
+  function getBridgeOperatorOf(address[] memory /*governors*/ ) external pure returns (address[] memory /*bridgeOperators*/ ) {
     revert("Deprecated method");
   }
 
@@ -430,7 +412,7 @@ abstract contract BridgeManager is IBridgeManager, HasContracts, BridgeManagerQu
    * @inheritdoc IBridgeManager
    * @custom:deprecated Deprecated due to high gas consume in new design.
    */
-  function getGovernorsOf(address[] calldata /*bridgeOperators*/) external pure returns (address[] memory /*governors*/) {
+  function getGovernorsOf(address[] calldata /*bridgeOperators*/ ) external pure returns (address[] memory /*governors*/ ) {
     revert("Deprecated method");
   }
 
@@ -438,7 +420,7 @@ abstract contract BridgeManager is IBridgeManager, HasContracts, BridgeManagerQu
    * @inheritdoc IBridgeManager
    */
   function getGovernorOf(address operator) external view returns (address governor) {
-    (governor, ) = _getGovernorOf(operator);
+    (governor,) = _getGovernorOf(operator);
   }
 
   function _getGovernorOf(address operator) internal view returns (address governor, uint idx) {
@@ -451,11 +433,7 @@ abstract contract BridgeManager is IBridgeManager, HasContracts, BridgeManagerQu
   /**
    * @inheritdoc IBridgeManager
    */
-  function getFullBridgeOperatorInfos()
-    external
-    view
-    returns (address[] memory governors, address[] memory bridgeOperators, uint96[] memory weights)
-  {
+  function getFullBridgeOperatorInfos() external view returns (address[] memory governors, address[] memory bridgeOperators, uint96[] memory weights) {
     BridgeManagerStorage storage $ = _getBridgeManagerStorage();
 
     governors = $._governors;
