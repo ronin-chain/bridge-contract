@@ -125,7 +125,8 @@ contract BridgeSlashTest is IBridgeSlashEvents, BridgeManagerUtils {
     MockBridgeManager(payable(_bridgeManagerContract)).registerCallbacks(registers);
 
     // Generate valid inputs for bridge operators
-    (address[] memory bridgeOperators, address[] memory governors, uint96[] memory voteWeights) = getValidInputs(
+    (address[] memory bridgeOperators, address[] memory governors, uint96[] memory voteWeights) = getValidAndNonExistingInputs(
+      _bridgeManagerContract,
       r1,
       r2,
       r3,
@@ -285,7 +286,7 @@ contract BridgeSlashTest is IBridgeSlashEvents, BridgeManagerUtils {
   }
 
   function _setUp() internal virtual {
-    _admin = vm.addr(1);
+    _admin = makeAddr("central-admin");
     _validatorContract = address(new MockValidatorSet_ForFoundryTest());
     (address[] memory bridgeOperators, address[] memory governors, uint96[] memory voteWeights) = getValidInputs(
       DEFAULT_R1,
