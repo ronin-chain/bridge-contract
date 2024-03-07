@@ -100,7 +100,7 @@ contract BaseIntegration_Test is Base_Test {
     _deployContractsOnRonin();
     _deployContractsOnMainchain();
 
-    // _initializeRonin();
+    _initializeRonin();
     _initializeMainchain();
 
     _changeAdminOnRonin();
@@ -161,8 +161,7 @@ contract BaseIntegration_Test is Base_Test {
   }
 
   function _initializeMainchain() internal {
-    _config.switchTo(Network.EthLocal.key());
-
+    _mainchainPauseEnforcerInitialize();
     _mainchainBridgeManagerInitialize();
     _constructForMainchainBridgeManager();
     _mainchainGatewayV3Initialize();

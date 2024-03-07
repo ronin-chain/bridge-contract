@@ -223,7 +223,10 @@ contract BridgeRewardTest is Base_Test, IBridgeRewardEvents, BridgeManagerUtils 
 
     _defaultBridgeManagerInputs = abi.encode(bridgeOperators, governors, voteWeights);
 
-    _bridgeManagerContract = address(new MockBridgeManager(bridgeOperators, governors, voteWeights));
+    address bridgeManagerLogic = address(new MockBridgeManager());
+    _bridgeManagerContract = address(
+        new TransparentUpgradeableProxy(bridgeManagerLogic, _admin, abi.encodeCall(MockBridgeManager.initialize, (bridgeOperators, governors, voteWeights)))
+    );
 
     _bridgeTrackingLogic = address(new BridgeTracking());
     _bridgeTrackingContract = address(new TransparentUpgradeableProxy(_bridgeTrackingLogic, _admin, ""));
