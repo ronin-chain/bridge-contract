@@ -22,6 +22,7 @@ contract BridgeRewardTest is Base_Test, IBridgeRewardEvents, BridgeManagerUtils 
   address internal _admin;
   address internal _validatorContract;
   address internal _bridgeRewardLogic;
+  address internal _bridgeManagerLogic;
   address internal _bridgeManagerContract;
   address internal _bridgeRewardContract;
   address internal _bridgeSlashLogic;
@@ -223,9 +224,9 @@ contract BridgeRewardTest is Base_Test, IBridgeRewardEvents, BridgeManagerUtils 
 
     _defaultBridgeManagerInputs = abi.encode(bridgeOperators, governors, voteWeights);
 
-    address bridgeManagerLogic = address(new MockBridgeManager());
+    _bridgeManagerLogic = address(new MockBridgeManager());
     _bridgeManagerContract = address(
-        new TransparentUpgradeableProxy(bridgeManagerLogic, _admin, abi.encodeCall(MockBridgeManager.initialize, (bridgeOperators, governors, voteWeights)))
+        new TransparentUpgradeableProxy(_bridgeManagerLogic, _admin, abi.encodeCall(MockBridgeManager.initialize, (bridgeOperators, governors, voteWeights)))
     );
 
     _bridgeTrackingLogic = address(new BridgeTracking());

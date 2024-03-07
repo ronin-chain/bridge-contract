@@ -231,9 +231,6 @@ contract BridgeManagerCRUDTest is BridgeManagerUtils {
       new TransparentUpgradeableProxyV2(bridgeManagerLogic, admin, abi.encodeCall(MockBridgeManager.initialize, (bridgeOperators, governors, voteWeights)))
     );
 
-    // empty storage for testing
-    // vm.prank(_bridgeManager);
-    // IBridgeManager(_bridgeManager).removeBridgeOperators(bridgeOperators);
     _initOperators = bridgeOperators;
     _initGovernors = governors;
     _initWeights = voteWeights;

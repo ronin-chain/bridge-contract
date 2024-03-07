@@ -162,7 +162,6 @@ contract BaseIntegration_Test is Base_Test {
 
   function _initializeMainchain() internal {
     _mainchainPauseEnforcerInitialize();
-    _mainchainBridgeManagerInitialize();
     _constructForMainchainBridgeManager();
     _mainchainGatewayV3Initialize();
   }

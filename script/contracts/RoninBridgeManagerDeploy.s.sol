@@ -13,22 +13,25 @@ contract RoninBridgeManagerDeploy is Migration {
   function _defaultArguments() internal virtual override returns (bytes memory args) {
     ISharedArgument.BridgeManagerParam memory param = config.sharedArguments().roninBridgeManager;
 
-    args = abi.encode(
-      param.num,
-      param.denom,
-      param.roninChainId,
-      param.expiryDuration,
-      param.bridgeContract,
-      param.callbackRegisters,
-      param.bridgeOperators,
-      param.governors,
-      param.voteWeights,
-      param.targetOptions,
-      param.targets
+    args = abi.encodeCall(
+      RoninBridgeManager.initialize,
+      (
+        param.num,
+        param.denom,
+        param.roninChainId,
+        param.expiryDuration,
+        param.bridgeContract,
+        param.callbackRegisters,
+        param.bridgeOperators,
+        param.governors,
+        param.voteWeights,
+        param.targetOptions,
+        param.targets
+      )
     );
   }
 
   function run() public virtual returns (RoninBridgeManager) {
-    return RoninBridgeManager(_deployImmutable(Contract.RoninBridgeManager.key()));
+    return RoninBridgeManager(_deployProxy(Contract.RoninBridgeManager.key()));
   }
 }

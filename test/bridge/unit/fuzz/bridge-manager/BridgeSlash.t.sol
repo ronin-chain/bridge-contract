@@ -27,6 +27,7 @@ contract BridgeSlashTest is IBridgeSlashEvents, BridgeManagerUtils {
   /// @dev immutable contracts
   address internal _admin;
   address internal _validatorContract;
+  address internal _bridgeManagerLogic;
   address internal _bridgeManagerContract;
   /// @dev proxy contracts
   address internal _gatewayLogic;
@@ -296,9 +297,9 @@ contract BridgeSlashTest is IBridgeSlashEvents, BridgeManagerUtils {
     );
     _defaultBridgeManagerInputs = abi.encode(bridgeOperators, governors, voteWeights);
 
-    address bridgeManagerLogic = address(new MockBridgeManager());
+    _bridgeManagerLogic = address(new MockBridgeManager());
     _bridgeManagerContract = address(
-      new TransparentUpgradeableProxyV2(bridgeManagerLogic, _admin, abi.encodeCall(MockBridgeManager.initialize, (bridgeOperators, governors, voteWeights)))
+      new TransparentUpgradeableProxyV2(_bridgeManagerLogic, _admin, abi.encodeCall(MockBridgeManager.initialize, (bridgeOperators, governors, voteWeights)))
     );
 
     _gatewayLogic = address(new RoninGatewayV3());
