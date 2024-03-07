@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "../../libraries/Proposal.sol";
 import "../../libraries/GlobalProposal.sol";
 import "../../utils/CommonErrors.sol";
@@ -9,7 +10,7 @@ import "../../interfaces/consumers/ChainTypeConsumer.sol";
 import "../../interfaces/consumers/SignatureConsumer.sol";
 import "../../interfaces/consumers/VoteStatusConsumer.sol";
 
-abstract contract CoreGovernance is SignatureConsumer, VoteStatusConsumer, ChainTypeConsumer {
+abstract contract CoreGovernance is Initializable, SignatureConsumer, VoteStatusConsumer, ChainTypeConsumer {
   using Proposal for Proposal.ProposalDetail;
 
   /**
@@ -57,11 +58,11 @@ abstract contract CoreGovernance is SignatureConsumer, VoteStatusConsumer, Chain
 
   uint256 internal _proposalExpiryDuration;
 
-  function __CoreGovernance_init(uint256 expiryDuration) internal {
+  function __CoreGovernance_init(uint256 expiryDuration) internal onlyInitializing {
     __CoreGovernance_init_unchained(expiryDuration);
   }
 
-  function __CoreGovernance_init_unchained(uint256 expiryDuration) internal {
+  function __CoreGovernance_init_unchained(uint256 expiryDuration) internal onlyInitializing {
     _setProposalExpiryDuration(expiryDuration);
   }
 

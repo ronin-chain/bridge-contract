@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { IBridgeManagerCallbackRegister } from "../../interfaces/bridge/IBridgeManagerCallbackRegister.sol";
 import { IBridgeManagerCallback } from "../../interfaces/bridge/IBridgeManagerCallback.sol";
@@ -10,7 +11,7 @@ import { TransparentUpgradeableProxyV2, IdentityGuard } from "../../utils/Identi
  * @title BridgeManagerCallbackRegister
  * @dev A contract that manages callback registrations and execution for a bridge.
  */
-abstract contract BridgeManagerCallbackRegister is IdentityGuard, IBridgeManagerCallbackRegister {
+abstract contract BridgeManagerCallbackRegister is Initializable, IdentityGuard, IBridgeManagerCallbackRegister {
   using EnumerableSet for EnumerableSet.AddressSet;
 
   /**
@@ -19,7 +20,7 @@ abstract contract BridgeManagerCallbackRegister is IdentityGuard, IBridgeManager
    */
   bytes32 private constant CALLBACK_REGISTERS_SLOT = 0x5da136eb38f8d8e354915fc8a767c0dc81d49de5fb65d5477122a82ddd976240;
 
-  function __BridgeManagerCallbackRegister_init_unchained(address[] memory callbackRegisters) internal  {
+  function __BridgeManagerCallbackRegister_init_unchained(address[] memory callbackRegisters) internal onlyInitializing {
     _registerCallbacks(callbackRegisters);
   }
 
