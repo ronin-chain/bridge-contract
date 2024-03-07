@@ -21,13 +21,7 @@ abstract contract BridgeManagerQuorum is IQuorum, IdentityGuard {
     }
   }
 
-  // constructor(uint256 num, uint256 denom) {
-  //   // BridgeManagerQuorumStorage storage $ = _getBridgeManagerQuorumStorage();
-  //   // $._nonce = 1;
-  //   // _setThreshold(num, denom);
-  // }
-
-  function __init(uint256 num, uint256 denom) internal {
+  function __BridgeManagerQuorum_init_unchained(uint256 num, uint256 denom) internal {
     BridgeManagerQuorumStorage storage $ = _getBridgeManagerQuorumStorage();
     $._nonce = 1;
 

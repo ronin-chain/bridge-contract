@@ -26,9 +26,9 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
     GlobalProposal.TargetOption[] memory targetOptions,
     address[] memory targets) external
  {
-    CoreGovernance.__init(expiryDuration);
-    GlobalCoreGovernance.__init(targetOptions, targets);
-    BridgeManager.__init(num, denom, roninChainId, bridgeContract, callbackRegisters, bridgeOperators, governors, voteWeights);
+    __CoreGovernance_init(expiryDuration);
+    __GlobalCoreGovernance_init(targetOptions, targets);
+    __BridgeManager_init(num, denom, roninChainId, bridgeContract, callbackRegisters, bridgeOperators, governors, voteWeights);
   }
 
   /**

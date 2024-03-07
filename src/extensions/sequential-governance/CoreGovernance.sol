@@ -35,13 +35,7 @@ abstract contract CoreGovernance is SignatureConsumer, VoteStatusConsumer, Chain
   }
 
   /// @dev Emitted when a proposal is created
-  event ProposalCreated(
-    uint256 indexed chainId,
-    uint256 indexed round,
-    bytes32 indexed proposalHash,
-    Proposal.ProposalDetail proposal,
-    address creator
-  );
+  event ProposalCreated(uint256 indexed chainId, uint256 indexed round, bytes32 indexed proposalHash, Proposal.ProposalDetail proposal, address creator);
   /// @dev Emitted when the proposal is voted
   event ProposalVoted(bytes32 indexed proposalHash, address indexed voter, Ballot.VoteType support, uint256 weight);
   /// @dev Emitted when the proposal is approved
@@ -63,14 +57,13 @@ abstract contract CoreGovernance is SignatureConsumer, VoteStatusConsumer, Chain
 
   uint256 internal _proposalExpiryDuration;
 
-  // constructor(uint256 _expiryDuration) {
-  //   // _setProposalExpiryDuration(_expiryDuration);
-  // }
-
-function __init(uint256 _expiryDuration)  internal {
-    _setProposalExpiryDuration(_expiryDuration);
+  function __CoreGovernance_init(uint256 expiryDuration) internal {
+    __CoreGovernance_init_unchained(expiryDuration);
   }
 
+  function __CoreGovernance_init_unchained(uint256 expiryDuration) internal {
+    _setProposalExpiryDuration(expiryDuration);
+  }
 
   /**
    * @dev Creates new voting round by calculating the `_round` number of chain `_chainId`.
@@ -142,10 +135,7 @@ function __init(uint256 _expiryDuration)  internal {
    * Emits the `ProposalCreated` event.
    *
    */
-  function _proposeProposalStruct(
-    Proposal.ProposalDetail memory proposal,
-    address creator
-  ) internal virtual returns (uint256 round_) {
+  function _proposeProposalStruct(Proposal.ProposalDetail memory proposal, address creator) internal virtual returns (uint256 round_) {
     uint256 chainId = proposal.chainId;
     if (chainId == 0) revert ErrInvalidChainId(msg.sig, 0, block.chainid);
     proposal.validate(_proposalExpiryDuration);
@@ -205,7 +195,9 @@ function __init(uint256 _expiryDuration)  internal {
     } else if (support == Ballot.VoteType.Against) {
       _vote.againstVoteds.push(voter);
       _againstVoteWeight = _vote.againstVoteWeight += voterWeight;
-    } else revert ErrUnsupportedVoteType(msg.sig);
+    } else {
+      revert ErrUnsupportedVoteType(msg.sig);
+    }
 
     if (_forVoteWeight >= minimumForVoteWeight) {
       done = true;
@@ -228,15 +220,12 @@ function __init(uint256 _expiryDuration)  internal {
    * before or it will emit an unexpected event of `ProposalExpired`.
    */
   function _tryDeleteExpiredVotingRound(ProposalVote storage proposalVote) internal returns (bool isExpired) {
-    isExpired =
-      _getChainType() == ChainType.RoninChain &&
-      proposalVote.status == VoteStatus.Pending &&
-      proposalVote.expiryTimestamp <= block.timestamp;
+    isExpired = _getChainType() == ChainType.RoninChain && proposalVote.status == VoteStatus.Pending && proposalVote.expiryTimestamp <= block.timestamp;
 
     if (isExpired) {
       emit ProposalExpired(proposalVote.hash);
 
-      for (uint256 _i; _i < proposalVote.forVoteds.length; ) {
+      for (uint256 _i; _i < proposalVote.forVoteds.length;) {
         delete proposalVote.voted[proposalVote.forVoteds[_i]];
         delete proposalVote.sig[proposalVote.forVoteds[_i]];
 
@@ -244,7 +233,7 @@ function __init(uint256 _expiryDuration)  internal {
           ++_i;
         }
       }
-      for (uint256 _i; _i < proposalVote.againstVoteds.length; ) {
+      for (uint256 _i; _i < proposalVote.againstVoteds.length;) {
         delete proposalVote.voted[proposalVote.againstVoteds[_i]];
         delete proposalVote.sig[proposalVote.againstVoteds[_i]];
 

@@ -14,23 +14,7 @@ import "../utils/CommonErrors.sol";
 contract MainchainBridgeManager is Initializable, BridgeManager, GovernanceRelay, GlobalGovernanceRelay {
   uint256 private constant DEFAULT_EXPIRY_DURATION = 1 << 255;
 
-  constructor()
-  //   uint256 num,
-  //   uint256 denom,
-  //   uint256 roninChainId,
-  //   address bridgeContract,
-  //   address[] memory callbackRegisters,
-  //   address[] memory bridgeOperators,
-  //   address[] memory governors,
-  //   uint96[] memory voteWeights,
-  //   GlobalProposal.TargetOption[] memory targetOptions,
-  //   address[] memory targets
-  // )
-  //   payable
-  //   CoreGovernance(DEFAULT_EXPIRY_DURATION)
-  //   GlobalCoreGovernance(targetOptions, targets)
-  //   BridgeManager(num, denom, roninChainId, bridgeContract, callbackRegisters, bridgeOperators, governors, voteWeights)
-  {
+  constructor() {
     _disableInitializers();
   }
 
@@ -46,9 +30,9 @@ contract MainchainBridgeManager is Initializable, BridgeManager, GovernanceRelay
     GlobalProposal.TargetOption[] memory targetOptions,
     address[] memory targets
   ) external initializer {
-    CoreGovernance.__init(DEFAULT_EXPIRY_DURATION);
-    GlobalCoreGovernance.__init(targetOptions, targets);
-    BridgeManager.__init(num, denom, roninChainId, bridgeContract, callbackRegisters, bridgeOperators, governors, voteWeights);
+    __CoreGovernance_init(DEFAULT_EXPIRY_DURATION);
+    __GlobalCoreGovernance_init(targetOptions, targets);
+    __BridgeManager_init(num, denom, roninChainId, bridgeContract, callbackRegisters, bridgeOperators, governors, voteWeights);
   }
 
   /**
