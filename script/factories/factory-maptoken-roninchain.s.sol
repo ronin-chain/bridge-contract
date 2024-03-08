@@ -89,16 +89,16 @@ abstract contract Factory__MapTokensRoninchain is BridgeMigration {
     //   address[] calldata _tokens,
     //   uint256[] calldata _thresholds
     // );
-    address[] memory mainchainTokensToSetMinThreshold = new address[](N);
+    address[] memory roninTokensToSetMinThreshold = new address[](N);
     uint256[] memory minThresholds = new uint256[](N);
 
     for (uint256 i; i < N; ++i) {
-      mainchainTokensToSetMinThreshold[i] = tokenInfos[i].mainchainToken;
+      roninTokensToSetMinThreshold[i] = tokenInfos[i].roninToken;
       minThresholds[i] = tokenInfos[i].minThreshold;
     }
 
     innerData =
-      abi.encodeCall(MinimumWithdrawal.setMinimumThresholds, (mainchainTokensToSetMinThreshold, minThresholds));
+      abi.encodeCall(MinimumWithdrawal.setMinimumThresholds, (roninTokensToSetMinThreshold, minThresholds));
     proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
 
     targets[1] = _roninGatewayV3;
