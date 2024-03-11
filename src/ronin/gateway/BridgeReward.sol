@@ -80,45 +80,55 @@ contract BridgeReward is IBridgeReward, BridgeTrackingHelper, HasContracts, RONT
    */
   function syncRewardManual(uint256 periodCount) external {
     if (!_isBridgeOperator(msg.sender)) revert ErrUnauthorizedCall(msg.sig);
+    uint256 currPd = IRoninValidatorSet(getContract(ContractType.VALIDATOR)).currentPeriod();
 
-    uint256 latestRewardedPeriod = getLatestRewardedPeriod();
-    uint256 currentPeriod = IRoninValidatorSet(getContract(ContractType.VALIDATOR)).currentPeriod();
-    if (latestRewardedPeriod + periodCount > currentPeriod) revert ErrInvalidArguments(msg.sig);
-    if (currentPeriod <= latestRewardedPeriod) revert ErrInvalidArguments(msg.sig);
-
-    _syncRewardBatch(latestRewardedPeriod, periodCount);
+    _syncRewardBatch({ currPd: currPd, pdCount: periodCount });
   }
 
   /**
    * @inheritdoc IBridgeReward
    */
-  function execSyncRewardAuto() external onlyContract(ContractType.BRIDGE_TRACKING) {
-    uint256 latestRewardedPeriod = getLatestRewardedPeriod();
-    uint256 currentPeriod = IRoninValidatorSet(getContract(ContractType.VALIDATOR)).currentPeriod();
-
-    if (currentPeriod <= latestRewardedPeriod) revert ErrInvalidArguments(msg.sig);
-
-    // Restrict number of period to reward in a transaction, to avoid consume too much gas
-    uint toRewardPeriodCount = currentPeriod - latestRewardedPeriod;
-    toRewardPeriodCount = Math.min(toRewardPeriodCount, $_MAX_REWARDING_PERIOD_COUNT.load());
-
-    _syncRewardBatch(latestRewardedPeriod, toRewardPeriodCount);
+  function execSyncRewardAuto(uint256 currentPeriod) external onlyContract(ContractType.BRIDGE_TRACKING) {
+    _syncRewardBatch({ currPd: currentPeriod, pdCount: 0 });
   }
 
-  function _syncRewardBatch(uint256 latestRewardedPeriod, uint256 periodCount) internal {
+  /**
+   * @dev Sync bridge reward for multiple periods, always assert `latestRewardedPeriod + periodCount <= currentPeriod`.
+   * @param pdCount Number of periods to settle reward. Leave this as 0 to calculate.
+   */
+  function _syncRewardBatch(uint256 currPd, uint256 pdCount) internal {
+    uint256 lastRewardPd = getLatestRewardedPeriod();
+    if (pdCount == 0) {
+      // Unchecked the subtraction to avoid underflow. The result will be checked in the next assertion.
+      unchecked {
+        // Restrict number of period to reward in a transaction, to avoid consume too much gas
+        uint toSettlePdCount = currPd - lastRewardPd;
+        pdCount = Math.min(toSettlePdCount, $_MAX_REWARDING_PERIOD_COUNT.load());
+      }
+    }
+    _assertPeriod({ currPd: currPd, pdCount: pdCount, lastRewardPd: lastRewardPd });
+
     address[] memory operators = IBridgeManager(getContract(ContractType.BRIDGE_MANAGER)).getBridgeOperators();
     IBridgeTracking bridgeTrackingContract = IBridgeTracking(getContract(ContractType.BRIDGE_TRACKING));
 
-    for (uint256 i = 1; i <= periodCount; i++) {
+    for (uint256 i = 1; i <= pdCount; i++) {
       $_LATEST_REWARDED_PERIOD.addAssign(1);
-      _syncReward({
+      _settleReward({
         operators: operators,
-        ballots: bridgeTrackingContract.getManyTotalBallots(latestRewardedPeriod, operators),
-        totalBallot: bridgeTrackingContract.totalBallot(latestRewardedPeriod),
-        totalVote: bridgeTrackingContract.totalVote(latestRewardedPeriod),
-        period: latestRewardedPeriod + i
+        ballots: bridgeTrackingContract.getManyTotalBallots(lastRewardPd, operators),
+        totalBallot: bridgeTrackingContract.totalBallot(lastRewardPd),
+        totalVote: bridgeTrackingContract.totalVote(lastRewardPd),
+        period: lastRewardPd + i
       });
     }
+  }
+
+  function _assertPeriod(uint256 currPd, uint256 pdCount, uint256 lastRewardPd) internal {
+    // Not settle the periods that not happen yet.
+    if (currPd < lastRewardPd + pdCount) revert ErrPeriodNotHappen(msg.sig, currPd, lastRewardPd, pdCount);
+
+    // Not settle the period that already rewarded.
+    if (currPd <= lastRewardPd) revert ErrPeriodAlreadyRewarded(msg.sig, currPd, lastRewardPd);
   }
 
   /**
@@ -154,7 +164,7 @@ contract BridgeReward is IBridgeReward, BridgeTrackingHelper, HasContracts, RONT
    * @param totalVote The total number of votes recorded for the period.
    * @param period The period for which the rewards are being synchronized.
    */
-  function _syncReward(address[] memory operators, uint256[] memory ballots, uint256 totalBallot, uint256 totalVote, uint256 period) internal {
+  function _settleReward(address[] memory operators, uint256[] memory ballots, uint256 totalBallot, uint256 totalVote, uint256 period) internal {
     uint256 numBridgeOperators = operators.length;
     uint256 rewardPerPeriod = getRewardPerPeriod();
     uint256[] memory slashedDurationList = _getSlashInfo(operators);

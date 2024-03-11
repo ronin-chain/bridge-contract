@@ -195,7 +195,7 @@ contract BridgeTracking is HasBridgeDeprecated, HasValidatorDeprecated, HasContr
    * @inheritdoc IBridgeTracking
    */
   function recordVote(VoteKind kind, uint256 requestId, address operator) external override onlyContract(ContractType.BRIDGE) skipOnNotStarted {
-    uint256 period = IRoninValidatorSet(getContract(ContractType.VALIDATOR)).currentPeriod();
+    uint256 currPd = IRoninValidatorSet(getContract(ContractType.VALIDATOR)).currentPeriod();
     _trySyncBuffer();
     ReceiptTrackingInfo storage _receiptInfo = _receiptTrackingInfo[kind][requestId];
 
@@ -206,12 +206,12 @@ contract BridgeTracking is HasBridgeDeprecated, HasValidatorDeprecated, HasContr
       return;
     }
 
-    _increaseBallot(kind, requestId, operator, period);
+    _increaseBallot(kind, requestId, operator, currPd);
 
     uint256 lastSyncPeriod = _lastSyncPeriod;
     // When switching to new period, wrap up vote info, then slash and distribute reward accordingly.
-    if (lastSyncPeriod < period) {
-      _lastSyncPeriod = period;
+    if (lastSyncPeriod < currPd) {
+      _lastSyncPeriod = currPd;
 
       address[] memory allOperators = IBridgeManager(getContract(ContractType.BRIDGE_MANAGER)).getBridgeOperators();
       uint256[] memory ballots = _getManyTotalBallots(lastSyncPeriod, allOperators);
@@ -228,7 +228,7 @@ contract BridgeTracking is HasBridgeDeprecated, HasValidatorDeprecated, HasContr
       }
 
       address bridgeRewardContract = getContract(ContractType.BRIDGE_REWARD);
-      (success, returnOrRevertData) = bridgeRewardContract.call(abi.encodeCall(IBridgeReward.execSyncRewardAuto, ()));
+      (success, returnOrRevertData) = bridgeRewardContract.call(abi.encodeCall(IBridgeReward.execSyncRewardAuto, (currPd)));
       if (!success) {
         emit ExternalCallFailed(bridgeRewardContract, IBridgeReward.execSyncRewardAuto.selector, returnOrRevertData);
       }
