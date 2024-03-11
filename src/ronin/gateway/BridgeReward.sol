@@ -100,7 +100,7 @@ contract BridgeReward is IBridgeReward, BridgeTrackingHelper, HasContracts, RONT
 
     // Restrict number of period to reward in a transaction, to avoid consume too much gas
     uint toRewardPeriodCount = currentPeriod - latestRewardedPeriod;
-    toRewardPeriodCount = Math.min(toRewardPeriodCount, $_MAX_REWARDING_PERIOD_COUNT);
+    toRewardPeriodCount = Math.min(toRewardPeriodCount, $_MAX_REWARDING_PERIOD_COUNT.load());
 
     _syncRewardBatch(latestRewardedPeriod, toRewardPeriodCount);
   }
