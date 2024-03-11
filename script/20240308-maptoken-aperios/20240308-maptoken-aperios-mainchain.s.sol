@@ -18,6 +18,7 @@ contract Migration__20240308_MapTokenAperiosMainchain is Base__MapToken, Factory
   }
 
   function run() public override {
+    console2.log("nonce", vm.getNonce(SM_GOVERNOR)); // Log nonce for workaround of nonce increase when switch network
     super.run();
   }
 }
