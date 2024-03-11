@@ -78,7 +78,7 @@ contract BridgeReward is IBridgeReward, BridgeTrackingHelper, HasContracts, RONT
   /**
    * @inheritdoc IBridgeReward
    */
-  function syncReward(uint256 periodCount) external {
+  function syncRewardManual(uint256 periodCount) external {
     if (!_isBridgeOperator(msg.sender)) revert ErrUnauthorizedCall(msg.sig);
 
     uint256 latestRewardedPeriod = getLatestRewardedPeriod();
@@ -92,7 +92,7 @@ contract BridgeReward is IBridgeReward, BridgeTrackingHelper, HasContracts, RONT
   /**
    * @inheritdoc IBridgeReward
    */
-  function execSyncReward() external onlyContract(ContractType.BRIDGE_TRACKING) {
+  function execSyncRewardAuto() external onlyContract(ContractType.BRIDGE_TRACKING) {
     uint256 latestRewardedPeriod = getLatestRewardedPeriod();
     uint256 currentPeriod = IRoninValidatorSet(getContract(ContractType.VALIDATOR)).currentPeriod();
 

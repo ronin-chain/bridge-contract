@@ -228,9 +228,9 @@ contract BridgeTracking is HasBridgeDeprecated, HasValidatorDeprecated, HasContr
       }
 
       address bridgeRewardContract = getContract(ContractType.BRIDGE_REWARD);
-      (success, returnOrRevertData) = bridgeRewardContract.call(abi.encodeCall(IBridgeReward.execSyncReward, ()));
+      (success, returnOrRevertData) = bridgeRewardContract.call(abi.encodeCall(IBridgeReward.execSyncRewardAuto, ()));
       if (!success) {
-        emit ExternalCallFailed(bridgeRewardContract, IBridgeReward.execSyncReward.selector, returnOrRevertData);
+        emit ExternalCallFailed(bridgeRewardContract, IBridgeReward.execSyncRewardAuto.selector, returnOrRevertData);
       }
     }
   }

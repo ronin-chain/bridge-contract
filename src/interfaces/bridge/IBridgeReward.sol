@@ -9,7 +9,7 @@ interface IBridgeReward is IBridgeRewardEvents {
    * @dev This function allows bridge operators to manually synchronize the reward for a given period length.
    * @param periodLength The length of the reward period for which synchronization is requested.
    */
-  function syncReward(uint256 periodLength) external;
+  function syncRewardManual(uint256 periodLength) external;
 
   /**
    * @dev Receives RON from any address.
@@ -23,7 +23,7 @@ interface IBridgeReward is IBridgeRewardEvents {
    * - This method is only called once each period.
    * - The caller must be the bridge tracking contract
    */
-  function execSyncReward() external;
+  function execSyncRewardAuto() external;
 
   /**
    * @dev Retrieve the total amount of rewards that have been topped up in the contract.
