@@ -56,7 +56,12 @@ contract BridgeReward is IBridgeReward, BridgeTrackingHelper, HasContracts, RONT
 
   /**
    * @dev Helper for running upgrade script, required to only revoked once by the DPoS's governance admin.
-   * The following must be assured after initializing REP2: `{BridgeTracking}._lastSyncPeriod` == `{BridgeReward}.latestRewardedPeriod` == `currentPeriod()`
+   * The following must be assured after initializing REP2:
+   * ```
+   *     {BridgeTracking}._lastSyncPeriod
+   *     == {BridgeReward}.latestRewardedPeriod
+   *     == {RoninValidatorSet}.currentPeriod()
+   * ```
    */
   function initializeREP2() external onlyContract(ContractType.GOVERNANCE_ADMIN) {
     require(getLatestRewardedPeriod() == type(uint256).max, "already init rep 2");
@@ -64,6 +69,14 @@ contract BridgeReward is IBridgeReward, BridgeTrackingHelper, HasContracts, RONT
     _setContract(ContractType.GOVERNANCE_ADMIN, address(0));
   }
 
+  /**
+   @dev The following must be assured after initializing V2:
+   * ```
+   *     {BridgeTracking}._lastSyncPeriod
+   *     == {RoninValidatorSet}.currentPeriod()
+   *     == {BridgeReward}.latestRewardedPeriod + 1
+   * ```
+   */
   function initializeV2() external reinitializer(2) {
     $_MAX_REWARDING_PERIOD_COUNT.store(5);
     $_LATEST_REWARDED_PERIOD.store(getLatestRewardedPeriod() - 1);
@@ -94,7 +107,7 @@ contract BridgeReward is IBridgeReward, BridgeTrackingHelper, HasContracts, RONT
   }
 
   /**
-   * @dev Sync bridge reward for multiple periods, always assert `latestRewardedPeriod + periodCount <= currentPeriod`.
+   * @dev Sync bridge reward for multiple periods, always assert `latestRewardedPeriod + periodCount < currentPeriod`.
    * @param pdCount Number of periods to settle reward. Leave this as 0 to auto calculate.
    */
   function _syncRewardBatch(uint256 currPd, uint256 pdCount) internal {
