@@ -12,7 +12,7 @@ import { BridgeReward } from "@ronin/contracts/ronin/gateway/BridgeReward.sol";
 import { BridgeTrackingHelper } from "@ronin/contracts/extensions/bridge-operator-governance/BridgeTrackingHelper.sol";
 import { MockBridgeManager } from "@ronin/test/mocks/MockBridgeManager.sol";
 
-import { BridgeReward_Unit_Concrete_Test } from "./BridgeReward.t.sol";
+import { BridgeReward_Unit_Concrete_Test } from "./BridgeReward_Unit_Concrete.t.sol";
 
 contract SyncRewardManual_Unit_Concrete_Test is
   BridgeReward_Unit_Concrete_Test,
