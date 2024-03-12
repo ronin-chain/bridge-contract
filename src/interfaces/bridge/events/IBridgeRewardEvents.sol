@@ -30,6 +30,7 @@ interface IBridgeRewardEvents {
   /// @dev Event emitted when the requesting period to sync  is too far.
   event BridgeRewardSyncTooFarPeriod(uint256 requestingPeriod, uint256 latestPeriod);
 
-  error ErrPeriodNotHappen(bytes4 msgSig, uint256 currentPeriod, uint256 latestRewardedPeriod, uint256 periodCount);
-  error ErrPeriodAlreadyRewarded(bytes4 msgSig, uint256 currentPeriod, uint256 latestRewardedPeriod);
+  error ErrPeriodNotHappen(uint256 currentPeriod, uint256 latestRewardedPeriod, uint256 periodCount);
+  error ErrPeriodAlreadyRewarded(uint256 currentPeriod, uint256 latestRewardedPeriod);
+  error ErrPeriodCountIsZero();
 }
