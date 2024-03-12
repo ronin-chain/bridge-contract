@@ -36,7 +36,7 @@ contract MockBridgeSlash is IBridgeSlash {
   }
 
   function cheat_setSlash(address[] calldata operators, uint256[] calldata untilPeriods) external {
-    require(operators.length != untilPeriods.length, "invalid length");
+    require(operators.length == untilPeriods.length, "invalid length");
 
     for (uint i; i < operators.length; i++) {
       _slashMap[operators[i]] = untilPeriods[i];

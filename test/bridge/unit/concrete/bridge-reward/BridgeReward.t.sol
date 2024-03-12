@@ -17,33 +17,37 @@ import { MockBridgeSlash } from "@ronin/test/mocks/MockBridgeSlash.sol";
 import { MockValidatorSet_ForFoundryTest } from "@ronin/test/mocks/MockValidatorSet_ForFoundryTest.sol";
 import { Users } from "@ronin/test/utils/Types.sol";
 
+import "@ronin/test/harness/BridgeRewardHarness.sol";
+
 contract BridgeReward_Unit_Concrete_Test is Base_Test {
-  BridgeReward internal _bridgeReward;
+  BridgeRewardHarness internal _bridgeReward;
   address internal _proxyAdmin;
   uint256 internal _rewardPerPeriod;
 
-  IBridgeTracking internal _bridgeTracking;
-  IBridgeManager internal _bridgeManager;
-  IBridgeSlash internal _bridgeSlash;
+  MockBridgeTracking internal _bridgeTracking;
+  MockBridgeManager internal _bridgeManager;
+  MockBridgeSlash internal _bridgeSlash;
   MockValidatorSet_ForFoundryTest internal _validatorSetContract;
 
   Users internal _users;
 
+  address _operator;
+  address _governor;
+  uint96 _weight;
+
   function setUp() public virtual {
     // Create users for testing.
     _users = Users({ alice: createUser("Alice") });
+    _operator = makeAddr("operator");
+    _governor = makeAddr("governor");
 
     _proxyAdmin = vm.addr(1);
     _rewardPerPeriod = 50_000;
 
-    address bridgeRewardImpl = address(new BridgeReward());
+    address bridgeRewardImpl = address(new BridgeRewardHarness());
 
     // Deploy the dependencies and mocks for testing contract
-    _bridgeReward = BridgeReward(
-      address(
-        new TransparentUpgradeableProxyV2{ value: _rewardPerPeriod * 1_000_000 }(bridgeRewardImpl, _proxyAdmin, "")
-      )
-    );
+    _bridgeReward = BridgeRewardHarness(address(new TransparentUpgradeableProxyV2{ value: _rewardPerPeriod * 1_000_000 }(bridgeRewardImpl, _proxyAdmin, "")));
     _bridgeTracking = new MockBridgeTracking();
     _bridgeManager = new MockBridgeManager();
     _bridgeSlash = new MockBridgeSlash();
@@ -63,6 +67,7 @@ contract BridgeReward_Unit_Concrete_Test is Base_Test {
 
     vm.prank(makeAccount("dposGA").addr);
     _bridgeReward.initializeREP2();
+    _bridgeReward.initializeV2();
 
     // Label the base test contracts.
     vm.label({ account: address(_bridgeReward), newLabel: "Bridge Reward" });
@@ -78,5 +83,26 @@ contract BridgeReward_Unit_Concrete_Test is Base_Test {
     address payable user = payable(makeAddr(name));
     vm.deal({ account: user, newBalance: 100 ether });
     return user;
+  }
+
+  function _generateInput_shareRewardProportionally()
+    internal
+    pure
+    returns (address[] memory operators, uint256[] memory ballots, uint256 totalBallot, uint256 totalVote)
+  {
+    operators = new address[](4);
+    operators[0] = address(0x10000);
+    operators[1] = address(0x10001);
+    operators[2] = address(0x10002);
+    operators[3] = address(0x10003);
+
+    ballots = new uint256[](4);
+    ballots[0] = 10;
+    ballots[1] = 20;
+    ballots[2] = 30;
+    ballots[3] = 40;
+
+    totalBallot = 100;
+    totalVote = 40;
   }
 }
