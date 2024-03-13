@@ -172,14 +172,14 @@ library LibTokenInfo {
   /**
    * @dev Transfers ERC721 token and returns the result.
    */
-  function tryTransferERC721(address token, address to, uint256 id) internal returns (bool success) {
+  function _tryTransferERC721(address token, address to, uint256 id) private returns (bool success) {
     (success,) = token.call(abi.encodeWithSelector(IERC721.transferFrom.selector, address(this), to, id));
   }
 
   /**
    * @dev Transfers ERC20 token and returns the result.
    */
-  function tryTransferERC20(address token, address to, uint256 quantity) internal returns (bool success) {
+  function _tryTransferERC20(address token, address to, uint256 quantity) private returns (bool success) {
     bytes memory data;
     (success, data) = token.call(abi.encodeWithSelector(IERC20.transfer.selector, to, quantity));
     success = success && (data.length == 0 || abi.decode(data, (bool)));
@@ -191,9 +191,9 @@ library LibTokenInfo {
   function transfer(TokenInfo memory self, address to, address token) internal {
     bool success;
     if (self.erc == TokenStandard.ERC20) {
-      success = tryTransferERC20(token, to, self.quantity);
+      success = _tryTransferERC20(token, to, self.quantity);
     } else if (self.erc == TokenStandard.ERC721) {
-      success = tryTransferERC721(token, to, self.id);
+      success = _tryTransferERC721(token, to, self.id);
     } else {
       revert ErrUnsupportedStandard();
     }
@@ -228,7 +228,7 @@ library LibTokenInfo {
 
       transfer(self, to, token);
     } else if (self.erc == TokenStandard.ERC721) {
-      if (!tryTransferERC721(token, to, self.id)) {
+      if (!_tryTransferERC721(token, to, self.id)) {
         // bytes4(keccak256("mint(address,uint256)"))
         (success,) = token.call(abi.encodeWithSelector(0x40c10f19, to, self.id));
         if (!success) revert ErrERC721MintingFailed();
