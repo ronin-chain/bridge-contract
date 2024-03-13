@@ -44,7 +44,7 @@ library LibTokenInfo {
   error ErrTokenCouldNotTransfer(TokenInfo tokenInfo, address to, address token);
 
   /**
-   * @dev Error indicating that the `transferFrom` has failed.
+   * @dev Error indicating that the `handleTransferFrom` has failed.
    * @param tokenInfo Info of the token including ERC standard, id or quantity.
    * @param from Owner of the token value.
    * @param to Receiver of the token value.
@@ -181,7 +181,7 @@ library LibTokenInfo {
    * - The `_from` address must approve for the contract using this library.
    *
    */
-  function transferFrom(TokenInfo memory self, address from, address to, address token) internal {
+  function handleTransferFrom(TokenInfo memory self, address from, address to, address token) internal {
     bool success;
     bytes memory data;
     if (self.erc == TokenStandard.ERC20) {
@@ -198,22 +198,6 @@ library LibTokenInfo {
   }
 
   /**
-   * @dev Transfer assets from current address to `_to` address.
-   */
-  function transfer(TokenInfo memory self, address to, address token) internal {
-    bool success;
-    if (self.erc == TokenStandard.ERC20) {
-      success = _tryTransferERC20(token, to, self.quantity);
-    } else if (self.erc == TokenStandard.ERC721) {
-      success = _tryTransferERC721(token, to, self.id);
-    } else {
-      revert ErrUnsupportedStandard();
-    }
-
-    if (!success) revert ErrTokenCouldNotTransfer(self, to, token);
-  }
-
-  /**
    * @dev Tries minting and transfering assets.
    *
    * @notice Prioritizes transfer native token if the token is wrapped.
@@ -222,12 +206,11 @@ library LibTokenInfo {
   function handleAssetTransfer(TokenInfo memory self, address payable to, address token, IWETH wrappedNativeToken)
     internal
   {
-    bool success;
     if (token == address(wrappedNativeToken)) {
       // Try sending the native token before transferring the wrapped token
       if (!to.send(self.quantity)) {
         wrappedNativeToken.deposit{ value: self.quantity }();
-        transfer(self, to, token);
+        _transfer(self, to, token);
       }
     } else if (self.erc == TokenStandard.ERC20) {
       uint256 _balance = IERC20(token).balanceOf(address(this));
@@ -236,7 +219,7 @@ library LibTokenInfo {
         if (!_tryMintERC20(token, address(this), self.quantity - _balance)) revert ErrERC20MintingFailed();
       }
 
-      transfer(self, to, token);
+      _transfer(self, to, token);
     } else if (self.erc == TokenStandard.ERC721) {
       if (!_tryTransferERC721(token, to, self.id)) {
         if (!_tryMintERC721(token, to, self.id)) revert ErrERC721MintingFailed();
@@ -251,6 +234,22 @@ library LibTokenInfo {
    *      TRANSFER HELPERS
    *
    */
+
+  /**
+   * @dev Transfer assets from current address to `_to` address.
+   */
+  function _transfer(TokenInfo memory self, address to, address token) private {
+    bool success;
+    if (self.erc == TokenStandard.ERC20) {
+      success = _tryTransferERC20(token, to, self.quantity);
+    } else if (self.erc == TokenStandard.ERC721) {
+      success = _tryTransferERC721(token, to, self.id);
+    } else {
+      revert ErrUnsupportedStandard();
+    }
+
+    if (!success) revert ErrTokenCouldNotTransfer(self, to, token);
+  }
 
   /**
    * @dev Transfers ERC20 token and returns the result.

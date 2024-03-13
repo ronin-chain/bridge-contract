@@ -359,7 +359,7 @@ contract MainchainGatewayV3 is
       _token = getRoninToken(_request.tokenAddr);
       if (_token.erc != _request.info.erc) revert ErrInvalidTokenStandard();
 
-      _request.info.transferFrom(_requester, address(this), _request.tokenAddr);
+      _request.info.handleTransferFrom(_requester, address(this), _request.tokenAddr);
       // Withdraw if token is WETH
       if (_roninWeth == _request.tokenAddr) {
         IWETH(_roninWeth).withdraw(_request.info.quantity);
