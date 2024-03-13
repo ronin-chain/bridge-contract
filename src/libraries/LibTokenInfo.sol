@@ -56,6 +56,25 @@ library LibTokenInfo {
   bytes32 public constant INFO_TYPE_HASH = 0x1e2b74b2a792d5c0f0b6e59b037fa9d43d84fbb759337f0112fcc15ca414fc8d;
 
   /**
+   *
+   *        ROUTER
+   *
+   */
+  function _isStandardSingle(TokenStandard standard) private pure returns (bool) {
+    return standard == TokenStandard.ERC20 || standard == TokenStandard.ERC721;
+  }
+
+  function _isStandardBatch(TokenStandard standard) private pure returns (bool) {
+    return standard == TokenStandard.ERC721Batch || standard == TokenStandard.ERC1155;
+  }
+
+  /**
+   *
+   *        HASH
+   *
+   */
+
+  /**
    * @dev Returns token info struct hash.
    */
   function hash(TokenInfo memory self) internal pure returns (bytes32 digest) {
