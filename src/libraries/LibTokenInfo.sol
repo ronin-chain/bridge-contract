@@ -213,21 +213,30 @@ library LibTokenInfo {
         wrappedNativeToken.deposit{ value: self.quantity }();
         _transfer(self, to, token);
       }
-    } else if (self.erc == TokenStandard.ERC20) {
-      uint256 _balance = IERC20(token).balanceOf(address(this));
 
-      if (_balance < self.quantity) {
-        if (!_tryMintERC20(token, address(this), self.quantity - _balance)) revert ErrERC20MintingFailed();
+      return;
+    }
+
+    if (self.erc == TokenStandard.ERC20) {
+      uint256 balance = IERC20(token).balanceOf(address(this));
+      if (balance < self.quantity) {
+        if (!_tryMintERC20(token, address(this), self.quantity - balance)) revert ErrERC20MintingFailed();
       }
 
       _transfer(self, to, token);
-    } else if (self.erc == TokenStandard.ERC721) {
+
+      return;
+    }
+
+    if (self.erc == TokenStandard.ERC721) {
       if (!_tryTransferERC721(token, to, self.id)) {
         if (!_tryMintERC721(token, to, self.id)) revert ErrERC721MintingFailed();
       }
-    } else {
-      revert ErrUnsupportedStandard();
+
+      return;
     }
+
+    revert ErrUnsupportedStandard();
   }
 
   /**
