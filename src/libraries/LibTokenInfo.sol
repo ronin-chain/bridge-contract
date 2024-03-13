@@ -195,8 +195,7 @@ library LibTokenInfo {
         token.call(abi.encodeWithSelector(IERC20.transferFrom.selector, from, address(this), self.quantity));
       success = success && (data.length == 0 || abi.decode(data, (bool)));
     } else if (self.erc == TokenStandard.ERC721) {
-      // bytes4(keccak256("transferFrom(address,address,uint256)"))
-      (success,) = token.call(abi.encodeWithSelector(0x23b872dd, from, address(this), self.id));
+      success = _tryTransferFromERC721(token, from, address(this), self.id);
     } else if (self.erc == TokenStandard.ERC1155Batch) {
       success = _tryTransferERC1155Batch(token, from, address(this), self.ids, self.quantities);
     } else {
