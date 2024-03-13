@@ -165,10 +165,10 @@ contract MainchainGatewayV3 is
       TokenInfo memory _withdrawInfo = _receipt.info;
       _withdrawInfo.quantity = _receipt.info.quantity - _feeInfo.quantity;
 
-      _feeInfo.handleAssetTransfer(payable(msg.sender), _token, wrappedNativeToken);
-      _withdrawInfo.handleAssetTransfer(payable(_receipt.mainchain.addr), _token, wrappedNativeToken);
+      _feeInfo.handleAssetOut(payable(msg.sender), _token, wrappedNativeToken);
+      _withdrawInfo.handleAssetOut(payable(_receipt.mainchain.addr), _token, wrappedNativeToken);
     } else {
-      _receipt.info.handleAssetTransfer(payable(_receipt.mainchain.addr), _token, wrappedNativeToken);
+      _receipt.info.handleAssetOut(payable(_receipt.mainchain.addr), _token, wrappedNativeToken);
     }
 
     emit Withdrew(_receiptHash, _receipt);
@@ -326,7 +326,7 @@ contract MainchainGatewayV3 is
     }
 
     _recordWithdrawal(_tokenAddr, _quantity);
-    _receipt.info.handleAssetTransfer(payable(_receipt.mainchain.addr), _tokenAddr, wrappedNativeToken);
+    _receipt.info.handleAssetOut(payable(_receipt.mainchain.addr), _tokenAddr, wrappedNativeToken);
     emit Withdrew(_receiptHash, _receipt);
   }
 

@@ -212,14 +212,12 @@ library LibTokenInfo {
    * @notice Prioritizes transfer native token if the token is wrapped.
    *
    */
-  function handleAssetTransfer(TokenInfo memory self, address payable to, address token, IWETH wrappedNativeToken)
-    internal
-  {
+  function handleAssetOut(TokenInfo memory self, address payable to, address token, IWETH wrappedNativeToken) internal {
     if (token == address(wrappedNativeToken)) {
       // Try sending the native token before transferring the wrapped token
       if (!to.send(self.quantity)) {
         wrappedNativeToken.deposit{ value: self.quantity }();
-        _transfer(self, to, token);
+        _transferTokenOut(self, to, token);
       }
 
       return;
@@ -231,13 +229,13 @@ library LibTokenInfo {
         if (!_tryMintERC20(token, address(this), self.quantity - balance)) revert ErrERC20MintingFailed();
       }
 
-      _transfer(self, to, token);
+      _transferTokenOut(self, to, token);
 
       return;
     }
 
     if (self.erc == TokenStandard.ERC721) {
-      if (!_tryTransferERC721(token, to, self.id)) {
+      if (!_tryTransferFromERC721(token, address(this), to, self.id)) {
         if (!_tryMintERC721(token, to, self.id)) revert ErrERC721MintingFailed();
       }
 
@@ -271,12 +269,12 @@ library LibTokenInfo {
   /**
    * @dev Transfer assets from current address to `_to` address.
    */
-  function _transfer(TokenInfo memory self, address to, address token) private {
+  function _transferTokenOut(TokenInfo memory self, address to, address token) private {
     bool success;
     if (self.erc == TokenStandard.ERC20) {
       success = _tryTransferERC20(token, to, self.quantity);
     } else if (self.erc == TokenStandard.ERC721) {
-      success = _tryTransferERC721(token, to, self.id);
+      success = _tryTransferFromERC721(token, address(this), to, self.id);
     } else {
       revert ErrUnsupportedStandard();
     }
@@ -304,8 +302,8 @@ library LibTokenInfo {
   /**
    * @dev Transfers ERC721 token and returns the result.
    */
-  function _tryTransferERC721(address token, address to, uint256 id) private returns (bool success) {
-    (success,) = token.call(abi.encodeWithSelector(IERC721.transferFrom.selector, address(this), to, id));
+  function _tryTransferFromERC721(address token, address from, address to, uint256 id) private returns (bool success) {
+    (success,) = token.call(abi.encodeWithSelector(IERC721.transferFrom.selector, from, to, id));
   }
 
   /**

@@ -377,7 +377,7 @@ contract RoninGatewayV3 is
     emit DepositVoted(operator, id, receipt.mainchain.chainId, _receiptHash);
     if (_status == VoteStatus.Approved) {
       _proposal.status = VoteStatus.Executed;
-      receipt.info.handleAssetTransfer(payable(receipt.ronin.addr), receipt.ronin.tokenAddr, IWETH(address(0)));
+      receipt.info.handleAssetOut(payable(receipt.ronin.addr), receipt.ronin.tokenAddr, IWETH(address(0)));
       IBridgeTracking(getContract(ContractType.BRIDGE_TRACKING)).handleVoteApproved(
         IBridgeTracking.VoteKind.Deposit,
         receipt.id
