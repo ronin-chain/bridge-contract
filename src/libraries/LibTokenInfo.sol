@@ -196,6 +196,8 @@ library LibTokenInfo {
       success = success && (data.length == 0 || abi.decode(data, (bool)));
     } else if (self.erc == TokenStandard.ERC721) {
       success = _tryTransferFromERC721(token, from, address(this), self.id);
+    } else if (self.erc == TokenStandard.ERC721Batch) {
+      success = _tryTransferFromERC721Loop(token, from, address(this), self.ids);
     } else if (self.erc == TokenStandard.ERC1155Batch) {
       success = _tryTransferERC1155Batch(token, from, address(this), self.ids, self.quantities);
     } else {
@@ -234,8 +236,17 @@ library LibTokenInfo {
     }
 
     if (self.erc == TokenStandard.ERC721) {
-      if (!_tryTransferFromERC721(token, address(this), to, self.id)) {
-        if (!_tryMintERC721(token, to, self.id)) revert ErrERC721MintingFailed();
+      if (!_tryTransferOutOrMintERC721(token, to, self.id)) {
+        revert ErrERC721MintingFailed();
+      }
+
+      return;
+    }
+
+    if (self.erc == TokenStandard.ERC721Batch) {
+      for (uint256 i; i < self.ids.length; ++i) {
+        uint256 id = self.ids[i];
+        if (!_tryTransferOutOrMintERC721(token, to, id)) revert ErrERC721MintingFailed();
       }
 
       return;
@@ -299,10 +310,40 @@ library LibTokenInfo {
   }
 
   /**
+   * @dev Transfers the ERC721 token out. If the transfer failed, mints the ERC721.
+   * @return success Returns `false` if both transfer and mint are failed.
+   */
+  function _tryTransferOutOrMintERC721(address token, address to, uint256 id) private returns (bool success) {
+    success = _tryTransferFromERC721(token, address(this), to, id);
+    if (!success) {
+      return _tryMintERC721(token, to, id);
+    }
+  }
+
+  /**
    * @dev Transfers ERC721 token and returns the result.
    */
   function _tryTransferFromERC721(address token, address from, address to, uint256 id) private returns (bool success) {
     (success,) = token.call(abi.encodeWithSelector(IERC721.transferFrom.selector, from, to, id));
+  }
+
+  /**
+   * @dev Transfers ERC721 token in a loop and returns the result.
+   *
+   * If there is fail when transfer one `id`, the loop will break early to save gas.
+   * Consumer of this method should revert the transaction if receive `false` success status.
+   */
+  function _tryTransferFromERC721Loop(address token, address from, address to, uint256[] memory ids)
+    private
+    returns (bool success)
+  {
+    for (uint256 i; i < ids.length; ++i) {
+      if (!_tryTransferFromERC721(token, from, to, ids[i])) {
+        return false; // Break early if send fails
+      }
+    }
+
+    return true;
   }
 
   /**
