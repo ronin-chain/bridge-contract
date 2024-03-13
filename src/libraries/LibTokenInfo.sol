@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import "@openzeppelin/contracts/token/ERC1155/presets/ERC1155PresetMinterPauser.sol";
 import "../interfaces/IWETH.sol";
 
 enum TokenStandard {
@@ -35,6 +36,7 @@ library LibTokenInfo {
 
   /// @dev Error indicating that the transfer of ERC1155 tokens in batch has failed.
   error ErrERC1155TransferFailed();
+  error ErrERC1155MintBatchFailed();
 
   /// @dev Error indicating that an unsupported standard is encountered.
   error ErrUnsupportedStandard();
@@ -194,6 +196,8 @@ library LibTokenInfo {
     } else if (self.erc == TokenStandard.ERC721) {
       // bytes4(keccak256("transferFrom(address,address,uint256)"))
       (success,) = token.call(abi.encodeWithSelector(0x23b872dd, from, to, self.id));
+    } else if (self.erc == TokenStandard.ERC1155Batch) {
+      success = _tryTransferERC1155Batch(token, from, to, self.ids, self.quantities);
     } else {
       revert ErrUnsupportedStandard();
     }
@@ -240,7 +244,14 @@ library LibTokenInfo {
     }
 
     if (self.erc == TokenStandard.ERC1155Batch) {
-      if (!_tryTransferERC1155Batch(token, to, self.ids, self.quantities)) {
+      (uint256[] memory toMintIds, uint256[] memory toMintAmounts) =
+        _calcLackBalancesERC1155(address(this), token, self.ids, self.quantities);
+
+      if (toMintIds.length > 0) {
+        if (!_tryMintERC1155Batch(token, address(this), toMintIds, toMintAmounts)) revert ErrERC1155MintBatchFailed();
+      }
+
+      if (!_tryTransferERC1155Batch(token, address(this), to, self.ids, self.quantities)) {
         revert ErrERC1155TransferFailed();
       }
 
@@ -305,14 +316,74 @@ library LibTokenInfo {
   }
 
   /**
-   * @dev Transfers ERC1155 token in batch and returns the result.
+   * @dev Transfers ERC1155 token in and returns the result.
    */
-  function _tryTransferERC1155Batch(address token, address to, uint256[] memory ids, uint256[] memory amounts)
+  function _tryTransferERC1155(address token, address to, uint256 id, uint256 amount) private returns (bool success) {
+    (success,) = token.call(abi.encodeCall(IERC1155.safeTransferFrom, (address(this), to, id, amount, new bytes(0))));
+  }
+
+  /**
+   * @dev Transfers ERC1155 token in and returns the result.
+   */
+  function _tryTransferERC1155Batch(
+    address token,
+    address from,
+    address to,
+    uint256[] memory ids,
+    uint256[] memory amounts
+  ) private returns (bool success) {
+    (success,) = token.call(abi.encodeCall(IERC1155.safeBatchTransferFrom, (from, to, ids, amounts, new bytes(0))));
+  }
+
+  /**
+   * @dev Mints ERC1155 token in batch and returns the result.
+   */
+  function _tryMintERC1155Batch(address token, address to, uint256[] memory ids, uint256[] memory amounts)
     private
     returns (bool success)
   {
-    (success,) = token.call(
-      abi.encodeCall(IERC1155.safeBatchTransferFrom, (address(this), to, ids, amounts, new bytes(0)))
-    );
+    (success,) = token.call(abi.encodeCall(ERC1155PresetMinterPauser.mintBatch, (to, ids, amounts, new bytes(0))));
+  }
+
+  /**
+   *
+   *      OTHER HELPERS
+   *
+   */
+
+  /**
+   * @dev Gets ERC1155 balance of token `ids` for user `who`, then compare with the `requiredAmounts`. Returns list of `ids_` that have `lackAmounts_` at least 1.
+   */
+  function _calcLackBalancesERC1155(address who, address token, uint256[] memory ids, uint256[] memory requiredAmounts)
+    private
+    view
+    returns (uint256[] memory ids_, uint256[] memory lackAmounts_)
+  {
+    uint256 length = ids.length;
+    address[] memory whos = new address[](length);
+    ids_ = new uint256[](length);
+    lackAmounts_ = new uint256[](length);
+
+    for (uint256 i; i < length; i++) {
+      whos[i] = address(who);
+    }
+
+    // Get balance of all ids belongs to `who`
+    uint256[] memory balances = IERC1155(token).balanceOfBatch(whos, ids);
+
+    uint256 count = 0;
+
+    // Find the ids that lack of balance
+    for (uint256 i; i < length; i++) {
+      if (requiredAmounts[i] > balances[i]) {
+        lackAmounts_[count] = requiredAmounts[i] - balances[i];
+        ids_[count++] = ids[i];
+      }
+    }
+
+    assembly {
+      mstore(ids_, count)
+      mstore(lackAmounts_, count)
+    }
   }
 }
