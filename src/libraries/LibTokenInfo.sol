@@ -233,17 +233,13 @@ library LibTokenInfo {
       uint256 _balance = IERC20(token).balanceOf(address(this));
 
       if (_balance < self.quantity) {
-        // bytes4(keccak256("mint(address,uint256)"))
-        (success,) = token.call(abi.encodeWithSelector(0x40c10f19, address(this), self.quantity - _balance));
-        if (!success) revert ErrERC20MintingFailed();
+        if (!_tryMintERC20(token, address(this), self.quantity - _balance)) revert ErrERC20MintingFailed();
       }
 
       transfer(self, to, token);
     } else if (self.erc == TokenStandard.ERC721) {
       if (!_tryTransferERC721(token, to, self.id)) {
-        // bytes4(keccak256("mint(address,uint256)"))
-        (success,) = token.call(abi.encodeWithSelector(0x40c10f19, to, self.id));
-        if (!success) revert ErrERC721MintingFailed();
+        if (!_tryMintERC721(token, to, self.id)) revert ErrERC721MintingFailed();
       }
     } else {
       revert ErrUnsupportedStandard();
@@ -257,6 +253,23 @@ library LibTokenInfo {
    */
 
   /**
+   * @dev Transfers ERC20 token and returns the result.
+   */
+  function _tryTransferERC20(address token, address to, uint256 quantity) private returns (bool success) {
+    bytes memory data;
+    (success, data) = token.call(abi.encodeWithSelector(IERC20.transfer.selector, to, quantity));
+    success = success && (data.length == 0 || abi.decode(data, (bool)));
+  }
+
+  /**
+   * @dev Mints ERC20 token and returns the result.
+   */
+  function _tryMintERC20(address token, address to, uint256 quantity) private returns (bool success) {
+    // bytes4(keccak256("mint(address,uint256)"))
+    (success,) = token.call(abi.encodeWithSelector(0x40c10f19, to, quantity));
+  }
+
+  /**
    * @dev Transfers ERC721 token and returns the result.
    */
   function _tryTransferERC721(address token, address to, uint256 id) private returns (bool success) {
@@ -264,11 +277,10 @@ library LibTokenInfo {
   }
 
   /**
-   * @dev Transfers ERC20 token and returns the result.
+   * @dev Mints ERC721 token and returns the result.
    */
-  function _tryTransferERC20(address token, address to, uint256 quantity) private returns (bool success) {
-    bytes memory data;
-    (success, data) = token.call(abi.encodeWithSelector(IERC20.transfer.selector, to, quantity));
-    success = success && (data.length == 0 || abi.decode(data, (bool)));
+  function _tryMintERC721(address token, address to, uint256 id) private returns (bool success) {
+    // bytes4(keccak256("mint(address,uint256)"))
+    (success,) = token.call(abi.encodeWithSelector(0x40c10f19, to, id));
   }
 }
