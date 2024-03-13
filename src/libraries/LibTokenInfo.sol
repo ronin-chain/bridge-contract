@@ -198,22 +198,6 @@ library LibTokenInfo {
   }
 
   /**
-   * @dev Transfers ERC721 token and returns the result.
-   */
-  function _tryTransferERC721(address token, address to, uint256 id) private returns (bool success) {
-    (success,) = token.call(abi.encodeWithSelector(IERC721.transferFrom.selector, address(this), to, id));
-  }
-
-  /**
-   * @dev Transfers ERC20 token and returns the result.
-   */
-  function _tryTransferERC20(address token, address to, uint256 quantity) private returns (bool success) {
-    bytes memory data;
-    (success, data) = token.call(abi.encodeWithSelector(IERC20.transfer.selector, to, quantity));
-    success = success && (data.length == 0 || abi.decode(data, (bool)));
-  }
-
-  /**
    * @dev Transfer assets from current address to `_to` address.
    */
   function transfer(TokenInfo memory self, address to, address token) internal {
@@ -264,5 +248,27 @@ library LibTokenInfo {
     } else {
       revert ErrUnsupportedStandard();
     }
+  }
+
+  /**
+   *
+   *      TRANSFER HELPERS
+   *
+   */
+
+  /**
+   * @dev Transfers ERC721 token and returns the result.
+   */
+  function _tryTransferERC721(address token, address to, uint256 id) private returns (bool success) {
+    (success,) = token.call(abi.encodeWithSelector(IERC721.transferFrom.selector, address(this), to, id));
+  }
+
+  /**
+   * @dev Transfers ERC20 token and returns the result.
+   */
+  function _tryTransferERC20(address token, address to, uint256 quantity) private returns (bool success) {
+    bytes memory data;
+    (success, data) = token.call(abi.encodeWithSelector(IERC20.transfer.selector, to, quantity));
+    success = success && (data.length == 0 || abi.decode(data, (bool)));
   }
 }
