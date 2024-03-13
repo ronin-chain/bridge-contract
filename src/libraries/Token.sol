@@ -54,14 +54,14 @@ library Token {
   /**
    * @dev Returns token info struct hash.
    */
-  function hash(Info memory _info) internal pure returns (bytes32 digest) {
+  function hash(Info memory self) internal pure returns (bytes32 digest) {
     // keccak256(abi.encode(INFO_TYPE_HASH, _info.erc, _info.id, _info.quantity))
     assembly {
       let ptr := mload(0x40)
       mstore(ptr, INFO_TYPE_HASH)
-      mstore(add(ptr, 0x20), mload(_info)) // _info.erc
-      mstore(add(ptr, 0x40), mload(add(_info, 0x20))) // _info.id
-      mstore(add(ptr, 0x60), mload(add(_info, 0x40))) // _info.quantity
+      mstore(add(ptr, 0x20), mload(self)) // _info.erc
+      mstore(add(ptr, 0x40), mload(add(self, 0x20))) // _info.id
+      mstore(add(ptr, 0x60), mload(add(self, 0x40))) // _info.quantity
       digest := keccak256(ptr, 0x80)
     }
   }
@@ -69,11 +69,11 @@ library Token {
   /**
    * @dev Validates the token info.
    */
-  function validate(Info memory _info) internal pure {
+  function validate(Info memory self) internal pure {
     if (
       !(
-        (_info.erc == Standard.ERC20 && _info.quantity > 0 && _info.id == 0)
-          || (_info.erc == Standard.ERC721 && _info.quantity == 0)
+        (self.erc == Standard.ERC20 && self.quantity > 0 && self.id == 0)
+          || (self.erc == Standard.ERC721 && self.quantity == 0)
       )
     ) revert ErrInvalidInfo();
   }
@@ -85,52 +85,52 @@ library Token {
    * - The `_from` address must approve for the contract using this library.
    *
    */
-  function transferFrom(Info memory _info, address _from, address _to, address _token) internal {
-    bool _success;
-    bytes memory _data;
-    if (_info.erc == Standard.ERC20) {
-      (_success, _data) = _token.call(abi.encodeWithSelector(IERC20.transferFrom.selector, _from, _to, _info.quantity));
-      _success = _success && (_data.length == 0 || abi.decode(_data, (bool)));
-    } else if (_info.erc == Standard.ERC721) {
+  function transferFrom(Info memory self, address from, address to, address token) internal {
+    bool success;
+    bytes memory data;
+    if (self.erc == Standard.ERC20) {
+      (success, data) = token.call(abi.encodeWithSelector(IERC20.transferFrom.selector, from, to, self.quantity));
+      success = success && (data.length == 0 || abi.decode(data, (bool)));
+    } else if (self.erc == Standard.ERC721) {
       // bytes4(keccak256("transferFrom(address,address,uint256)"))
-      (_success,) = _token.call(abi.encodeWithSelector(0x23b872dd, _from, _to, _info.id));
+      (success,) = token.call(abi.encodeWithSelector(0x23b872dd, from, to, self.id));
     } else {
       revert ErrUnsupportedStandard();
     }
 
-    if (!_success) revert ErrTokenCouldNotTransferFrom(_info, _from, _to, _token);
+    if (!success) revert ErrTokenCouldNotTransferFrom(self, from, to, token);
   }
 
   /**
    * @dev Transfers ERC721 token and returns the result.
    */
-  function tryTransferERC721(address _token, address _to, uint256 _id) internal returns (bool _success) {
-    (_success,) = _token.call(abi.encodeWithSelector(IERC721.transferFrom.selector, address(this), _to, _id));
+  function tryTransferERC721(address token, address to, uint256 id) internal returns (bool success) {
+    (success,) = token.call(abi.encodeWithSelector(IERC721.transferFrom.selector, address(this), to, id));
   }
 
   /**
    * @dev Transfers ERC20 token and returns the result.
    */
-  function tryTransferERC20(address _token, address _to, uint256 _quantity) internal returns (bool _success) {
-    bytes memory _data;
-    (_success, _data) = _token.call(abi.encodeWithSelector(IERC20.transfer.selector, _to, _quantity));
-    _success = _success && (_data.length == 0 || abi.decode(_data, (bool)));
+  function tryTransferERC20(address token, address to, uint256 quantity) internal returns (bool success) {
+    bytes memory data;
+    (success, data) = token.call(abi.encodeWithSelector(IERC20.transfer.selector, to, quantity));
+    success = success && (data.length == 0 || abi.decode(data, (bool)));
   }
 
   /**
    * @dev Transfer assets from current address to `_to` address.
    */
-  function transfer(Info memory _info, address _to, address _token) internal {
-    bool _success;
-    if (_info.erc == Standard.ERC20) {
-      _success = tryTransferERC20(_token, _to, _info.quantity);
-    } else if (_info.erc == Standard.ERC721) {
-      _success = tryTransferERC721(_token, _to, _info.id);
+  function transfer(Info memory self, address to, address token) internal {
+    bool success;
+    if (self.erc == Standard.ERC20) {
+      success = tryTransferERC20(token, to, self.quantity);
+    } else if (self.erc == Standard.ERC721) {
+      success = tryTransferERC721(token, to, self.id);
     } else {
       revert ErrUnsupportedStandard();
     }
 
-    if (!_success) revert ErrTokenCouldNotTransfer(_info, _to, _token);
+    if (!success) revert ErrTokenCouldNotTransfer(self, to, token);
   }
 
   /**
@@ -139,31 +139,31 @@ library Token {
    * @notice Prioritizes transfer native token if the token is wrapped.
    *
    */
-  function handleAssetTransfer(Info memory _info, address payable _to, address _token, IWETH _wrappedNativeToken)
+  function handleAssetTransfer(Info memory self, address payable to, address token, IWETH wrappedNativeToken)
     internal
   {
-    bool _success;
-    if (_token == address(_wrappedNativeToken)) {
+    bool success;
+    if (token == address(wrappedNativeToken)) {
       // Try sending the native token before transferring the wrapped token
-      if (!_to.send(_info.quantity)) {
-        _wrappedNativeToken.deposit{ value: _info.quantity }();
-        transfer(_info, _to, _token);
+      if (!to.send(self.quantity)) {
+        wrappedNativeToken.deposit{ value: self.quantity }();
+        transfer(self, to, token);
       }
-    } else if (_info.erc == Token.Standard.ERC20) {
-      uint256 _balance = IERC20(_token).balanceOf(address(this));
+    } else if (self.erc == Token.Standard.ERC20) {
+      uint256 _balance = IERC20(token).balanceOf(address(this));
 
-      if (_balance < _info.quantity) {
+      if (_balance < self.quantity) {
         // bytes4(keccak256("mint(address,uint256)"))
-        (_success,) = _token.call(abi.encodeWithSelector(0x40c10f19, address(this), _info.quantity - _balance));
-        if (!_success) revert ErrERC20MintingFailed();
+        (success,) = token.call(abi.encodeWithSelector(0x40c10f19, address(this), self.quantity - _balance));
+        if (!success) revert ErrERC20MintingFailed();
       }
 
-      transfer(_info, _to, _token);
-    } else if (_info.erc == Token.Standard.ERC721) {
-      if (!tryTransferERC721(_token, _to, _info.id)) {
+      transfer(self, to, token);
+    } else if (self.erc == Token.Standard.ERC721) {
+      if (!tryTransferERC721(token, to, self.id)) {
         // bytes4(keccak256("mint(address,uint256)"))
-        (_success,) = _token.call(abi.encodeWithSelector(0x40c10f19, _to, _info.id));
-        if (!_success) revert ErrERC721MintingFailed();
+        (success,) = token.call(abi.encodeWithSelector(0x40c10f19, to, self.id));
+        if (!success) revert ErrERC721MintingFailed();
       }
     } else {
       revert ErrUnsupportedStandard();
@@ -182,14 +182,14 @@ library Token {
   /**
    * @dev Returns ownership struct hash.
    */
-  function hash(Owner memory _owner) internal pure returns (bytes32 digest) {
+  function hash(Owner memory owner) internal pure returns (bytes32 digest) {
     // keccak256(abi.encode(OWNER_TYPE_HASH, _owner.addr, _owner.tokenAddr, _owner.chainId))
     assembly {
       let ptr := mload(0x40)
       mstore(ptr, OWNER_TYPE_HASH)
-      mstore(add(ptr, 0x20), mload(_owner)) // _owner.addr
-      mstore(add(ptr, 0x40), mload(add(_owner, 0x20))) // _owner.tokenAddr
-      mstore(add(ptr, 0x60), mload(add(_owner, 0x40))) // _owner.chainId
+      mstore(add(ptr, 0x20), mload(owner)) // _owner.addr
+      mstore(add(ptr, 0x40), mload(add(owner, 0x20))) // _owner.tokenAddr
+      mstore(add(ptr, 0x60), mload(add(owner, 0x40))) // _owner.chainId
       digest := keccak256(ptr, 0x80)
     }
   }
