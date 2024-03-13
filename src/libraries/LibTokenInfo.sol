@@ -52,9 +52,6 @@ library LibTokenInfo {
    */
   error ErrTokenCouldNotTransferFrom(TokenInfo tokenInfo, address from, address to, address token);
 
-  // keccak256("TokenInfo(uint8 erc,uint256 id,uint256 quantity)");
-  bytes32 public constant INFO_TYPE_HASH = 0x1e2b74b2a792d5c0f0b6e59b037fa9d43d84fbb759337f0112fcc15ca414fc8d;
-
   /**
    *
    *        ROUTER
@@ -74,17 +71,48 @@ library LibTokenInfo {
    *
    */
 
+  // keccak256("TokenInfo(uint8 erc,uint256 id,uint256 quantity)");
+  bytes32 public constant INFO_TYPE_HASH_SINGLE = 0x1e2b74b2a792d5c0f0b6e59b037fa9d43d84fbb759337f0112fcc15ca414fc8d;
+
+  // keccak256("TokenInfo(uint8 erc,uint256[] id,uint256[] quantity)");
+  bytes32 public constant INFO_TYPE_HASH_BATCH = 0xe0d9a8bb18cfc29aa6e46b1293275ca79aeaaf28ac63b66dcb6ebce2f127f5a0;
+
   /**
    * @dev Returns token info struct hash.
    */
   function hash(TokenInfo memory self) internal pure returns (bytes32 digest) {
-    // keccak256(abi.encode(INFO_TYPE_HASH, _info.erc, _info.id, _info.quantity))
+    if (_isStandardSingle(self.erc)) return _hashSingle(self);
+    if (_isStandardBatch(self.erc)) return _hashBatch(self);
+    revert ErrUnsupportedStandard();
+  }
+
+  function _hashSingle(TokenInfo memory self) internal pure returns (bytes32 digest) {
+    // keccak256(abi.encode(INFO_TYPE_HASH_SINGLE, info.erc, info.id, info.quantity))
     assembly {
       let ptr := mload(0x40)
-      mstore(ptr, INFO_TYPE_HASH)
-      mstore(add(ptr, 0x20), mload(self)) // _info.erc
-      mstore(add(ptr, 0x40), mload(add(self, 0x20))) // _info.id
-      mstore(add(ptr, 0x60), mload(add(self, 0x40))) // _info.quantity
+      mstore(ptr, INFO_TYPE_HASH_SINGLE)
+      mstore(add(ptr, 0x20), mload(self)) // info.erc
+      mstore(add(ptr, 0x40), mload(add(self, 0x20))) // info.id
+      mstore(add(ptr, 0x60), mload(add(self, 0x40))) // info.quantity
+      digest := keccak256(ptr, 0x80)
+    }
+  }
+
+  function _hashBatch(TokenInfo memory self) internal pure returns (bytes32 digest) {
+    // keccak256(abi.encode(INFO_TYPE_HASH_BATCH, info.erc, info.ids, info.quantities))
+    assembly {
+      let ptr := mload(0x40)
+      mstore(ptr, INFO_TYPE_HASH_SINGLE)
+      mstore(add(ptr, 0x20), mload(self)) // info.erc
+
+      let ids := mload(add(self, 0x20)) // info.ids
+      let idsHash := keccak256(add(ids, 32), mul(mload(ids), 32)) // keccak256(info.ids)
+      mstore(add(ptr, 0x40), idsHash)
+
+      let qtys := mload(add(self, 0x40)) // info.quantities
+      let qtysHash := keccak256(add(qtys, 32), mul(mload(qtys), 32)) // keccak256(info.quantities)
+      mstore(add(ptr, 0x60), qtysHash)
+
       digest := keccak256(ptr, 0x80)
     }
   }
