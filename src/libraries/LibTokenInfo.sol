@@ -16,6 +16,8 @@ struct TokenInfo {
   // For ERC721: the quantity must be 0.
   uint256 id;
   uint256 quantity;
+  uint256[] ids;
+  uint256[] quantities;
 }
 
 library LibTokenInfo {

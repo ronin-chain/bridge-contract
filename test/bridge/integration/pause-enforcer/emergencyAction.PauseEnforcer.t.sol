@@ -30,7 +30,13 @@ contract EmergencyAction_PauseEnforcer_Test is BaseIntegration_Test {
       kind: Transfer.Kind.Deposit,
       ronin: TokenOwner({ addr: makeAddr("recipient"), tokenAddr: address(_roninWeth), chainId: block.chainid }),
       mainchain: TokenOwner({ addr: makeAddr("requester"), tokenAddr: address(_mainchainWeth), chainId: block.chainid }),
-      info: TokenInfo({ erc: TokenStandard.ERC20, id: 0, quantity: 100 })
+      info: TokenInfo({
+        erc: TokenStandard.ERC20,
+        id: 0,
+        quantity: 100,
+        ids: new uint256[](0),
+        quantities: new uint256[](0)
+      })
     });
 
     vm.expectRevert("Pausable: paused");
@@ -67,7 +73,13 @@ contract EmergencyAction_PauseEnforcer_Test is BaseIntegration_Test {
       kind: Transfer.Kind.Deposit,
       ronin: TokenOwner({ addr: makeAddr("recipient"), tokenAddr: address(_roninWeth), chainId: block.chainid }),
       mainchain: TokenOwner({ addr: makeAddr("requester"), tokenAddr: address(_mainchainWeth), chainId: block.chainid }),
-      info: TokenInfo({ erc: TokenStandard.ERC20, id: 0, quantity: 100 })
+      info: TokenInfo({
+        erc: TokenStandard.ERC20,
+        id: 0,
+        quantity: 100,
+        ids: new uint256[](0),
+        quantities: new uint256[](0)
+      })
     });
 
     uint256 numOperatorsForVoteExecuted =
