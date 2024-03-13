@@ -169,28 +169,4 @@ library Token {
       revert ErrUnsupportedStandard();
     }
   }
-
-  struct Owner {
-    address addr;
-    address tokenAddr;
-    uint256 chainId;
-  }
-
-  // keccak256("TokenOwner(address addr,address tokenAddr,uint256 chainId)");
-  bytes32 public constant OWNER_TYPE_HASH = 0x353bdd8d69b9e3185b3972e08b03845c0c14a21a390215302776a7a34b0e8764;
-
-  /**
-   * @dev Returns ownership struct hash.
-   */
-  function hash(Owner memory owner) internal pure returns (bytes32 digest) {
-    // keccak256(abi.encode(OWNER_TYPE_HASH, _owner.addr, _owner.tokenAddr, _owner.chainId))
-    assembly {
-      let ptr := mload(0x40)
-      mstore(ptr, OWNER_TYPE_HASH)
-      mstore(add(ptr, 0x20), mload(owner)) // _owner.addr
-      mstore(add(ptr, 0x40), mload(add(owner, 0x20))) // _owner.tokenAddr
-      mstore(add(ptr, 0x60), mload(add(owner, 0x40))) // _owner.chainId
-      digest := keccak256(ptr, 0x80)
-    }
-  }
 }

@@ -4,9 +4,12 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./Token.sol";
+import "./LibTokenOwner.sol";
 
 library Transfer {
   using ECDSA for bytes32;
+  using LibTokenOwner for TokenOwner;
+  using Token for Token.Info;
 
   enum Kind {
     Deposit,
@@ -68,8 +71,8 @@ library Transfer {
   struct Receipt {
     uint256 id;
     Kind kind;
-    Token.Owner mainchain;
-    Token.Owner ronin;
+    TokenOwner mainchain;
+    TokenOwner ronin;
     Token.Info info;
   }
 
@@ -80,9 +83,9 @@ library Transfer {
    * @dev Returns token info struct hash.
    */
   function hash(Receipt memory _receipt) internal pure returns (bytes32 digest) {
-    bytes32 hashedReceiptMainchain = Token.hash(_receipt.mainchain);
-    bytes32 hashedReceiptRonin = Token.hash(_receipt.ronin);
-    bytes32 hashedReceiptInfo = Token.hash(_receipt.info);
+    bytes32 hashedReceiptMainchain = _receipt.mainchain.hash();
+    bytes32 hashedReceiptRonin = _receipt.ronin.hash();
+    bytes32 hashedReceiptInfo = _receipt.info.hash();
 
     /*
      * return
