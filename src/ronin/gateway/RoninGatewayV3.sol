@@ -401,7 +401,7 @@ contract RoninGatewayV3 is
     MappedToken memory _token = getMainchainToken(_request.tokenAddr, _chainId);
     if (_request.info.erc != _token.erc) revert ErrInvalidTokenStandard();
 
-    _request.info.handleTransferFrom(_requester, address(this), _request.tokenAddr);
+    _request.info.handleAssetIn(_requester, _request.tokenAddr);
     _storeAsReceipt(_request, _chainId, _requester, _token.tokenAddr);
   }
 

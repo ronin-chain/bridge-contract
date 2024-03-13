@@ -50,7 +50,7 @@ library LibTokenInfo {
   error ErrTokenCouldNotTransfer(TokenInfo tokenInfo, address to, address token);
 
   /**
-   * @dev Error indicating that the `handleTransferFrom` has failed.
+   * @dev Error indicating that the `handleAssetIn` has failed.
    * @param tokenInfo Info of the token including ERC standard, id or quantity.
    * @param from Owner of the token value.
    * @param to Receiver of the token value.
@@ -187,22 +187,23 @@ library LibTokenInfo {
    * - The `_from` address must approve for the contract using this library.
    *
    */
-  function handleTransferFrom(TokenInfo memory self, address from, address to, address token) internal {
+  function handleAssetIn(TokenInfo memory self, address from, address token) internal {
     bool success;
     bytes memory data;
     if (self.erc == TokenStandard.ERC20) {
-      (success, data) = token.call(abi.encodeWithSelector(IERC20.transferFrom.selector, from, to, self.quantity));
+      (success, data) =
+        token.call(abi.encodeWithSelector(IERC20.transferFrom.selector, from, address(this), self.quantity));
       success = success && (data.length == 0 || abi.decode(data, (bool)));
     } else if (self.erc == TokenStandard.ERC721) {
       // bytes4(keccak256("transferFrom(address,address,uint256)"))
-      (success,) = token.call(abi.encodeWithSelector(0x23b872dd, from, to, self.id));
+      (success,) = token.call(abi.encodeWithSelector(0x23b872dd, from, address(this), self.id));
     } else if (self.erc == TokenStandard.ERC1155Batch) {
-      success = _tryTransferERC1155Batch(token, from, to, self.ids, self.quantities);
+      success = _tryTransferERC1155Batch(token, from, address(this), self.ids, self.quantities);
     } else {
       revert ErrUnsupportedStandard();
     }
 
-    if (!success) revert ErrTokenCouldNotTransferFrom(self, from, to, token);
+    if (!success) revert ErrTokenCouldNotTransferFrom(self, from, address(this), token);
   }
 
   /**
