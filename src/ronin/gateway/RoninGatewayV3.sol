@@ -24,7 +24,7 @@ contract RoninGatewayV3 is
   IRoninGatewayV3,
   HasContracts
 {
-  using Token for Token.Info;
+  using LibTokenInfo for TokenInfo;
   using Transfer for Transfer.Request;
   using Transfer for Transfer.Receipt;
   using IsolatedGovernance for IsolatedGovernance.Vote;
@@ -95,7 +95,7 @@ contract RoninGatewayV3 is
     // _packedNumbers[0]: chainIds
     // _packedNumbers[1]: minimumThresholds
     uint256[][2] calldata _packedNumbers,
-    Token.Standard[] calldata _standards
+    TokenStandard[] calldata _standards
   ) external virtual initializer {
     _setupRole(DEFAULT_ADMIN_ROLE, _roleSetter);
     _setThreshold(_numerator, _denominator);
@@ -288,7 +288,7 @@ contract RoninGatewayV3 is
     address[] calldata _roninTokens,
     address[] calldata _mainchainTokens,
     uint256[] calldata _chainIds,
-    Token.Standard[] calldata _standards
+    TokenStandard[] calldata _standards
   ) external onlyAdmin {
     if (_roninTokens.length == 0) revert ErrLengthMismatch(msg.sig);
     _mapTokens(_roninTokens, _mainchainTokens, _chainIds, _standards);
@@ -336,7 +336,7 @@ contract RoninGatewayV3 is
     address[] calldata _roninTokens,
     address[] calldata _mainchainTokens,
     uint256[] calldata _chainIds,
-    Token.Standard[] calldata _standards
+    TokenStandard[] calldata _standards
   ) internal {
     if (!(_roninTokens.length == _mainchainTokens.length && _roninTokens.length == _chainIds.length))
       revert ErrLengthMismatch(msg.sig);

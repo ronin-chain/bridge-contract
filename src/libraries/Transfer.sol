@@ -3,13 +3,13 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./Token.sol";
+import "./LibTokenInfo.sol";
 import "./LibTokenOwner.sol";
 
 library Transfer {
   using ECDSA for bytes32;
   using LibTokenOwner for TokenOwner;
-  using Token for Token.Info;
+  using LibTokenInfo for TokenInfo;
 
   enum Kind {
     Deposit,
@@ -23,7 +23,7 @@ library Transfer {
     // Token address to deposit/withdraw
     // Value 0: native token
     address tokenAddr;
-    Token.Info info;
+    TokenInfo info;
   }
 
   /**
@@ -73,7 +73,7 @@ library Transfer {
     Kind kind;
     TokenOwner mainchain;
     TokenOwner ronin;
-    Token.Info info;
+    TokenInfo info;
   }
 
   // keccak256("Receipt(uint256 id,uint8 kind,TokenOwner mainchain,TokenOwner ronin,TokenInfo info)TokenInfo(uint8 erc,uint256 id,uint256 quantity)TokenOwner(address addr,address tokenAddr,uint256 chainId)");

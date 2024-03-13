@@ -6,7 +6,7 @@ import { StdStyle } from "forge-std/StdStyle.sol";
 import { BaseMigration } from "foundry-deployment-kit/BaseMigration.s.sol";
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import { IRoninGatewayV3 } from "@ronin/contracts/interfaces/IRoninGatewayV3.sol";
-import { Token } from "@ronin/contracts/libraries/Token.sol";
+import { LibTokenInfo, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { Contract } from "../utils/Contract.sol";
 import { BridgeMigration } from "../BridgeMigration.sol";
 import { Network } from "../utils/Network.sol";
@@ -32,14 +32,14 @@ contract Migration__20231215_MapTokenRoninchain is BridgeMigration {
     mainchainTokens[0] = _aggMainchainToken;
     uint256[] memory chainIds = new uint256[](1);
     chainIds[0] = _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).chainId();
-    Token.Standard[] memory standards = new Token.Standard[](1);
-    standards[0] = Token.Standard.ERC20;
+    TokenStandard[] memory standards = new TokenStandard[](1);
+    standards[0] = TokenStandard.ERC20;
 
     // function mapTokens(
     //   address[] calldata _roninTokens,
     //   address[] calldata _mainchainTokens,
     //   uint256[] calldata chainIds,
-    //   Token.Standard[] calldata _standards
+    //   TokenStandard[] calldata _standards
     // )
     bytes memory innerData =
       abi.encodeCall(IRoninGatewayV3.mapTokens, (roninTokens, mainchainTokens, chainIds, standards));
