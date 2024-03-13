@@ -34,8 +34,10 @@ library LibTokenInfo {
   /// @dev Error indicating that the minting of ERC721 tokens has failed.
   error ErrERC721MintingFailed();
 
-  /// @dev Error indicating that the transfer of ERC1155 tokens in batch has failed.
+  /// @dev Error indicating that the transfer of ERC1155 tokens has failed.
   error ErrERC1155TransferFailed();
+
+  /// @dev Error indicating that the mint of ERC1155 tokens in batch has failed.
   error ErrERC1155MintBatchFailed();
 
   /// @dev Error indicating that an unsupported standard is encountered.
@@ -80,7 +82,7 @@ library LibTokenInfo {
   // keccak256("TokenInfo(uint8 erc,uint256 id,uint256 quantity)");
   bytes32 public constant INFO_TYPE_HASH_SINGLE = 0x1e2b74b2a792d5c0f0b6e59b037fa9d43d84fbb759337f0112fcc15ca414fc8d;
 
-  // keccak256("TokenInfo(uint8 erc,uint256[] id,uint256[] quantity)");
+  // keccak256("TokenInfo(uint8 erc,uint256[] ids,uint256[] quantities)");
   bytes32 public constant INFO_TYPE_HASH_BATCH = 0xe0d9a8bb18cfc29aa6e46b1293275ca79aeaaf28ac63b66dcb6ebce2f127f5a0;
 
   /**
@@ -176,12 +178,12 @@ library LibTokenInfo {
 
   /**
    *
-   *       TRANSFER
+   *       TRANSFER IN/OUT METHOD
    *
    */
 
   /**
-   * @dev Transfer asset from.
+   * @dev Transfer asset in.
    *
    * Requirements:
    * - The `_from` address must approve for the contract using this library.
@@ -208,7 +210,7 @@ library LibTokenInfo {
   }
 
   /**
-   * @dev Tries minting and transfering assets.
+   * @dev Tries transfer assets out, or mint the assets if cannot transfer.
    *
    * @notice Prioritizes transfer native token if the token is wrapped.
    *
