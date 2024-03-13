@@ -3,13 +3,14 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "../interfaces/IWETH.sol";
 
 enum TokenStandard {
   ERC20,
   ERC721,
   ERC721Batch,
-  ERC1155
+  ERC1155Batch
 }
 
 struct TokenInfo {
@@ -62,7 +63,7 @@ library LibTokenInfo {
   }
 
   function _isStandardBatch(TokenStandard standard) private pure returns (bool) {
-    return standard == TokenStandard.ERC721Batch || standard == TokenStandard.ERC1155;
+    return standard == TokenStandard.ERC721Batch || standard == TokenStandard.ERC1155Batch;
   }
 
   /**
@@ -127,7 +128,7 @@ library LibTokenInfo {
    * @dev Validates the token info.
    */
   function validate(TokenInfo memory self) internal pure {
-    if (!(_validateERC20(self) || _validateERC721(self)) || _validateERC721Batch(self) || _validateERC1155(self)) {
+    if (!(_validateERC20(self) || _validateERC721(self)) || _validateERC721Batch(self) || _validateERC1155Batch(self)) {
       revert ErrInvalidInfo();
     }
   }
@@ -152,9 +153,9 @@ library LibTokenInfo {
     }
   }
 
-  function _validateERC1155(TokenInfo memory self) private pure returns (bool res) {
+  function _validateERC1155Batch(TokenInfo memory self) private pure returns (bool res) {
     uint256 length = self.ids.length;
-    res = self.erc == TokenStandard.ERC1155 && _validateBatch(self);
+    res = self.erc == TokenStandard.ERC1155Batch && _validateBatch(self);
 
     for (uint256 i; i < length; ++i) {
       if (self.quantities[i] == 0) {
