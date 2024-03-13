@@ -7,7 +7,9 @@ import "../interfaces/IWETH.sol";
 
 enum TokenStandard {
   ERC20,
-  ERC721
+  ERC721,
+  ERC721Batch,
+  ERC1155
 }
 
 struct TokenInfo {
@@ -69,16 +71,61 @@ library LibTokenInfo {
   }
 
   /**
+   *
+   *         VALIDATE
+   *
+   */
+
+  /**
    * @dev Validates the token info.
    */
   function validate(TokenInfo memory self) internal pure {
-    if (
-      !(
-        (self.erc == TokenStandard.ERC20 && self.quantity > 0 && self.id == 0)
-          || (self.erc == TokenStandard.ERC721 && self.quantity == 0)
-      )
-    ) revert ErrInvalidInfo();
+    if (!(_validateERC20(self) || _validateERC721(self)) || _validateERC721Batch(self) || _validateERC1155(self)) {
+      revert ErrInvalidInfo();
+    }
   }
+
+  function _validateERC20(TokenInfo memory self) private pure returns (bool) {
+    return (self.erc == TokenStandard.ERC20 && self.quantity > 0 && self.id == 0);
+  }
+
+  function _validateERC721(TokenInfo memory self) private pure returns (bool) {
+    return (self.erc == TokenStandard.ERC721 && self.quantity == 0);
+  }
+
+  function _validateERC721Batch(TokenInfo memory self) private pure returns (bool res) {
+    uint256 length = self.ids.length;
+
+    res = self.erc == TokenStandard.ERC721Batch && _validateBatch(self);
+
+    for (uint256 i; i < length; ++i) {
+      if (self.quantities[i] != 0) {
+        return false;
+      }
+    }
+  }
+
+  function _validateERC1155(TokenInfo memory self) private pure returns (bool res) {
+    uint256 length = self.ids.length;
+    res = self.erc == TokenStandard.ERC1155 && _validateBatch(self);
+
+    for (uint256 i; i < length; ++i) {
+      if (self.quantities[i] == 0) {
+        return false;
+      }
+    }
+  }
+
+  function _validateBatch(TokenInfo memory self) private pure returns (bool res) {
+    return self.quantity == 0 && self.id == 0 && self.ids.length > 0 && self.quantities.length > 0
+      && self.ids.length == self.quantities.length;
+  }
+
+  /**
+   *
+   *       TRANSFER
+   *
+   */
 
   /**
    * @dev Transfer asset from.
