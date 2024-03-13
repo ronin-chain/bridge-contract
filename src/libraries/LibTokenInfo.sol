@@ -33,6 +33,9 @@ library LibTokenInfo {
   /// @dev Error indicating that the minting of ERC721 tokens has failed.
   error ErrERC721MintingFailed();
 
+  /// @dev Error indicating that the transfer of ERC1155 tokens in batch has failed.
+  error ErrERC1155TransferFailed();
+
   /// @dev Error indicating that an unsupported standard is encountered.
   error ErrUnsupportedStandard();
 
@@ -236,6 +239,14 @@ library LibTokenInfo {
       return;
     }
 
+    if (self.erc == TokenStandard.ERC1155Batch) {
+      if (!_tryTransferERC1155Batch(token, to, self.ids, self.quantities)) {
+        revert ErrERC1155TransferFailed();
+      }
+
+      return;
+    }
+
     revert ErrUnsupportedStandard();
   }
 
@@ -291,5 +302,17 @@ library LibTokenInfo {
   function _tryMintERC721(address token, address to, uint256 id) private returns (bool success) {
     // bytes4(keccak256("mint(address,uint256)"))
     (success,) = token.call(abi.encodeWithSelector(0x40c10f19, to, id));
+  }
+
+  /**
+   * @dev Transfers ERC1155 token in batch and returns the result.
+   */
+  function _tryTransferERC1155Batch(address token, address to, uint256[] memory ids, uint256[] memory amounts)
+    private
+    returns (bool success)
+  {
+    (success,) = token.call(
+      abi.encodeCall(IERC1155.safeBatchTransferFrom, (address(this), to, ids, amounts, new bytes(0)))
+    );
   }
 }
