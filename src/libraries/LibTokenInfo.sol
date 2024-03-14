@@ -135,7 +135,7 @@ library LibTokenInfo {
    * @dev Validates the token info.
    */
   function validate(TokenInfo memory self) internal pure {
-    if (!(_validateERC20(self) || _validateERC721(self)) || _validateERC721Batch(self) || _validateERC1155Batch(self)) {
+    if (!(_validateERC20(self) || _validateERC721(self) || _validateERC721Batch(self) || _validateERC1155Batch(self))) {
       revert ErrInvalidInfo();
     }
   }
