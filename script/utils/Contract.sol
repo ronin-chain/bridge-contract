@@ -19,7 +19,7 @@ enum Contract {
   MainchainPauseEnforcer,
   MainchainGatewayV3,
   MainchainBridgeManager,
-  MainchainWethMediator
+  MainchainWethUnwrapper
 }
 
 using { key, name } for Contract global;
@@ -46,7 +46,7 @@ function name(Contract contractEnum) pure returns (string memory) {
   if (contractEnum == Contract.MainchainPauseEnforcer) return "PauseEnforcer";
   if (contractEnum == Contract.MainchainGatewayV3) return "MainchainGatewayV3";
   if (contractEnum == Contract.MainchainBridgeManager) return "MainchainBridgeManager";
-  if (contractEnum == Contract.MainchainWethMediator) return "WethMediator";
+  if (contractEnum == Contract.MainchainWethUnwrapper) return "WethUnwrapper";
 
   revert("Contract: Unknown contract");
 }

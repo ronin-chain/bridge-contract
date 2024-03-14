@@ -106,7 +106,7 @@ interface ISharedArgument is IGeneralConfig {
     uint256[] governorPKs;
   }
 
-  struct WethMediatorParam {
+  struct WethUnwrapperParam {
     address weth;
     address owner;
   }
@@ -116,7 +116,7 @@ interface ISharedArgument is IGeneralConfig {
     BridgeManagerParam mainchainBridgeManager;
     MainchainGatewayV3Param mainchainGatewayV3;
     PauseEnforcerParam mainchainPauseEnforcer;
-    WethMediatorParam mainchainWethMediator;
+    WethUnwrapperParam mainchainWethUnwrapper;
     // ronin
     BridgeManagerParam roninBridgeManager;
     RoninGatewayV3Param roninGatewayV3;
