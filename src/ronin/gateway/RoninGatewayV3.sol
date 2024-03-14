@@ -144,7 +144,7 @@ contract RoninGatewayV3 is
     _depositFor(_receipt, _sender, minimumVoteWeight());
     IBridgeTracking(getContract(ContractType.BRIDGE_TRACKING)).recordVote(
       IBridgeTracking.VoteKind.Deposit,
-      _receipt.id,
+      _receipt.manifest.id,
       _sender
     );
   }
@@ -174,7 +174,7 @@ contract RoninGatewayV3 is
         if (_status == VoteStatus.Approved) {
           _vote.status = VoteStatus.Executed;
           _bridgeTrackingContract.handleVoteApproved(IBridgeTracking.VoteKind.MainchainWithdrawal, _withdrawalId);
-          emit MainchainWithdrew(_hash, _withdrawal);
+          emit MainchainWithdrew(_hash, _withdrawal.manifest);
         }
       }
 
@@ -198,8 +198,8 @@ contract RoninGatewayV3 is
     IBridgeTracking _bridgeTrackingContract = IBridgeTracking(getContract(ContractType.BRIDGE_TRACKING));
     for (uint256 _i; _i < _receipts.length; ) {
       _receipt = _receipts[_i];
-      _bridgeTrackingContract.recordVote(IBridgeTracking.VoteKind.Deposit, _receipt.id, _sender);
-      if (depositVote[_receipt.mainchain.chainId][_receipt.id].status == VoteStatus.Executed) {
+      _bridgeTrackingContract.recordVote(IBridgeTracking.VoteKind.Deposit, _receipt.manifest.id, _sender);
+      if (depositVote[_receipt.manifest.mainchain.chainId][_receipt.manifest.id].status == VoteStatus.Executed) {
         _executedReceipts[_i] = true;
       } else {
         _depositFor(_receipt, _sender, _minVoteWeight);
@@ -239,11 +239,11 @@ contract RoninGatewayV3 is
     if (mainchainWithdrew(_withdrawalId)) revert ErrWithdrawnOnMainchainAlready();
 
     Transfer.Receipt memory _receipt = withdrawal[_withdrawalId];
-    if (_receipt.ronin.chainId != block.chainid) {
-      revert ErrInvalidChainId(msg.sig, _receipt.ronin.chainId, block.chainid);
+    if (_receipt.manifest.ronin.chainId != block.chainid) {
+      revert ErrInvalidChainId(msg.sig, _receipt.manifest.ronin.chainId, block.chainid);
     }
 
-    emit WithdrawalSignaturesRequested(_receipt.hash(), _receipt);
+    emit WithdrawalSignaturesRequested(_receipt.hash(), _receipt.manifest);
   }
 
   /**
@@ -360,29 +360,29 @@ contract RoninGatewayV3 is
    *
    */
   function _depositFor(Transfer.Receipt memory receipt, address operator, uint256 minVoteWeight) internal {
-    uint256 id = receipt.id;
+    uint256 id = receipt.manifest.id;
     receipt.info.validate();
-    if (receipt.kind != Transfer.Kind.Deposit) revert ErrInvalidReceiptKind();
+    if (receipt.manifest.kind != Transfer.Kind.Deposit) revert ErrInvalidReceiptKind();
 
-    if (receipt.ronin.chainId != block.chainid) revert ErrInvalidChainId(msg.sig, receipt.ronin.chainId, block.chainid);
+    if (receipt.manifest.ronin.chainId != block.chainid) revert ErrInvalidChainId(msg.sig, receipt.manifest.ronin.chainId, block.chainid);
 
-    MappedToken memory _token = getMainchainToken(receipt.ronin.tokenAddr, receipt.mainchain.chainId);
+    MappedToken memory _token = getMainchainToken(receipt.manifest.ronin.tokenAddr, receipt.manifest.mainchain.chainId);
 
-    if (!(_token.erc == receipt.info.erc && _token.tokenAddr == receipt.mainchain.tokenAddr))
+    if (!(_token.erc == receipt.info.erc && _token.tokenAddr == receipt.manifest.mainchain.tokenAddr))
       revert ErrInvalidReceipt();
 
-    IsolatedGovernance.Vote storage _proposal = depositVote[receipt.mainchain.chainId][id];
+    IsolatedGovernance.Vote storage _proposal = depositVote[receipt.manifest.mainchain.chainId][id];
     bytes32 _receiptHash = receipt.hash();
     VoteStatus _status = _castIsolatedVote(_proposal, operator, minVoteWeight, _receiptHash);
-    emit DepositVoted(operator, id, receipt.mainchain.chainId, _receiptHash);
+    emit DepositVoted(operator, id, receipt.manifest.mainchain.chainId, _receiptHash);
     if (_status == VoteStatus.Approved) {
       _proposal.status = VoteStatus.Executed;
-      receipt.info.handleAssetOut(payable(receipt.ronin.addr), receipt.ronin.tokenAddr, IWETH(address(0)));
+      receipt.info.handleAssetOut(payable(receipt.manifest.ronin.addr), receipt.manifest.ronin.tokenAddr, IWETH(address(0)));
       IBridgeTracking(getContract(ContractType.BRIDGE_TRACKING)).handleVoteApproved(
         IBridgeTracking.VoteKind.Deposit,
-        receipt.id
+        receipt.manifest.id
       );
-      emit Deposited(_receiptHash, receipt);
+      emit Deposited(_receiptHash, receipt.manifest);
     }
   }
 
@@ -425,7 +425,7 @@ contract RoninGatewayV3 is
       _chainId
     );
     withdrawal[_withdrawalId] = _receipt;
-    emit WithdrawalRequested(_receipt.hash(), _receipt);
+    emit WithdrawalRequested(_receipt.hash(), _receipt.manifest);
   }
 
   /**

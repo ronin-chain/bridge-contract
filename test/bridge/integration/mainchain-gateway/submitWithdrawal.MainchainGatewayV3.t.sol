@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import { console2 as console } from "forge-std/console2.sol";
 import { Transfer as LibTransfer } from "@ronin/contracts/libraries/Transfer.sol";
-import { LibTokenInfo, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
+import { LibTokenInfo, Mode, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/SignatureConsumer.sol";
 import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
 import "../BaseIntegration.t.sol";
@@ -17,7 +17,7 @@ interface IERC20 {
 }
 
 contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
-  event Withdrew(bytes32 receiptHash, LibTransfer.Receipt receipt);
+  event Withdrew(bytes32 receiptHash, LibTransfer.ReceiptManifest receipt);
 
   error ErrInvalidOrder(bytes4);
   error ErrQueryForApprovedWithdrawal();
@@ -35,14 +35,14 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
 
     _domainSeparator = _mainchainGatewayV3.DOMAIN_SEPARATOR();
 
-    _withdrawalReceipt.id = 0;
-    _withdrawalReceipt.kind = LibTransfer.Kind.Withdrawal;
-    _withdrawalReceipt.ronin.addr = makeAddr("requester");
-    _withdrawalReceipt.ronin.tokenAddr = address(_roninWeth);
-    _withdrawalReceipt.ronin.chainId = block.chainid;
-    _withdrawalReceipt.mainchain.addr = makeAddr("recipient");
-    _withdrawalReceipt.mainchain.tokenAddr = address(_mainchainWeth);
-    _withdrawalReceipt.mainchain.chainId = block.chainid;
+    _withdrawalReceipt.manifest.id = 0;
+    _withdrawalReceipt.manifest.kind = LibTransfer.Kind.Withdrawal;
+    _withdrawalReceipt.manifest.ronin.addr = makeAddr("requester");
+    _withdrawalReceipt.manifest.ronin.tokenAddr = address(_roninWeth);
+    _withdrawalReceipt.manifest.ronin.chainId = block.chainid;
+    _withdrawalReceipt.manifest.mainchain.addr = makeAddr("recipient");
+    _withdrawalReceipt.manifest.mainchain.tokenAddr = address(_mainchainWeth);
+    _withdrawalReceipt.manifest.mainchain.chainId = block.chainid;
     _withdrawalReceipt.info.erc = TokenStandard.ERC20;
     _withdrawalReceipt.info.id = 0;
     _withdrawalReceipt.info.quantity = 10;
@@ -82,14 +82,14 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
     SignatureConsumer.Signature[] memory signatures =
       _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs);
 
-    uint256 balanceBefore = _withdrawalReceipt.mainchain.addr.balance;
+    uint256 balanceBefore = _withdrawalReceipt.manifest.mainchain.addr.balance;
 
     vm.expectEmit(address(_mainchainGatewayV3));
-    emit Withdrew(_withdrawalReceipt.hash(), _withdrawalReceipt);
+    emit Withdrew(_withdrawalReceipt.hash(), _withdrawalReceipt.manifest);
 
     _mainchainGatewayV3.submitWithdrawal(_withdrawalReceipt, signatures);
 
-    uint256 balanceAfter = _withdrawalReceipt.mainchain.addr.balance;
+    uint256 balanceAfter = _withdrawalReceipt.manifest.mainchain.addr.balance;
     assertEq(balanceAfter, balanceBefore + _withdrawalReceipt.info.quantity);
   }
 
@@ -108,13 +108,13 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
   // test withdrawal > should be able to withdraw for self
   function test_WithdrawForSelf() public {
     address sender = makeAddr("sender");
-    _withdrawalReceipt.mainchain.addr = sender;
+    _withdrawalReceipt.manifest.mainchain.addr = sender;
 
     SignatureConsumer.Signature[] memory signatures =
       _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs);
 
     vm.expectEmit(address(_mainchainGatewayV3));
-    emit Withdrew(_withdrawalReceipt.hash(), _withdrawalReceipt);
+    emit Withdrew(_withdrawalReceipt.hash(), _withdrawalReceipt.manifest);
 
     vm.prank(sender);
     _mainchainGatewayV3.submitWithdrawal(_withdrawalReceipt, signatures);
@@ -124,13 +124,13 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
 
   // test withdrawal > should be able to withdraw locked erc20
   function test_WithdrawLockedERC20() public {
-    address recipient = _withdrawalReceipt.mainchain.addr;
+    address recipient = _withdrawalReceipt.manifest.mainchain.addr;
     uint256 quantity = _withdrawalReceipt.info.quantity;
 
     _mainchainAxs.mint(address(_mainchainGatewayV3), quantity);
 
-    _withdrawalReceipt.mainchain.tokenAddr = address(_mainchainAxs);
-    _withdrawalReceipt.ronin.tokenAddr = address(_roninAxs);
+    _withdrawalReceipt.manifest.mainchain.tokenAddr = address(_mainchainAxs);
+    _withdrawalReceipt.manifest.ronin.tokenAddr = address(_roninAxs);
 
     SignatureConsumer.Signature[] memory signatures =
       _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs);
@@ -138,7 +138,7 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
     vm.expectEmit(address(_mainchainAxs));
     emit IERC20.Transfer(address(_mainchainGatewayV3), recipient, quantity);
     vm.expectEmit(address(_mainchainGatewayV3));
-    emit Withdrew(_withdrawalReceipt.hash(), _withdrawalReceipt);
+    emit Withdrew(_withdrawalReceipt.hash(), _withdrawalReceipt.manifest);
 
     uint256 balanceBefore = _mainchainAxs.balanceOf(recipient);
 
@@ -151,12 +151,12 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
 
   // test withdraw > should be able to mint new erc20 token when withdrawing
   function test_MintTokenWhileWithdrawing() public {
-    address recipient = _withdrawalReceipt.mainchain.addr;
+    address recipient = _withdrawalReceipt.manifest.mainchain.addr;
     uint256 quantity = _withdrawalReceipt.info.quantity;
 
     uint256 balanceBefore = _mainchainSlp.balanceOf(recipient);
-    _withdrawalReceipt.mainchain.tokenAddr = address(_mainchainSlp);
-    _withdrawalReceipt.ronin.tokenAddr = address(_roninSlp);
+    _withdrawalReceipt.manifest.mainchain.tokenAddr = address(_mainchainSlp);
+    _withdrawalReceipt.manifest.ronin.tokenAddr = address(_roninSlp);
 
     SignatureConsumer.Signature[] memory signatures =
       _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs);
@@ -168,7 +168,7 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
     emit IERC20.Transfer(address(_mainchainGatewayV3), recipient, quantity);
 
     vm.expectEmit(address(_mainchainGatewayV3));
-    emit Withdrew(_withdrawalReceipt.hash(), _withdrawalReceipt);
+    emit Withdrew(_withdrawalReceipt.hash(), _withdrawalReceipt.manifest);
 
     _mainchainGatewayV3.submitWithdrawal(_withdrawalReceipt, signatures);
 
@@ -179,13 +179,13 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
 
   // test withdraw > should be able to withdraw locked erc721
   function test_WithdrawERC721Token() public {
-    address recipient = _withdrawalReceipt.mainchain.addr;
+    address recipient = _withdrawalReceipt.manifest.mainchain.addr;
 
     uint256 tokenId = 22;
     _mainchainMockERC721.mint(address(_mainchainGatewayV3), tokenId);
 
-    _withdrawalReceipt.mainchain.tokenAddr = address(_mainchainMockERC721);
-    _withdrawalReceipt.ronin.tokenAddr = address(_roninMockERC721);
+    _withdrawalReceipt.manifest.mainchain.tokenAddr = address(_mainchainMockERC721);
+    _withdrawalReceipt.manifest.ronin.tokenAddr = address(_roninMockERC721);
     _withdrawalReceipt.info.id = tokenId;
     _withdrawalReceipt.info.erc = TokenStandard.ERC721;
     _withdrawalReceipt.info.quantity = 0;
@@ -197,7 +197,7 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
     emit IERC721.Transfer(address(_mainchainGatewayV3), recipient, tokenId);
 
     vm.expectEmit(address(_mainchainGatewayV3));
-    emit Withdrew(_withdrawalReceipt.hash(), _withdrawalReceipt);
+    emit Withdrew(_withdrawalReceipt.hash(), _withdrawalReceipt.manifest);
 
     assertEq(_mainchainMockERC721.ownerOf(tokenId), address(_mainchainGatewayV3));
 
@@ -208,12 +208,12 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
 
   // test withdraw > should be able to mint new erc721 when withdrawing
   function test_MintERC721TokenWhileWithdrawing() public {
-    address recipient = _withdrawalReceipt.mainchain.addr;
+    address recipient = _withdrawalReceipt.manifest.mainchain.addr;
 
     uint256 tokenId = 22;
 
-    _withdrawalReceipt.mainchain.tokenAddr = address(_mainchainMockERC721);
-    _withdrawalReceipt.ronin.tokenAddr = address(_roninMockERC721);
+    _withdrawalReceipt.manifest.mainchain.tokenAddr = address(_mainchainMockERC721);
+    _withdrawalReceipt.manifest.ronin.tokenAddr = address(_roninMockERC721);
     _withdrawalReceipt.info.id = tokenId;
     _withdrawalReceipt.info.erc = TokenStandard.ERC721;
     _withdrawalReceipt.info.quantity = 0;
@@ -225,7 +225,7 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
     emit IERC721.Transfer(address(0), recipient, tokenId);
 
     vm.expectEmit(address(_mainchainGatewayV3));
-    emit Withdrew(_withdrawalReceipt.hash(), _withdrawalReceipt);
+    emit Withdrew(_withdrawalReceipt.hash(), _withdrawalReceipt.manifest);
 
     _mainchainGatewayV3.submitWithdrawal(_withdrawalReceipt, signatures);
 

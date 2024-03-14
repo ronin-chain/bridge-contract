@@ -22,7 +22,7 @@ import { MockERC721 } from "@ronin/contracts/mocks/token/MockERC721.sol";
 import { MockWrappedToken } from "@ronin/contracts/mocks/token/MockWrappedToken.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
 import { Proposal } from "@ronin/contracts/libraries/Proposal.sol";
-import { LibTokenInfo, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
+import { LibTokenInfo, Mode, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { IWETH } from "@ronin/contracts/interfaces/IWETH.sol";
 import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/SignatureConsumer.sol";
 import { Ballot } from "@ronin/contracts/libraries/Ballot.sol";

@@ -36,14 +36,14 @@ library Transfer {
     address _roninTokenAddr,
     uint256 _roninChainId
   ) internal view returns (Receipt memory _receipt) {
-    _receipt.id = _id;
-    _receipt.kind = Kind.Deposit;
-    _receipt.mainchain.addr = _requester;
-    _receipt.mainchain.tokenAddr = _request.tokenAddr;
-    _receipt.mainchain.chainId = block.chainid;
-    _receipt.ronin.addr = _request.recipientAddr;
-    _receipt.ronin.tokenAddr = _roninTokenAddr;
-    _receipt.ronin.chainId = _roninChainId;
+    _receipt.manifest.id = _id;
+    _receipt.manifest.kind = Kind.Deposit;
+    _receipt.manifest.mainchain.addr = _requester;
+    _receipt.manifest.mainchain.tokenAddr = _request.tokenAddr;
+    _receipt.manifest.mainchain.chainId = block.chainid;
+    _receipt.manifest.ronin.addr = _request.recipientAddr;
+    _receipt.manifest.ronin.tokenAddr = _roninTokenAddr;
+    _receipt.manifest.ronin.chainId = _roninChainId;
     _receipt.info = _request.info;
   }
 
@@ -57,22 +57,26 @@ library Transfer {
     address _mainchainTokenAddr,
     uint256 _mainchainId
   ) internal view returns (Receipt memory _receipt) {
-    _receipt.id = _id;
-    _receipt.kind = Kind.Withdrawal;
-    _receipt.ronin.addr = _requester;
-    _receipt.ronin.tokenAddr = _request.tokenAddr;
-    _receipt.ronin.chainId = block.chainid;
-    _receipt.mainchain.addr = _request.recipientAddr;
-    _receipt.mainchain.tokenAddr = _mainchainTokenAddr;
-    _receipt.mainchain.chainId = _mainchainId;
+    _receipt.manifest.id = _id;
+    _receipt.manifest.kind = Kind.Withdrawal;
+    _receipt.manifest.ronin.addr = _requester;
+    _receipt.manifest.ronin.tokenAddr = _request.tokenAddr;
+    _receipt.manifest.ronin.chainId = block.chainid;
+    _receipt.manifest.mainchain.addr = _request.recipientAddr;
+    _receipt.manifest.mainchain.tokenAddr = _mainchainTokenAddr;
+    _receipt.manifest.mainchain.chainId = _mainchainId;
     _receipt.info = _request.info;
   }
 
-  struct Receipt {
+  struct ReceiptManifest {
     uint256 id;
     Kind kind;
     TokenOwner mainchain;
     TokenOwner ronin;
+  }
+
+  struct Receipt {
+    ReceiptManifest manifest;
     TokenInfo info;
   }
 
@@ -83,33 +87,21 @@ library Transfer {
    * @dev Returns token info struct hash.
    */
   function hash(Receipt memory _receipt) internal pure returns (bytes32 digest) {
-    bytes32 hashedReceiptMainchain = _receipt.mainchain.hash();
-    bytes32 hashedReceiptRonin = _receipt.ronin.hash();
+    bytes32 hashedReceiptMainchain = _receipt.manifest.mainchain.hash();
+    bytes32 hashedReceiptRonin = _receipt.manifest.ronin.hash();
     bytes32 hashedReceiptInfo = _receipt.info.hash();
 
-    /*
-     * return
-     *   keccak256(
-     *     abi.encode(
-     *       TYPE_HASH,
-     *       _receipt.id,
-     *       _receipt.kind,
-     *       Token.hash(_receipt.mainchain),
-     *       Token.hash(_receipt.ronin),
-     *       Token.hash(_receipt.info)
-     *     )
-     *   );
-     */
-    assembly {
-      let ptr := mload(0x40)
-      mstore(ptr, TYPE_HASH)
-      mstore(add(ptr, 0x20), mload(_receipt)) // _receipt.id
-      mstore(add(ptr, 0x40), mload(add(_receipt, 0x20))) // _receipt.kind
-      mstore(add(ptr, 0x60), hashedReceiptMainchain)
-      mstore(add(ptr, 0x80), hashedReceiptRonin)
-      mstore(add(ptr, 0xa0), hashedReceiptInfo)
-      digest := keccak256(ptr, 0xc0)
-    }
+    // Using solidity instead of assembly here to preserve the test suite.
+    return keccak256(
+      abi.encode(
+        TYPE_HASH,
+        _receipt.manifest.id,
+        _receipt.manifest.kind,
+        hashedReceiptMainchain,
+        hashedReceiptRonin,
+        hashedReceiptInfo
+      )
+    );
   }
 
   /**

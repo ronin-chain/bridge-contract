@@ -15,7 +15,7 @@ library LibTokenOwner {
    * @dev Returns ownership struct hash.
    */
   function hash(TokenOwner memory owner) internal pure returns (bytes32 digest) {
-    // keccak256(abi.encode(OWNER_TYPE_HASH, owner.addr, owner.tokenAddr, owner.chainId))
+    // return keccak256(abi.encode(OWNER_TYPE_HASH, owner.addr, owner.tokenAddr, owner.chainId));
     assembly {
       let ptr := mload(0x40)
       mstore(ptr, OWNER_TYPE_HASH)

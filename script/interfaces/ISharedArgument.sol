@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import { IGeneralConfig } from "foundry-deployment-kit/interfaces/IGeneralConfig.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
-import { LibTokenInfo, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
+import { LibTokenInfo, Mode, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 
 interface ISharedArgument is IGeneralConfig {
   struct BridgeManagerParam {

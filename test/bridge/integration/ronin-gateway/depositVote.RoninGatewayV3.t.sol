@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import { console2 as console } from "forge-std/console2.sol";
 import { Transfer } from "@ronin/contracts/libraries/Transfer.sol";
-import { LibTokenInfo, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
+import { LibTokenInfo, Mode, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { ContractType } from "@ronin/contracts/utils/ContractType.sol";
 import { IsolatedGovernance } from "@ronin/contracts/libraries/IsolatedGovernance.sol";
 import { VoteStatusConsumer } from "@ronin/contracts/interfaces/consumers/VoteStatusConsumer.sol";
@@ -23,12 +23,15 @@ contract DepositVote_RoninGatewayV3_Test is BaseIntegration_Test {
     vm.etch(address(_roninGatewayV3), address(new MockRoninGatewayV3Extended()).code);
 
     Transfer.Receipt memory receipt = Transfer.Receipt({
-      id: 0,
-      kind: Transfer.Kind.Deposit,
-      ronin: TokenOwner({ addr: makeAddr("recipient"), tokenAddr: address(_roninWeth), chainId: block.chainid }),
-      mainchain: TokenOwner({ addr: makeAddr("requester"), tokenAddr: address(_mainchainWeth), chainId: block.chainid }),
+      manifest: Transfer.ReceiptManifest({
+        id: 0,
+        kind: Transfer.Kind.Deposit,
+        ronin: TokenOwner({ addr: makeAddr("recipient"), tokenAddr: address(_roninWeth), chainId: block.chainid }),
+        mainchain: TokenOwner({ addr: makeAddr("requester"), tokenAddr: address(_mainchainWeth), chainId: block.chainid })
+      }),
       info: TokenInfo({
         erc: TokenStandard.ERC20,
+        mode: Mode.Single,
         id: 0,
         quantity: 100,
         ids: new uint256[](0),
@@ -37,7 +40,7 @@ contract DepositVote_RoninGatewayV3_Test is BaseIntegration_Test {
     });
 
     _depositReceipts.push(receipt);
-    receipt.id = 1;
+    receipt.manifest.id = 1;
     _depositReceipts.push(receipt);
 
     _numOperatorsForVoteExecuted =
@@ -53,12 +56,12 @@ contract DepositVote_RoninGatewayV3_Test is BaseIntegration_Test {
 
     for (uint256 i = 0; i < _depositReceipts.length; i++) {
       (VoteStatusConsumer.VoteStatus status,,,) =
-        _roninGatewayV3.depositVote(_depositReceipts[i].mainchain.chainId, _depositReceipts[i].id);
+        _roninGatewayV3.depositVote(_depositReceipts[i].manifest.mainchain.chainId, _depositReceipts[i].manifest.id);
 
       assertEq(uint256(uint8(status)), uint256(uint8(VoteStatusConsumer.VoteStatus.Pending)));
 
       uint256 totalWeight = MockRoninGatewayV3Extended(payable(address(_roninGatewayV3))).getDepositVoteWeight(
-        _depositReceipts[i].mainchain.chainId, i, Transfer.hash(_depositReceipts[i])
+        _depositReceipts[i].manifest.mainchain.chainId, i, Transfer.hash(_depositReceipts[i])
       );
       assertEq(totalWeight, (_numOperatorsForVoteExecuted - 1) * 100);
     }
@@ -73,12 +76,12 @@ contract DepositVote_RoninGatewayV3_Test is BaseIntegration_Test {
 
     for (uint256 i = 0; i < _depositReceipts.length; i++) {
       (VoteStatusConsumer.VoteStatus status,,,) =
-        _roninGatewayV3.depositVote(_depositReceipts[i].mainchain.chainId, _depositReceipts[i].id);
+        _roninGatewayV3.depositVote(_depositReceipts[i].manifest.mainchain.chainId, _depositReceipts[i].manifest.id);
 
       assertEq(uint256(uint8(status)), uint256(uint8(VoteStatusConsumer.VoteStatus.Executed)));
 
       uint256 totalWeight = MockRoninGatewayV3Extended(payable(address(_roninGatewayV3))).getDepositVoteWeight(
-        _depositReceipts[i].mainchain.chainId, i, Transfer.hash(_depositReceipts[i])
+        _depositReceipts[i].manifest.mainchain.chainId, i, Transfer.hash(_depositReceipts[i])
       );
       assertEq(totalWeight, (_numOperatorsForVoteExecuted) * 100);
     }

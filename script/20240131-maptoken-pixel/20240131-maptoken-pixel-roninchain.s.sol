@@ -8,7 +8,7 @@ import { BaseMigration } from "foundry-deployment-kit/BaseMigration.s.sol";
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import { IRoninGatewayV3 } from "@ronin/contracts/interfaces/IRoninGatewayV3.sol";
 import { MinimumWithdrawal } from "@ronin/contracts/extensions/MinimumWithdrawal.sol";
-import { LibTokenInfo, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
+import { LibTokenInfo, Mode, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { Ballot } from "@ronin/contracts/libraries/Ballot.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
 

@@ -26,12 +26,15 @@ contract EmergencyAction_PauseEnforcer_Test is BaseIntegration_Test {
   function test_RevertWhen_InteractWithGateway_AfterPause() public {
     test_EmergencyPause_RoninGatewayV3();
     Transfer.Receipt memory receipt = Transfer.Receipt({
-      id: 0,
-      kind: Transfer.Kind.Deposit,
-      ronin: TokenOwner({ addr: makeAddr("recipient"), tokenAddr: address(_roninWeth), chainId: block.chainid }),
-      mainchain: TokenOwner({ addr: makeAddr("requester"), tokenAddr: address(_mainchainWeth), chainId: block.chainid }),
+      manifest: Transfer.ReceiptManifest({
+        id: 0,
+        kind: Transfer.Kind.Deposit,
+        ronin: TokenOwner({ addr: makeAddr("recipient"), tokenAddr: address(_roninWeth), chainId: block.chainid }),
+        mainchain: TokenOwner({ addr: makeAddr("requester"), tokenAddr: address(_mainchainWeth), chainId: block.chainid })
+      }),
       info: TokenInfo({
         erc: TokenStandard.ERC20,
+        mode: Mode.Single,
         id: 0,
         quantity: 100,
         ids: new uint256[](0),
@@ -69,12 +72,15 @@ contract EmergencyAction_PauseEnforcer_Test is BaseIntegration_Test {
   function test_InteractWithGateway_AfterUnpause() public {
     test_EmergencyUnpause_RoninGatewayV3();
     Transfer.Receipt memory receipt = Transfer.Receipt({
-      id: 0,
-      kind: Transfer.Kind.Deposit,
-      ronin: TokenOwner({ addr: makeAddr("recipient"), tokenAddr: address(_roninWeth), chainId: block.chainid }),
-      mainchain: TokenOwner({ addr: makeAddr("requester"), tokenAddr: address(_mainchainWeth), chainId: block.chainid }),
+      manifest: Transfer.ReceiptManifest({
+        id: 0,
+        kind: Transfer.Kind.Deposit,
+        ronin: TokenOwner({ addr: makeAddr("recipient"), tokenAddr: address(_roninWeth), chainId: block.chainid }),
+        mainchain: TokenOwner({ addr: makeAddr("requester"), tokenAddr: address(_mainchainWeth), chainId: block.chainid })
+      }),
       info: TokenInfo({
         erc: TokenStandard.ERC20,
+        mode: Mode.Single,
         id: 0,
         quantity: 100,
         ids: new uint256[](0),

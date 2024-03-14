@@ -9,7 +9,7 @@ import { Network } from "./utils/Network.sol";
 import { Utils } from "./utils/Utils.sol";
 import { Contract } from "./utils/Contract.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
-import { LibTokenInfo, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
+import { LibTokenInfo, Mode, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { LibArray } from "./libraries/LibArray.sol";
 
 contract Migration is BaseMigrationV2, Utils {
