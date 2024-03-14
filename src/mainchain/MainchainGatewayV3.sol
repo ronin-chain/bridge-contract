@@ -44,11 +44,11 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
   WethMediator public wethMediator;
 
   fallback() external payable {
-    // _fallback();
+    _fallback();
   }
 
   receive() external payable {
-    // _fallback();
+    _fallback();
   }
 
   /**
