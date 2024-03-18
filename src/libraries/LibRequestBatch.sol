@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "../interfaces/IMainchainGatewayV3.sol";
-import { TokenInfoBatch, ErrUnsupportedStandard } from "./LibTokenInfoBatch.sol";
+import { TokenInfoBatch } from "./LibTokenInfoBatch.sol";
 
 struct RequestBatch {
   address recipient;
