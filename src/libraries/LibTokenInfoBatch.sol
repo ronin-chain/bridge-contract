@@ -48,24 +48,27 @@ library LibTokenInfoBatch {
   function _validateERC721Batch(TokenInfoBatch memory self) private pure returns (bool res) {
     uint256 length = self.ids.length;
 
-    res = self.erc == TokenStandard.ERC721;
-
-    for (uint256 i; i < length; ++i) {
-      if (self.quantities[i] != 0) {
-        return false;
-      }
-    }
+    return self.erc == TokenStandard.ERC721 // Check ERC721
+      && self.ids.length != 0 // Info must contain valid array of ids
+      && self.quantities.length == 0; // Quantity of each ERC721 alway is 1, no input to save gas
   }
 
   function _validateERC1155Batch(TokenInfoBatch memory self) private pure returns (bool res) {
     uint256 length = self.ids.length;
-    res = self.erc == TokenStandard.ERC1155;
 
+    // Info must have same length for each token id
+    if (self.erc == TokenStandard.ERC1155 || length != self.quantities.length) {
+      return false;
+    }
+
+    // Each token id must have quantity
     for (uint256 i; i < length; ++i) {
       if (self.quantities[i] == 0) {
         return false;
       }
     }
+
+    return true;
   }
 
   /**

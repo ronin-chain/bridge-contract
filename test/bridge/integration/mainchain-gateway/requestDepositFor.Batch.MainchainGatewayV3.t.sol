@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import { console2 as console } from "forge-std/console2.sol";
 import { Transfer as LibTransfer } from "@ronin/contracts/libraries/Transfer.sol";
+import "@ronin/contracts/libraries/LibRequestBatch.sol";
 import "@ronin/contracts/libraries/LibTokenInfoBatch.sol";
 
 import "../BaseIntegration.t.sol";
@@ -80,7 +81,7 @@ contract RequestDepositFor_Batch_MainchainGatewayV3_Test is BaseIntegration_Test
     _mainchainMockERC721.approve(address(_mainchainGatewayBatcher), tokenId1);
     _mainchainMockERC721.approve(address(_mainchainGatewayBatcher), tokenId2);
 
-    MainchainGatewayBatcher.RequestBatch memory req;
+    RequestBatch memory req;
     req.recipient = makeAddr("recipient");
     req.tokenAddr = address(_mainchainMockERC721);
     req.info.erc = TokenStandard.ERC721;

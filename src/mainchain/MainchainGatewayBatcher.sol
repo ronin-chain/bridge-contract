@@ -3,20 +3,18 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
+import "../libraries/LibRequestBatch.sol";
 import "../libraries/LibTokenInfoBatch.sol";
 import "./MainchainGatewayV3.sol";
 
 contract MainchainGatewayBatcher is Initializable {
+  using LibRequestBatch for RequestBatch;
+  using LibTokenInfoBatch for TokenInfoBatch;
+
   MainchainGatewayV3 internal _mainchainGateway;
 
   constructor() {
     _disableInitializers();
-  }
-
-  struct RequestBatch {
-    address recipient;
-    address tokenAddr;
-    TokenInfoBatch info;
   }
 
   function initialize(MainchainGatewayV3 gateway) external initializer {
@@ -40,68 +38,10 @@ contract MainchainGatewayBatcher is Initializable {
    * - Emit an event that include information of the {RequestBatch}
    */
   function requestDepositForBatch(RequestBatch calldata request) external {
-    _validateRequestBatchERC721(request);
-    _handleAssetInBatchERC721(request);
+    request.info.validate();
+    request.info.handleAssetIn(msg.sender, request.tokenAddr);
 
     IERC721(request.tokenAddr).setApprovalForAll(address(_mainchainGateway), true);
-    _forwardRequestToGatewayERC721(request);
-  }
-
-  function _validateRequestBatchERC721(RequestBatch memory request) internal pure {
-    if (request.info.erc != TokenStandard.ERC721) {
-      revert ErrUnsupportedToken();
-    }
-
-    if (
-      request.info.ids.length == 0 // Request must contain valid array of  ids
-        || request.info.quantities.length != 0 // Quantity of each ERC721 alway is 1, no input to save gas
-    ) {
-      revert ErrInvalidRequest();
-    }
-  }
-
-  function _handleAssetInBatchERC721(RequestBatch memory request) internal returns (bool success) {
-    success = _tryTransferFromERC721Loop(request.tokenAddr, msg.sender, address(this), request.info.ids);
-    if (!success) {
-      revert("Transfer Failed");
-    }
-  }
-
-  /**
-   * @dev Transfers ERC721 token in a loop and returns the result.
-   *
-   * If there is fail when transfer one `id`, the loop will break early to save gas.
-   * Consumer of this method should revert the transaction if receive `false` success status.
-   */
-  function _tryTransferFromERC721Loop(address token, address from, address to, uint256[] memory ids)
-    private
-    returns (bool success)
-  {
-    for (uint256 i; i < ids.length; ++i) {
-      if (!_tryTransferFromERC721(token, from, to, ids[i])) {
-        return false; // Break early if send fails
-      }
-    }
-
-    return true;
-  }
-
-  /**
-   * @dev Transfers ERC721 token and returns the result.
-   */
-  function _tryTransferFromERC721(address token, address from, address to, uint256 id) private returns (bool success) {
-    (success,) = token.call(abi.encodeWithSelector(IERC721.transferFrom.selector, from, to, id));
-  }
-
-  function _forwardRequestToGatewayERC721(RequestBatch memory req) internal {
-    for (uint256 i; i < req.info.ids.length; i++) {
-      _mainchainGateway.requestDepositFor(
-        Transfer.Request({
-          recipientAddr: req.recipient,
-          tokenAddr: req.tokenAddr,
-          info: TokenInfo({ erc: req.info.erc, id: req.info.ids[i], quantity: 0 })
-        })
-      );
-    }
+    request.forwardRequestToGateway(_mainchainGateway);
   }
 }
