@@ -39,25 +39,28 @@ library LibTokenInfoBatch {
   /**
    * @dev Validates the token info.
    */
-  function validate(TokenInfoBatch memory self) internal pure {
-    if (!(_validateERC721Batch(self) || _validateERC1155Batch(self))) {
+  function validate(TokenInfoBatch memory self, function (TokenInfoBatch memory) pure returns (bool) fCheck)
+    internal
+    pure
+  {
+    if (!fCheck(self)) {
       revert ErrInvalidInfo();
     }
   }
 
-  function _validateERC721Batch(TokenInfoBatch memory self) private pure returns (bool res) {
-    uint256 length = self.ids.length;
-
+  function checkERC721Batch(TokenInfoBatch memory self) internal pure returns (bool res) {
     return self.erc == TokenStandard.ERC721 // Check ERC721
       && self.ids.length != 0 // Info must contain valid array of ids
       && self.quantities.length == 0; // Quantity of each ERC721 alway is 1, no input to save gas
   }
 
-  function _validateERC1155Batch(TokenInfoBatch memory self) private pure returns (bool res) {
+  function checkERC1155Batch(TokenInfoBatch memory self) internal pure returns (bool res) {
     uint256 length = self.ids.length;
 
-    // Info must have same length for each token id
-    if (self.erc == TokenStandard.ERC1155 || length != self.quantities.length) {
+    if (
+      self.erc == TokenStandard.ERC1155 // Check ERC1155
+        || length != self.quantities.length // Info must have same length for each token id
+    ) {
       return false;
     }
 
@@ -84,18 +87,21 @@ library LibTokenInfoBatch {
    * - The `_from` address must approve for the contract using this library.
    *
    */
-  function handleAssetIn(TokenInfoBatch memory self, address from, address token) internal {
-    bool success;
-    bytes memory data;
-    if (self.erc == TokenStandard.ERC721) {
-      success = _tryTransferFromERC721Loop(token, from, address(this), self.ids);
-    } else if (self.erc == TokenStandard.ERC1155) {
-      success = _tryTransferERC1155Batch(token, from, address(this), self.ids, self.quantities);
-    } else {
-      revert ErrUnsupportedStandard();
-    }
+  function handleAssetIn(
+    TokenInfoBatch memory self,
+    address from,
+    address token,
+    function (TokenInfoBatch memory, address, address) returns (bool) fHandleAssetIn
+  ) internal {
+    if (!fHandleAssetIn(self, from, token)) revert ErrTokenBatchCouldNotTransferFrom(self, from, address(this), token);
+  }
 
-    if (!success) revert ErrTokenBatchCouldNotTransferFrom(self, from, address(this), token);
+  function tryHandleAssetInERC721(TokenInfoBatch memory self, address from, address token) internal returns (bool) {
+    return _tryTransferFromERC721Loop(token, from, address(this), self.ids);
+  }
+
+  function tryHandleAssetInERC1155(TokenInfoBatch memory self, address from, address token) internal returns (bool) {
+    return _tryTransferERC1155Batch(token, from, address(this), self.ids, self.quantities);
   }
 
   /**

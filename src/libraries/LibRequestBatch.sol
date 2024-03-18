@@ -11,17 +11,7 @@ struct RequestBatch {
 }
 
 library LibRequestBatch {
-  function forwardRequestToGateway(RequestBatch memory req, IMainchainGatewayV3 mainchainGateway) internal {
-    if (req.info.erc == TokenStandard.ERC721) {
-      _forwardRequestToGatewayERC721(req, mainchainGateway);
-    } else if (req.info.erc == TokenStandard.ERC1155) {
-      _forwardRequestToGatewayERC1155(req, mainchainGateway);
-    } else {
-      revert ErrUnsupportedStandard();
-    }
-  }
-
-  function _forwardRequestToGatewayERC721(RequestBatch memory req, IMainchainGatewayV3 mainchainGateway) internal {
+  function forwardRequestToGatewayERC721(RequestBatch memory req, IMainchainGatewayV3 mainchainGateway) internal {
     for (uint256 i; i < req.info.ids.length; i++) {
       mainchainGateway.requestDepositFor(
         Transfer.Request({
@@ -33,7 +23,7 @@ library LibRequestBatch {
     }
   }
 
-  function _forwardRequestToGatewayERC1155(RequestBatch memory req, IMainchainGatewayV3 mainchainGateway) internal {
+  function forwardRequestToGatewayERC1155(RequestBatch memory req, IMainchainGatewayV3 mainchainGateway) internal {
     for (uint256 i; i < req.info.ids.length; i++) {
       mainchainGateway.requestDepositFor(
         Transfer.Request({

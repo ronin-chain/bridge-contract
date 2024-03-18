@@ -132,7 +132,7 @@ library LibTokenInfo {
    * @dev Validates the token info.
    */
   function validate(TokenInfo memory self) internal pure {
-    if (!(_validateERC20(self) || _validateERC721(self) || _validateERC721Batch(self) || _validateERC1155Batch(self))) {
+    if (!(_validateERC20(self) || _validateERC721(self) || _checkERC721Batch(self) || _checkERC1155Batch(self))) {
       revert ErrInvalidInfo();
     }
   }
@@ -145,7 +145,7 @@ library LibTokenInfo {
     return (self.erc == TokenStandard.ERC721 && self.quantity == 0);
   }
 
-  function _validateERC721Batch(TokenInfo memory self) private pure returns (bool res) {
+  function _checkERC721Batch(TokenInfo memory self) private pure returns (bool res) {
     // uint256 length = self.ids.length;
 
     // res = self.erc == TokenStandard.ERC721Batch && _validateBatch(self);
@@ -157,7 +157,7 @@ library LibTokenInfo {
     // }
   }
 
-  function _validateERC1155Batch(TokenInfo memory self) private pure returns (bool res) {
+  function _checkERC1155Batch(TokenInfo memory self) private pure returns (bool res) {
     // uint256 length = self.ids.length;
     // res = self.erc == TokenStandard.ERC1155Batch && _validateBatch(self);
 
