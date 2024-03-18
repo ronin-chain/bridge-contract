@@ -72,8 +72,8 @@ contract RequestDepositFor_Batch_MainchainGatewayV3_Test is BaseIntegration_Test
   // }
 
   function test_depositERC721Batch_Success() public {
-    uint256 tokenId1 = 22;
-    uint256 tokenId2 = 23;
+    uint256 tokenId1 = 721_22;
+    uint256 tokenId2 = 721_23;
     _mainchainMockERC721.mint(_sender, tokenId1);
     _mainchainMockERC721.mint(_sender, tokenId2);
 
@@ -102,6 +102,46 @@ contract RequestDepositFor_Batch_MainchainGatewayV3_Test is BaseIntegration_Test
 
     assertEq(_mainchainMockERC721.ownerOf(tokenId1), address(_mainchainGatewayV3));
     assertEq(_mainchainMockERC721.ownerOf(tokenId2), address(_mainchainGatewayV3));
+    assertEq(_mainchainGatewayV3.depositCount(), 2);
+  }
+
+  function test_depositERC1155Batch_Success() public {
+    uint256 tokenId1 = 1155_33;
+    uint256 tokenId2 = 1155_34;
+    uint256 tokenId1Amount = 50;
+    uint256 tokenId2Amount = 100;
+
+    _mainchainMockERC1155.mint(_sender, tokenId1, tokenId1Amount);
+    _mainchainMockERC1155.mint(_sender, tokenId2, tokenId2Amount);
+
+    vm.startPrank(_sender);
+    _mainchainMockERC1155.setApprovalForAll(address(_mainchainGatewayBatcher), true);
+
+    RequestBatch memory req;
+    req.recipient = makeAddr("recipient");
+    req.tokenAddr = address(_mainchainMockERC1155);
+    req.info.erc = TokenStandard.ERC1155;
+    req.info.ids = new uint256[](2);
+    req.info.ids[0] = tokenId1;
+    req.info.ids[1] = tokenId2;
+    req.info.quantities = new uint256[](2);
+    req.info.quantities[0] = tokenId1Amount;
+    req.info.quantities[1] = tokenId2Amount;
+
+    assertEq(_mainchainMockERC1155.balanceOf(_sender, tokenId1), tokenId1Amount);
+    assertEq(_mainchainMockERC1155.balanceOf(_sender, tokenId2), tokenId2Amount);
+
+    _mainchainGatewayBatcher.requestDepositForBatch(req);
+
+    // LibTransfer.Receipt memory receipt = _depositRequest.into_deposit_receipt(
+    //   _sender, _mainchainGatewayV3.depositCount(), address(_roninMockERC721), block.chainid
+    // );
+    // vm.expectEmit(address(_mainchainGatewayV3));
+    // emit DepositRequested(receipt.hash(), receipt);
+
+    assertEq(_mainchainMockERC1155.balanceOf(address(_mainchainGatewayV3), tokenId1), tokenId1Amount);
+    assertEq(_mainchainMockERC1155.balanceOf(address(_mainchainGatewayV3), tokenId2), tokenId2Amount);
+
     assertEq(_mainchainGatewayV3.depositCount(), 2);
   }
 }

@@ -49,6 +49,7 @@ contract GeneralConfig is BaseGeneralConfig, Utils {
     _mapContractName(Contract.MainchainGatewayBatcher);
     _mapContractName(Contract.MainchainBridgeManager);
     _mapContractName(Contract.MockERC721);
+    _mapContractName(Contract.MockERC1155);
 
     _contractNameMap[Contract.WETH.key()] = "MockWrappedToken";
     _contractNameMap[Contract.WRON.key()] = "MockWrappedToken";

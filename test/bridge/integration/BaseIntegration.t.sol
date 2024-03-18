@@ -19,6 +19,7 @@ import { MainchainGatewayBatcher } from "@ronin/contracts/mainchain/MainchainGat
 import { MainchainBridgeManager } from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
 import { MockERC20 } from "@ronin/contracts/mocks/token/MockERC20.sol";
 import { MockERC721 } from "@ronin/contracts/mocks/token/MockERC721.sol";
+import { MockERC1155 } from "@ronin/contracts/mocks/token/MockERC1155.sol";
 
 import { MockWrappedToken } from "@ronin/contracts/mocks/token/MockWrappedToken.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
@@ -55,6 +56,7 @@ import { AXSDeploy } from "@ronin/script/contracts/token/AXSDeploy.s.sol";
 import { SLPDeploy } from "@ronin/script/contracts/token/SLPDeploy.s.sol";
 import { USDCDeploy } from "@ronin/script/contracts/token/USDCDeploy.s.sol";
 import { MockERC721Deploy } from "@ronin/script/contracts/token/MockERC721Deploy.s.sol";
+import { MockERC1155Deploy } from "@ronin/script/contracts/token/MockERC1155Deploy.s.sol";
 
 import { RoninBridgeAdminUtils } from "test/helpers/RoninBridgeAdminUtils.t.sol";
 import { MainchainBridgeAdminUtils } from "test/helpers/MainchainBridgeAdminUtils.t.sol";
@@ -87,6 +89,7 @@ contract BaseIntegration_Test is Base_Test {
   MockERC20 _mainchainSlp;
   MockERC20 _mainchainUsdc;
   MockERC721 _mainchainMockERC721;
+  MockERC1155 _mainchainMockERC1155;
 
   MockValidatorContract_OnlyTiming_ForHardhatTest _validatorSet;
 
@@ -142,6 +145,7 @@ contract BaseIntegration_Test is Base_Test {
     _mainchainSlp = new SLPDeploy().run();
     _mainchainUsdc = new USDCDeploy().run();
     _mainchainMockERC721 = new MockERC721Deploy().run();
+    _mainchainMockERC1155 = new MockERC1155Deploy().run();
 
     _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
     _mainchainProposalUtils = new MainchainBridgeAdminUtils(

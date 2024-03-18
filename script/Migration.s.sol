@@ -46,6 +46,8 @@ contract Migration is BaseMigrationV2, Utils {
       param.mockErc721.name = "Mock ERC721";
       param.mockErc721.symbol = "M_ERC721";
 
+      param.mockErc1155.uri = "mock://erc1155/";
+
       uint256 num = 6;
       address[] memory operatorAddrs = new address[](num);
       address[] memory governorAddrs = new address[](num);

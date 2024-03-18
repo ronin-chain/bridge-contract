@@ -98,6 +98,10 @@ interface ISharedArgument is IGeneralConfig {
     string symbol;
   }
 
+  struct MockERC1155Param {
+    string uri;
+  }
+
   struct UnitTestParam {
     address proxyAdmin;
     uint256 numberOfBlocksInEpoch;
@@ -125,6 +129,7 @@ interface ISharedArgument is IGeneralConfig {
     MockERC20Param slp;
     MockERC20Param usdc;
     MockERC721Param mockErc721;
+    MockERC1155Param mockErc1155;
     UnitTestParam test;
   }
 
