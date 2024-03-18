@@ -33,9 +33,9 @@ contract EmergencyAction_PauseEnforcer_Test is BaseIntegration_Test {
       info: TokenInfo({
         erc: TokenStandard.ERC20,
         id: 0,
-        quantity: 100,
-        ids: new uint256[](0),
-        quantities: new uint256[](0)
+        quantity: 100
+        // ids: new uint256[](0),
+        // quantities: new uint256[](0)
       })
     });
 
@@ -76,9 +76,9 @@ contract EmergencyAction_PauseEnforcer_Test is BaseIntegration_Test {
       info: TokenInfo({
         erc: TokenStandard.ERC20,
         id: 0,
-        quantity: 100,
-        ids: new uint256[](0),
-        quantities: new uint256[](0)
+        quantity: 100
+        // ids: new uint256[](0),
+        // quantities: new uint256[](0)
       })
     });
 

@@ -10,8 +10,7 @@ import "../interfaces/IWETH.sol";
 enum TokenStandard {
   ERC20,
   ERC721,
-  ERC721Batch,
-  ERC1155Batch
+  ERC1155
 }
 
 struct TokenInfo {
@@ -20,46 +19,44 @@ struct TokenInfo {
   // For ERC721: the quantity must be 0.
   uint256 id;
   uint256 quantity;
-  uint256[] ids;
-  uint256[] quantities;
 }
 
+/**
+ * @dev Error indicating that the `transfer` has failed.
+ * @param tokenInfo Info of the token including ERC standard, id or quantity.
+ * @param to Receiver of the token value.
+ * @param token Address of the token.
+ */
+error ErrTokenCouldNotTransfer(TokenInfo tokenInfo, address to, address token);
+
+/**
+ * @dev Error indicating that the `handleAssetIn` has failed.
+ * @param tokenInfo Info of the token including ERC standard, id or quantity.
+ * @param from Owner of the token value.
+ * @param to Receiver of the token value.
+ * @param token Address of the token.
+ */
+error ErrTokenCouldNotTransferFrom(TokenInfo tokenInfo, address from, address to, address token);
+
+/// @dev Error indicating that the provided information is invalid.
+error ErrInvalidInfo();
+
+/// @dev Error indicating that the minting of ERC20 tokens has failed.
+error ErrERC20MintingFailed();
+
+/// @dev Error indicating that the minting of ERC721 tokens has failed.
+error ErrERC721MintingFailed();
+
+/// @dev Error indicating that the transfer of ERC1155 tokens has failed.
+error ErrERC1155TransferFailed();
+
+/// @dev Error indicating that the mint of ERC1155 tokens in batch has failed.
+error ErrERC1155MintBatchFailed();
+
+/// @dev Error indicating that an unsupported standard is encountered.
+error ErrUnsupportedStandard();
+
 library LibTokenInfo {
-  /// @dev Error indicating that the provided information is invalid.
-  error ErrInvalidInfo();
-
-  /// @dev Error indicating that the minting of ERC20 tokens has failed.
-  error ErrERC20MintingFailed();
-
-  /// @dev Error indicating that the minting of ERC721 tokens has failed.
-  error ErrERC721MintingFailed();
-
-  /// @dev Error indicating that the transfer of ERC1155 tokens has failed.
-  error ErrERC1155TransferFailed();
-
-  /// @dev Error indicating that the mint of ERC1155 tokens in batch has failed.
-  error ErrERC1155MintBatchFailed();
-
-  /// @dev Error indicating that an unsupported standard is encountered.
-  error ErrUnsupportedStandard();
-
-  /**
-   * @dev Error indicating that the `transfer` has failed.
-   * @param tokenInfo Info of the token including ERC standard, id or quantity.
-   * @param to Receiver of the token value.
-   * @param token Address of the token.
-   */
-  error ErrTokenCouldNotTransfer(TokenInfo tokenInfo, address to, address token);
-
-  /**
-   * @dev Error indicating that the `handleAssetIn` has failed.
-   * @param tokenInfo Info of the token including ERC standard, id or quantity.
-   * @param from Owner of the token value.
-   * @param to Receiver of the token value.
-   * @param token Address of the token.
-   */
-  error ErrTokenCouldNotTransferFrom(TokenInfo tokenInfo, address from, address to, address token);
-
   /**
    *
    *        ROUTER
@@ -70,7 +67,7 @@ library LibTokenInfo {
   }
 
   function _isStandardBatch(TokenStandard standard) private pure returns (bool) {
-    return standard == TokenStandard.ERC721Batch || standard == TokenStandard.ERC1155Batch;
+    // return standard == TokenStandard.ERC721Batch || standard == TokenStandard.ERC1155Batch;
   }
 
   /**
@@ -149,31 +146,31 @@ library LibTokenInfo {
   }
 
   function _validateERC721Batch(TokenInfo memory self) private pure returns (bool res) {
-    uint256 length = self.ids.length;
+    // uint256 length = self.ids.length;
 
-    res = self.erc == TokenStandard.ERC721Batch && _validateBatch(self);
+    // res = self.erc == TokenStandard.ERC721Batch && _validateBatch(self);
 
-    for (uint256 i; i < length; ++i) {
-      if (self.quantities[i] != 0) {
-        return false;
-      }
-    }
+    // for (uint256 i; i < length; ++i) {
+    //   if (self.quantities[i] != 0) {
+    //     return false;
+    //   }
+    // }
   }
 
   function _validateERC1155Batch(TokenInfo memory self) private pure returns (bool res) {
-    uint256 length = self.ids.length;
-    res = self.erc == TokenStandard.ERC1155Batch && _validateBatch(self);
+    // uint256 length = self.ids.length;
+    // res = self.erc == TokenStandard.ERC1155Batch && _validateBatch(self);
 
-    for (uint256 i; i < length; ++i) {
-      if (self.quantities[i] == 0) {
-        return false;
-      }
-    }
+    // for (uint256 i; i < length; ++i) {
+    //   if (self.quantities[i] == 0) {
+    //     return false;
+    //   }
+    // }
   }
 
   function _validateBatch(TokenInfo memory self) private pure returns (bool res) {
-    return self.quantity == 0 && self.id == 0 && self.ids.length > 0 && self.quantities.length > 0
-      && self.ids.length == self.quantities.length;
+    // return self.quantity == 0 && self.id == 0 && self.ids.length > 0 && self.quantities.length > 0
+    //   && self.ids.length == self.quantities.length;
   }
 
   /**
@@ -198,10 +195,10 @@ library LibTokenInfo {
       success = success && (data.length == 0 || abi.decode(data, (bool)));
     } else if (self.erc == TokenStandard.ERC721) {
       success = _tryTransferFromERC721(token, from, address(this), self.id);
-    } else if (self.erc == TokenStandard.ERC721Batch) {
-      success = _tryTransferFromERC721Loop(token, from, address(this), self.ids);
-    } else if (self.erc == TokenStandard.ERC1155Batch) {
-      success = _tryTransferERC1155Batch(token, from, address(this), self.ids, self.quantities);
+      // } else if (self.erc == TokenStandard.ERC721Batch) {
+      //   success = _tryTransferFromERC721Loop(token, from, address(this), self.ids);
+      // } else if (self.erc == TokenStandard.ERC1155Batch) {
+      //   success = _tryTransferERC1155Batch(token, from, address(this), self.ids, self.quantities);
     } else {
       revert ErrUnsupportedStandard();
     }
@@ -245,29 +242,29 @@ library LibTokenInfo {
       return;
     }
 
-    if (self.erc == TokenStandard.ERC721Batch) {
-      for (uint256 i; i < self.ids.length; ++i) {
-        uint256 id = self.ids[i];
-        if (!_tryTransferOutOrMintERC721(token, to, id)) revert ErrERC721MintingFailed();
-      }
+    // if (self.erc == TokenStandard.ERC721Batch) {
+    //   for (uint256 i; i < self.ids.length; ++i) {
+    //     uint256 id = self.ids[i];
+    //     if (!_tryTransferOutOrMintERC721(token, to, id)) revert ErrERC721MintingFailed();
+    //   }
 
-      return;
-    }
+    //   return;
+    // }
 
-    if (self.erc == TokenStandard.ERC1155Batch) {
-      (uint256[] memory toMintIds, uint256[] memory toMintAmounts) =
-        _calcLackBalancesERC1155(address(this), token, self.ids, self.quantities);
+    // if (self.erc == TokenStandard.ERC1155Batch) {
+    //   (uint256[] memory toMintIds, uint256[] memory toMintAmounts) =
+    //     _calcLackBalancesERC1155(address(this), token, self.ids, self.quantities);
 
-      if (toMintIds.length > 0) {
-        if (!_tryMintERC1155Batch(token, address(this), toMintIds, toMintAmounts)) revert ErrERC1155MintBatchFailed();
-      }
+    //   if (toMintIds.length > 0) {
+    //     if (!_tryMintERC1155Batch(token, address(this), toMintIds, toMintAmounts)) revert ErrERC1155MintBatchFailed();
+    //   }
 
-      if (!_tryTransferERC1155Batch(token, address(this), to, self.ids, self.quantities)) {
-        revert ErrERC1155TransferFailed();
-      }
+    //   if (!_tryTransferERC1155Batch(token, address(this), to, self.ids, self.quantities)) {
+    //     revert ErrERC1155TransferFailed();
+    //   }
 
-      return;
-    }
+    //   return;
+    // }
 
     revert ErrUnsupportedStandard();
   }

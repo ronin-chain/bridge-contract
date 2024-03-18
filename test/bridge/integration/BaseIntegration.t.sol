@@ -15,6 +15,7 @@ import { BridgeTracking } from "@ronin/contracts/ronin/gateway/BridgeTracking.so
 import { BridgeSlash } from "@ronin/contracts/ronin/gateway/BridgeSlash.sol";
 import { BridgeReward } from "@ronin/contracts/ronin/gateway/BridgeReward.sol";
 import { MainchainGatewayV3 } from "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
+import { MainchainGatewayBatcher } from "@ronin/contracts/mainchain/MainchainGatewayBatcher.sol";
 import { MainchainBridgeManager } from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
 import { MockERC20 } from "@ronin/contracts/mocks/token/MockERC20.sol";
 import { MockERC721 } from "@ronin/contracts/mocks/token/MockERC721.sol";
@@ -45,6 +46,7 @@ import { BridgeRewardDeploy } from "@ronin/script/contracts/BridgeRewardDeploy.s
 import { RoninPauseEnforcerDeploy } from "@ronin/script/contracts/RoninPauseEnforcerDeploy.s.sol";
 
 import { MainchainGatewayV3Deploy } from "@ronin/script/contracts/MainchainGatewayV3Deploy.s.sol";
+import { MainchainGatewayBatcherDeploy } from "@ronin/script/contracts/MainchainGatewayBatcherDeploy.s.sol";
 import { MainchainBridgeManagerDeploy } from "@ronin/script/contracts/MainchainBridgeManagerDeploy.s.sol";
 import { MainchainPauseEnforcerDeploy } from "@ronin/script/contracts/MainchainPauseEnforcerDeploy.s.sol";
 import { WETHDeploy } from "@ronin/script/contracts/token/WETHDeploy.s.sol";
@@ -70,6 +72,7 @@ contract BaseIntegration_Test is Base_Test {
 
   PauseEnforcer _mainchainPauseEnforcer;
   MainchainGatewayV3 _mainchainGatewayV3;
+  MainchainGatewayBatcher _mainchainGatewayBatcher;
   MainchainBridgeManager _mainchainBridgeManager;
 
   MockWrappedToken _roninWeth;
@@ -143,6 +146,10 @@ contract BaseIntegration_Test is Base_Test {
     _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
     _mainchainProposalUtils = new MainchainBridgeAdminUtils(
       _param.test.governorPKs, _mainchainBridgeManager, _param.mainchainBridgeManager.governors[0]
+    );
+
+    _mainchainGatewayBatcher = new MainchainGatewayBatcherDeploy().runWithArgs(
+      abi.encodeCall(MainchainGatewayBatcher.initialize, (_mainchainGatewayV3))
     );
   }
 

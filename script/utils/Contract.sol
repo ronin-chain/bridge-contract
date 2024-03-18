@@ -18,6 +18,7 @@ enum Contract {
   RoninBridgeManager,
   MainchainPauseEnforcer,
   MainchainGatewayV3,
+  MainchainGatewayBatcher,
   MainchainBridgeManager
 }
 
@@ -44,6 +45,7 @@ function name(Contract contractEnum) pure returns (string memory) {
 
   if (contractEnum == Contract.MainchainPauseEnforcer) return "PauseEnforcer";
   if (contractEnum == Contract.MainchainGatewayV3) return "MainchainGatewayV3";
+  if (contractEnum == Contract.MainchainGatewayBatcher) return "MainchainGatewayBatcher";
   if (contractEnum == Contract.MainchainBridgeManager) return "MainchainBridgeManager";
 
   revert("Contract: Unknown contract");
