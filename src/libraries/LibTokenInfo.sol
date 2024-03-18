@@ -50,26 +50,13 @@ error ErrERC721MintingFailed();
 /// @dev Error indicating that the transfer of ERC1155 tokens has failed.
 error ErrERC1155TransferFailed();
 
-/// @dev Error indicating that the mint of ERC1155 tokens in batch has failed.
-error ErrERC1155MintBatchFailed();
+/// @dev Error indicating that the mint of ERC1155 tokens has failed.
+error ErrERC1155MintingFailed();
 
 /// @dev Error indicating that an unsupported standard is encountered.
 error ErrUnsupportedStandard();
 
 library LibTokenInfo {
-  /**
-   *
-   *        ROUTER
-   *
-   */
-  function _isStandardSingle(TokenStandard standard) private pure returns (bool) {
-    return standard == TokenStandard.ERC20 || standard == TokenStandard.ERC721;
-  }
-
-  function _isStandardBatch(TokenStandard standard) private pure returns (bool) {
-    // return standard == TokenStandard.ERC721Batch || standard == TokenStandard.ERC1155Batch;
-  }
-
   /**
    *
    *        HASH
@@ -79,19 +66,10 @@ library LibTokenInfo {
   // keccak256("TokenInfo(uint8 erc,uint256 id,uint256 quantity)");
   bytes32 public constant INFO_TYPE_HASH_SINGLE = 0x1e2b74b2a792d5c0f0b6e59b037fa9d43d84fbb759337f0112fcc15ca414fc8d;
 
-  // keccak256("TokenInfo(uint8 erc,uint256[] ids,uint256[] quantities)");
-  bytes32 public constant INFO_TYPE_HASH_BATCH = 0xe0d9a8bb18cfc29aa6e46b1293275ca79aeaaf28ac63b66dcb6ebce2f127f5a0;
-
   /**
    * @dev Returns token info struct hash.
    */
   function hash(TokenInfo memory self) internal pure returns (bytes32 digest) {
-    if (_isStandardSingle(self.erc)) return _hashSingle(self);
-    if (_isStandardBatch(self.erc)) return _hashBatch(self);
-    revert ErrUnsupportedStandard();
-  }
-
-  function _hashSingle(TokenInfo memory self) internal pure returns (bytes32 digest) {
     // keccak256(abi.encode(INFO_TYPE_HASH_SINGLE, info.erc, info.id, info.quantity))
     assembly {
       let ptr := mload(0x40)
@@ -99,25 +77,6 @@ library LibTokenInfo {
       mstore(add(ptr, 0x20), mload(self)) // info.erc
       mstore(add(ptr, 0x40), mload(add(self, 0x20))) // info.id
       mstore(add(ptr, 0x60), mload(add(self, 0x40))) // info.quantity
-      digest := keccak256(ptr, 0x80)
-    }
-  }
-
-  function _hashBatch(TokenInfo memory self) internal pure returns (bytes32 digest) {
-    // keccak256(abi.encode(INFO_TYPE_HASH_BATCH, info.erc, info.ids, info.quantities))
-    assembly {
-      let ptr := mload(0x40)
-      mstore(ptr, INFO_TYPE_HASH_SINGLE)
-      mstore(add(ptr, 0x20), mload(self)) // info.erc
-
-      let ids := mload(add(self, 0x20)) // info.ids
-      let idsHash := keccak256(add(ids, 32), mul(mload(ids), 32)) // keccak256(info.ids)
-      mstore(add(ptr, 0x40), idsHash)
-
-      let qtys := mload(add(self, 0x40)) // info.quantities
-      let qtysHash := keccak256(add(qtys, 32), mul(mload(qtys), 32)) // keccak256(info.quantities)
-      mstore(add(ptr, 0x60), qtysHash)
-
       digest := keccak256(ptr, 0x80)
     }
   }
@@ -132,45 +91,22 @@ library LibTokenInfo {
    * @dev Validates the token info.
    */
   function validate(TokenInfo memory self) internal pure {
-    if (!(_validateERC20(self) || _validateERC721(self) || _checkERC721Batch(self) || _checkERC1155Batch(self))) {
+    if (!(_checkERC20(self) || _checkERC721(self) || _checkERC1155(self))) {
       revert ErrInvalidInfo();
     }
   }
 
-  function _validateERC20(TokenInfo memory self) private pure returns (bool) {
+  function _checkERC20(TokenInfo memory self) private pure returns (bool) {
     return (self.erc == TokenStandard.ERC20 && self.quantity > 0 && self.id == 0);
   }
 
-  function _validateERC721(TokenInfo memory self) private pure returns (bool) {
+  function _checkERC721(TokenInfo memory self) private pure returns (bool) {
     return (self.erc == TokenStandard.ERC721 && self.quantity == 0);
   }
 
-  function _checkERC721Batch(TokenInfo memory self) private pure returns (bool res) {
-    // uint256 length = self.ids.length;
-
-    // res = self.erc == TokenStandard.ERC721Batch && _validateBatch(self);
-
-    // for (uint256 i; i < length; ++i) {
-    //   if (self.quantities[i] != 0) {
-    //     return false;
-    //   }
-    // }
-  }
-
-  function _checkERC1155Batch(TokenInfo memory self) private pure returns (bool res) {
-    // uint256 length = self.ids.length;
-    // res = self.erc == TokenStandard.ERC1155Batch && _validateBatch(self);
-
-    // for (uint256 i; i < length; ++i) {
-    //   if (self.quantities[i] == 0) {
-    //     return false;
-    //   }
-    // }
-  }
-
-  function _validateBatch(TokenInfo memory self) private pure returns (bool res) {
-    // return self.quantity == 0 && self.id == 0 && self.ids.length > 0 && self.quantities.length > 0
-    //   && self.ids.length == self.quantities.length;
+  function _checkERC1155(TokenInfo memory self) private pure returns (bool res) {
+    // Only validate the quantity, because id of ERC-1155 can be 0.
+    return (self.erc == TokenStandard.ERC1155 && self.quantity > 0);
   }
 
   /**
@@ -195,10 +131,8 @@ library LibTokenInfo {
       success = success && (data.length == 0 || abi.decode(data, (bool)));
     } else if (self.erc == TokenStandard.ERC721) {
       success = _tryTransferFromERC721(token, from, address(this), self.id);
-      // } else if (self.erc == TokenStandard.ERC721Batch) {
-      //   success = _tryTransferFromERC721Loop(token, from, address(this), self.ids);
-      // } else if (self.erc == TokenStandard.ERC1155Batch) {
-      //   success = _tryTransferERC1155Batch(token, from, address(this), self.ids, self.quantities);
+    } else if (self.erc == TokenStandard.ERC1155) {
+      success = _tryTransferFromERC1155(token, from, address(this), self.id, self.quantity);
     } else {
       revert ErrUnsupportedStandard();
     }
@@ -230,7 +164,6 @@ library LibTokenInfo {
       }
 
       _transferTokenOut(self, to, token);
-
       return;
     }
 
@@ -238,33 +171,15 @@ library LibTokenInfo {
       if (!_tryTransferOutOrMintERC721(token, to, self.id)) {
         revert ErrERC721MintingFailed();
       }
-
       return;
     }
 
-    // if (self.erc == TokenStandard.ERC721Batch) {
-    //   for (uint256 i; i < self.ids.length; ++i) {
-    //     uint256 id = self.ids[i];
-    //     if (!_tryTransferOutOrMintERC721(token, to, id)) revert ErrERC721MintingFailed();
-    //   }
-
-    //   return;
-    // }
-
-    // if (self.erc == TokenStandard.ERC1155Batch) {
-    //   (uint256[] memory toMintIds, uint256[] memory toMintAmounts) =
-    //     _calcLackBalancesERC1155(address(this), token, self.ids, self.quantities);
-
-    //   if (toMintIds.length > 0) {
-    //     if (!_tryMintERC1155Batch(token, address(this), toMintIds, toMintAmounts)) revert ErrERC1155MintBatchFailed();
-    //   }
-
-    //   if (!_tryTransferERC1155Batch(token, address(this), to, self.ids, self.quantities)) {
-    //     revert ErrERC1155TransferFailed();
-    //   }
-
-    //   return;
-    // }
+    if (self.erc == TokenStandard.ERC1155) {
+      if (!_tryTransferOutOrMintERC1155(token, to, self.id, self.quantity)) {
+        revert ErrERC1155MintingFailed();
+      }
+      return;
+    }
 
     revert ErrUnsupportedStandard();
   }
@@ -292,6 +207,10 @@ library LibTokenInfo {
   }
 
   /**
+   *      TRANSFER ERC-20
+   */
+
+  /**
    * @dev Transfers ERC20 token and returns the result.
    */
   function _tryTransferERC20(address token, address to, uint256 quantity) private returns (bool success) {
@@ -307,6 +226,10 @@ library LibTokenInfo {
     // bytes4(keccak256("mint(address,uint256)"))
     (success,) = token.call(abi.encodeWithSelector(0x40c10f19, to, quantity));
   }
+
+  /**
+   *      TRANSFER ERC-721
+   */
 
   /**
    * @dev Transfers the ERC721 token out. If the transfer failed, mints the ERC721.
@@ -327,25 +250,6 @@ library LibTokenInfo {
   }
 
   /**
-   * @dev Transfers ERC721 token in a loop and returns the result.
-   *
-   * If there is fail when transfer one `id`, the loop will break early to save gas.
-   * Consumer of this method should revert the transaction if receive `false` success status.
-   */
-  function _tryTransferFromERC721Loop(address token, address from, address to, uint256[] memory ids)
-    private
-    returns (bool success)
-  {
-    for (uint256 i; i < ids.length; ++i) {
-      if (!_tryTransferFromERC721(token, from, to, ids[i])) {
-        return false; // Break early if send fails
-      }
-    }
-
-    return true;
-  }
-
-  /**
    * @dev Mints ERC721 token and returns the result.
    */
   function _tryMintERC721(address token, address to, uint256 id) private returns (bool success) {
@@ -354,74 +258,37 @@ library LibTokenInfo {
   }
 
   /**
-   * @dev Transfers ERC1155 token in and returns the result.
+   *      TRANSFER ERC-1155
    */
-  function _tryTransferERC1155(address token, address to, uint256 id, uint256 amount) private returns (bool success) {
-    (success,) = token.call(abi.encodeCall(IERC1155.safeTransferFrom, (address(this), to, id, amount, new bytes(0))));
-  }
 
   /**
-   * @dev Transfers ERC1155 token in and returns the result.
+   * @dev Transfers the ERC1155 token out. If the transfer failed, mints the ERC11555.
+   * @return success Returns `false` if both transfer and mint are failed.
    */
-  function _tryTransferERC1155Batch(
-    address token,
-    address from,
-    address to,
-    uint256[] memory ids,
-    uint256[] memory amounts
-  ) private returns (bool success) {
-    (success,) = token.call(abi.encodeCall(IERC1155.safeBatchTransferFrom, (from, to, ids, amounts, new bytes(0))));
-  }
-
-  /**
-   * @dev Mints ERC1155 token in batch and returns the result.
-   */
-  function _tryMintERC1155Batch(address token, address to, uint256[] memory ids, uint256[] memory amounts)
+  function _tryTransferOutOrMintERC1155(address token, address to, uint256 id, uint256 amount)
     private
     returns (bool success)
   {
-    (success,) = token.call(abi.encodeCall(ERC1155PresetMinterPauser.mintBatch, (to, ids, amounts, new bytes(0))));
+    success = _tryTransferFromERC1155(token, address(this), to, id, amount);
+    if (!success) {
+      return _tryMintERC1155(token, to, id, amount);
+    }
   }
 
   /**
-   *
-   *      OTHER HELPERS
-   *
+   * @dev Transfers ERC1155 token and returns the result.
    */
+  function _tryTransferFromERC1155(address token, address from, address to, uint256 id, uint256 amount)
+    private
+    returns (bool success)
+  {
+    (success,) = token.call(abi.encodeCall(IERC1155.safeTransferFrom, (from, to, id, amount, new bytes(0))));
+  }
 
   /**
-   * @dev Gets ERC1155 balance of token `ids` for user `who`, then compare with the `requiredAmounts`. Returns list of `ids_` that have `lackAmounts_` at least 1.
+   * @dev Mints ERC1155 token and returns the result.
    */
-  function _calcLackBalancesERC1155(address who, address token, uint256[] memory ids, uint256[] memory requiredAmounts)
-    private
-    view
-    returns (uint256[] memory ids_, uint256[] memory lackAmounts_)
-  {
-    uint256 length = ids.length;
-    address[] memory whos = new address[](length);
-    ids_ = new uint256[](length);
-    lackAmounts_ = new uint256[](length);
-
-    for (uint256 i; i < length; i++) {
-      whos[i] = address(who);
-    }
-
-    // Get balance of all ids belongs to `who`
-    uint256[] memory balances = IERC1155(token).balanceOfBatch(whos, ids);
-
-    uint256 count = 0;
-
-    // Find the ids that lack of balance
-    for (uint256 i; i < length; i++) {
-      if (requiredAmounts[i] > balances[i]) {
-        lackAmounts_[count] = requiredAmounts[i] - balances[i];
-        ids_[count++] = ids[i];
-      }
-    }
-
-    assembly {
-      mstore(ids_, count)
-      mstore(lackAmounts_, count)
-    }
+  function _tryMintERC1155(address token, address to, uint256 id, uint256 amount) private returns (bool success) {
+    (success,) = token.call(abi.encodeCall(ERC1155PresetMinterPauser.mint, (to, id, amount, new bytes(0))));
   }
 }
