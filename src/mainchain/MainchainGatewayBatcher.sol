@@ -2,12 +2,13 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
 import "../libraries/LibRequestBatch.sol";
 import "../libraries/LibTokenInfoBatch.sol";
 import "./MainchainGatewayV3.sol";
 
-contract MainchainGatewayBatcher is Initializable {
+contract MainchainGatewayBatcher is Initializable, ERC1155Holder {
   using LibRequestBatch for RequestBatch;
   using LibTokenInfoBatch for TokenInfoBatch;
 

@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "../../extensions/GatewayV3.sol";
 import "../../extensions/collections/HasContracts.sol";
 import "../../extensions/MinimumWithdrawal.sol";
@@ -20,6 +21,7 @@ contract RoninGatewayV3 is
   Initializable,
   MinimumWithdrawal,
   AccessControlEnumerable,
+  ERC1155Holder,
   VoteStatusConsumer,
   IRoninGatewayV3,
   HasContracts
@@ -527,5 +529,13 @@ contract RoninGatewayV3 is
    */
   function _minimumTrustedVoteWeight(uint256 _totalTrustedWeight) internal view virtual returns (uint256) {
     return (_trustedNum * _totalTrustedWeight + _trustedDenom - 1) / _trustedDenom;
+  }
+
+  function supportsInterface(bytes4 interfaceId)
+    public
+    view
+    override(AccessControlEnumerable, ERC1155Receiver) returns (bool)
+  {
+    return AccessControlEnumerable.supportsInterface(interfaceId) || ERC1155Receiver.supportsInterface(interfaceId);
   }
 }

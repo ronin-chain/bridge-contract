@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import { IBridgeManager } from "../interfaces/bridge/IBridgeManager.sol";
 import { IBridgeManagerCallback } from "../interfaces/bridge/IBridgeManagerCallback.sol";
 import { HasContracts, ContractType } from "../extensions/collections/HasContracts.sol";
@@ -14,6 +15,7 @@ contract MainchainGatewayV3 is
   WithdrawalLimitation,
   Initializable,
   AccessControlEnumerable,
+  ERC1155Holder,
   IMainchainGatewayV3,
   HasContracts
 {
@@ -455,5 +457,13 @@ contract MainchainGatewayV3 is
    */
   function _getWeight(address _addr) internal view returns (uint256) {
     return IBridgeManager(getContract(ContractType.BRIDGE_MANAGER)).getBridgeOperatorWeight(_addr);
+  }
+
+  function supportsInterface(bytes4 interfaceId)
+    public
+    view
+    override(AccessControlEnumerable, ERC1155Receiver) returns (bool)
+  {
+    return AccessControlEnumerable.supportsInterface(interfaceId) || ERC1155Receiver.supportsInterface(interfaceId);
   }
 }
