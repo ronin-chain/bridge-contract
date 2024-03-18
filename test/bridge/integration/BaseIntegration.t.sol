@@ -83,6 +83,7 @@ contract BaseIntegration_Test is Base_Test {
   MockERC20 _roninSlp;
   MockERC20 _roninUsdc;
   MockERC721 _roninMockERC721;
+  MockERC1155 _roninMockERC1155;
 
   MockWrappedToken _mainchainWeth;
   MockERC20 _mainchainAxs;
@@ -128,6 +129,7 @@ contract BaseIntegration_Test is Base_Test {
     _roninSlp = new SLPDeploy().run();
     _roninUsdc = new USDCDeploy().run();
     _roninMockERC721 = new MockERC721Deploy().run();
+    _roninMockERC1155 = new MockERC1155Deploy().run();
 
     _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
     _roninProposalUtils =
@@ -239,17 +241,14 @@ contract BaseIntegration_Test is Base_Test {
   }
 
   function _roninGatewayV3Initialize() internal {
-    (address[] memory mainchainTokens, address[] memory roninTokens) = _getMainchainAndRoninTokens();
+    (address[] memory mainchainTokens, address[] memory roninTokens, TokenStandard[] memory standards) = _getMainchainAndRoninTokens();
     uint256 tokenNum = mainchainTokens.length; // reserve slot for ERC721Tokens
     uint256[] memory minimumThreshold = new uint256[](tokenNum);
     uint256[] memory chainIds = new uint256[](tokenNum);
-    TokenStandard[] memory standards = new TokenStandard[](tokenNum);
-    for (uint256 i; i < tokenNum; i++) {
-      bool isERC721 = i == mainchainTokens.length - 1; // last item is ERC721
 
+    for (uint256 i; i < tokenNum; i++) {
       minimumThreshold[i] = 20;
       chainIds[i] = block.chainid;
-      standards[i] = isERC721 ? TokenStandard.ERC721 : TokenStandard.ERC20;
     }
 
     // Ronin Gateway V3
@@ -437,28 +436,24 @@ contract BaseIntegration_Test is Base_Test {
   }
 
   function _mainchainGatewayV3Initialize() internal {
-    (address[] memory mainchainTokens, address[] memory roninTokens) = _getMainchainAndRoninTokens();
+    (address[] memory mainchainTokens, address[] memory roninTokens, TokenStandard[] memory standards) = _getMainchainAndRoninTokens();
     uint256 tokenNum = mainchainTokens.length;
     uint256[] memory highTierThreshold = new uint256[](tokenNum);
     uint256[] memory lockedThreshold = new uint256[](tokenNum);
     uint256[] memory unlockFeePercentages = new uint256[](tokenNum);
     uint256[] memory dailyWithdrawalLimits = new uint256[](tokenNum);
-    TokenStandard[] memory standards = new TokenStandard[](tokenNum);
 
     for (uint256 i; i < tokenNum; i++) {
-      bool isERC721 = i == mainchainTokens.length - 1; // last item is ERC721
-
       highTierThreshold[i] = 10;
       lockedThreshold[i] = 20;
       unlockFeePercentages[i] = 100_000;
       dailyWithdrawalLimits[i] = 12;
-      standards[i] = isERC721 ? TokenStandard.ERC721 : TokenStandard.ERC20;
     }
 
     // Mainchain Gateway V3
     _param.mainchainGatewayV3.wrappedToken = address(_mainchainWeth);
-    _param.mainchainGatewayV3.addresses[0] = mainchainTokens; // (ERC20 + ERC721)
-    _param.mainchainGatewayV3.addresses[1] = roninTokens; // (ERC20 + ERC721)
+    _param.mainchainGatewayV3.addresses[0] = mainchainTokens; // (ERC20 + ERC721 + ERC1155)
+    _param.mainchainGatewayV3.addresses[1] = roninTokens; // (ERC20 + ERC721 + ERC1155)
     _param.mainchainGatewayV3.addresses[2] = getEmptyAddressArray();
     _param.mainchainGatewayV3.thresholds[0] = highTierThreshold;
     _param.mainchainGatewayV3.thresholds[1] = lockedThreshold;
@@ -494,23 +489,33 @@ contract BaseIntegration_Test is Base_Test {
   function _getMainchainAndRoninTokens()
     internal
     view
-    returns (address[] memory mainchainTokens, address[] memory roninTokens)
+    returns (address[] memory mainchainTokens, address[] memory roninTokens, TokenStandard[] memory standards)
   {
-    uint256 tokenNum = 5;
+    uint256 tokenNum = 6;
     mainchainTokens = new address[](tokenNum);
     roninTokens = new address[](tokenNum);
+    standards = new TokenStandard[](tokenNum);
 
     mainchainTokens[0] = address(_mainchainWeth);
     mainchainTokens[1] = address(_mainchainAxs);
     mainchainTokens[2] = address(_mainchainSlp);
     mainchainTokens[3] = address(_mainchainUsdc);
     mainchainTokens[4] = address(_mainchainMockERC721);
+    mainchainTokens[5] = address(_mainchainMockERC1155);
 
     roninTokens[0] = address(_roninWeth);
     roninTokens[1] = address(_roninAxs);
     roninTokens[2] = address(_roninSlp);
     roninTokens[3] = address(_roninUsdc);
     roninTokens[4] = address(_roninMockERC721);
+    roninTokens[5] = address(_roninMockERC1155);
+
+    standards[0] = TokenStandard.ERC20;
+    standards[1] = TokenStandard.ERC20;
+    standards[2] = TokenStandard.ERC20;
+    standards[3] = TokenStandard.ERC20;
+    standards[4] = TokenStandard.ERC721;
+    standards[5] = TokenStandard.ERC1155;
   }
 
   function _changeAdminOnRonin() internal {
