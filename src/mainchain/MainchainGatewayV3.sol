@@ -10,14 +10,7 @@ import "../extensions/WithdrawalLimitation.sol";
 import "../libraries/Transfer.sol";
 import "../interfaces/IMainchainGatewayV3.sol";
 
-contract MainchainGatewayV3 is
-  WithdrawalLimitation,
-  Initializable,
-  AccessControlEnumerable,
-  IMainchainGatewayV3,
-  HasContracts,
-  IBridgeManagerCallback
-{
+contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessControlEnumerable, IMainchainGatewayV3, HasContracts, IBridgeManagerCallback {
   using Token for Token.Info;
   using Transfer for Transfer.Request;
   using Transfer for Transfer.Receipt;
@@ -118,7 +111,7 @@ contract MainchainGatewayV3 is
   /**
    * @dev Receives ether without doing anything. Use this function to topup native token.
    */
-  function receiveEther() external payable {}
+  function receiveEther() external payable { }
 
   /**
    * @inheritdoc IMainchainGatewayV3
@@ -144,10 +137,7 @@ contract MainchainGatewayV3 is
   /**
    * @inheritdoc IMainchainGatewayV3
    */
-  function submitWithdrawal(
-    Transfer.Receipt calldata _receipt,
-    Signature[] calldata _signatures
-  ) external virtual whenNotPaused returns (bool _locked) {
+  function submitWithdrawal(Transfer.Receipt calldata _receipt, Signature[] calldata _signatures) external virtual whenNotPaused returns (bool _locked) {
     return _submitWithdrawal(_receipt, _signatures);
   }
 
@@ -184,11 +174,7 @@ contract MainchainGatewayV3 is
   /**
    * @inheritdoc IMainchainGatewayV3
    */
-  function mapTokens(
-    address[] calldata _mainchainTokens,
-    address[] calldata _roninTokens,
-    Token.Standard[] calldata _standards
-  ) external virtual onlyAdmin {
+  function mapTokens(address[] calldata _mainchainTokens, address[] calldata _roninTokens, Token.Standard[] calldata _standards) external virtual onlyAdmin {
     if (_mainchainTokens.length == 0) revert ErrEmptyArray();
     _mapTokens(_mainchainTokens, _roninTokens, _standards);
   }
@@ -270,7 +256,9 @@ contract MainchainGatewayV3 is
 
     MappedToken memory token = getRoninToken(receipt.mainchain.tokenAddr);
 
-    if (!(token.erc == receipt.info.erc && token.tokenAddr == receipt.ronin.tokenAddr)) revert ErrInvalidReceipt();
+    if (!(token.erc == receipt.info.erc && token.tokenAddr == receipt.ronin.tokenAddr && receipt.ronin.chainId == roninChainId)) {
+      revert ErrInvalidReceipt();
+    }
 
     if (withdrawalHash[id] != 0) revert ErrQueryForProcessedWithdrawal();
 
@@ -484,10 +472,7 @@ contract MainchainGatewayV3 is
   /**
    * @inheritdoc IBridgeManagerCallback
    */
-  function onBridgeOperatorsRemoved(
-    address[] calldata operators,
-    bool[] calldata removeds
-  ) external onlyContract(ContractType.BRIDGE_MANAGER) returns (bytes4) {
+  function onBridgeOperatorsRemoved(address[] calldata operators, bool[] calldata removeds) external onlyContract(ContractType.BRIDGE_MANAGER) returns (bytes4) {
     uint length = operators.length;
     if (length != removeds.length) revert ErrLengthMismatch(msg.sig);
     if (length == 0) {
