@@ -7,12 +7,16 @@ on:
       - testnet
       - 'feature/*'
       - 'features/*'
+      - 'feat/*'
+      - 'feats/*'
   pull_request:
     branches:
       - mainnet
       - testnet
       - 'feature/*'
       - 'features/*'
+      - 'feat/*'
+      - 'feats/*'
 
 env:
   FOUNDRY_PROFILE: ci
