@@ -163,7 +163,8 @@ contract BridgeReward is IBridgeReward, BridgeTrackingHelper, HasContracts, RONT
   function _assertPeriod(uint256 currPd, uint256 pdCount, uint256 lastRewardPd) internal pure {
     if (pdCount == 0) revert ErrPeriodCountIsZero();
 
-    // Not settle the period that already rewarded.
+    // Not settle the period that already rewarded. This check may redundant as in the following assertion.
+    // However, not increase much in gas, this is kept for obvious in error handling.
     if (currPd <= lastRewardPd + 1) revert ErrPeriodAlreadyRewarded(currPd, lastRewardPd);
 
     // Not settle the periods that not happen yet.
