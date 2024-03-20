@@ -485,7 +485,7 @@ contract BaseIntegration_Test is Base_Test {
     );
 
     _mainchainGatewayV3.initializeV2(address(_mainchainBridgeManager));
-    _mainchainGatewayV3.initializeV3(_param.mainchainBridgeManager.bridgeOperators, _param.mainchainBridgeManager.voteWeights);
+    _mainchainGatewayV3.initializeV3();
   }
 
   function _mainchainPauseEnforcerInitialize() internal {
@@ -576,7 +576,7 @@ contract BaseIntegration_Test is Base_Test {
     LibTransfer.Receipt memory receipt,
     uint256[] memory signerPKs,
     bytes32 domainSeparator
-  ) internal pure  returns (SignatureConsumer.Signature[] memory sigs) {
+  ) internal pure returns (SignatureConsumer.Signature[] memory sigs) {
     sigs = new SignatureConsumer.Signature[](signerPKs.length);
 
     for (uint256 i; i < signerPKs.length; i++) {

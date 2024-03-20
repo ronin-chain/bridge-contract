@@ -99,7 +99,10 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
     _setContract(ContractType.BRIDGE_MANAGER, bridgeManagerContract);
   }
 
-  function initializeV3(address[] calldata operators, uint96[] calldata weights) external reinitializer(3) {
+  function initializeV3() external reinitializer(3) {
+    IBridgeManager mainchainBridgeManager = IBridgeManager(getContract(ContractType.BRIDGE_MANAGER));
+    (, address[] memory operators, uint96[] memory weights) = mainchainBridgeManager.getFullBridgeOperatorInfos();
+
     uint96 totalWeight;
     for (uint i; i < operators.length; i++) {
       _operatorWeight[operators[i]] = weights[i];
