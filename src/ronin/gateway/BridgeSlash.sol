@@ -119,21 +119,6 @@ contract BridgeSlash is
   }
 
   /**
-   * @inheritdoc IBridgeManagerCallback
-   */
-  function onBridgeOperatorUpdated(
-    address currentBridgeOperator,
-    address newBridgeOperator
-  ) external onlyContract(ContractType.BRIDGE_MANAGER) returns (bytes4) {
-    mapping(address => BridgeSlashInfo) storage _bridgeSlashInfos = _getBridgeSlashInfos();
-
-    _bridgeSlashInfos[newBridgeOperator] = _bridgeSlashInfos[currentBridgeOperator];
-    delete _bridgeSlashInfos[currentBridgeOperator];
-
-    return IBridgeManagerCallback.onBridgeOperatorUpdated.selector;
-  }
-
-  /**
    * @inheritdoc IBridgeSlash
    */
   function execSlashBridgeOperators(

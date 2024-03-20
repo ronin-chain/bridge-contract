@@ -462,16 +462,6 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
   /**
    * @inheritdoc IBridgeManagerCallback
    */
-  function onBridgeOperatorUpdated(address currOperator, address newOperator) external onlyContract(ContractType.BRIDGE_MANAGER) returns (bytes4) {
-    _operatorWeight[newOperator] = _operatorWeight[currOperator];
-    delete _operatorWeight[currOperator];
-
-    return IBridgeManagerCallback.onBridgeOperatorUpdated.selector;
-  }
-
-  /**
-   * @inheritdoc IBridgeManagerCallback
-   */
   function onBridgeOperatorsRemoved(address[] calldata operators, bool[] calldata removeds) external onlyContract(ContractType.BRIDGE_MANAGER) returns (bytes4) {
     uint length = operators.length;
     if (length != removeds.length) revert ErrLengthMismatch(msg.sig);
