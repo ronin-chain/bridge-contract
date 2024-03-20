@@ -26,14 +26,12 @@ interface IBridgeReward is IBridgeRewardEvents {
   function execSyncRewardAuto(uint256 currentPeriod) external;
 
   /**
-   * @dev Retrieve the total amount of rewards that have been topped up in the contract.
-   * @return totalRewardToppedUp The total rewards topped up value.
+   * @dev Returns the total amount of rewards that have been topped up in the contract.
    */
   function getTotalRewardToppedUp() external view returns (uint256);
 
   /**
-   * @dev Retrieve the total amount of rewards that have been scattered to bridge operators in the contract.
-   * @return totalRewardScattered The total rewards scattered value.
+   * @dev Returns the total reward amount scattered to the operators, excluding the slashed reward and failed-to-transfer reward.
    */
   function getTotalRewardScattered() external view returns (uint256);
 
@@ -44,9 +42,13 @@ interface IBridgeReward is IBridgeRewardEvents {
 
   /**
    * @dev External function to retrieve the latest rewarded period in the contract.
-   * @return latestRewardedPeriod The latest rewarded period value.
    */
   function getLatestRewardedPeriod() external view returns (uint256);
+
+  /**
+   * @dev Returns the claimed and slashed reward amount of the `operator`.
+   */
+  function getRewardInfo(address operator) external view returns (BridgeRewardInfo memory rewardInfo);
 
   /**
    * @dev Setter for all bridge operators per period.

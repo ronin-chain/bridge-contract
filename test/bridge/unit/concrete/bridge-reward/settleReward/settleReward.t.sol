@@ -128,6 +128,52 @@ contract SettleReward_Unit_Concrete_Test is
 
     _bridgeReward.exposed_settleReward({ operators: operators, ballots: ballots, totalBallot: totalBallot, totalVote: totalVote, period: period });
     assertEq(_bridgeReward.getLatestRewardedPeriod(), period);
+
+    BridgeRewardInfo memory rewardInfo;
+    for (uint i; i < operators.length; i++) {
+      rewardInfo = _bridgeReward.getRewardInfo(operators[i]);
+      assertEq(rewardInfo.claimed, _rewardPerPeriod / operators.length);
+    }
+    assertEq(_bridgeReward.getTotalRewardScattered(), _rewardPerPeriod);
+  }
+
+  function test_settleReward_ShareEqually_WhenNoVote_ButFundIsLackForOneOperator() external {
+    (address[] memory operators, uint256[] memory ballots, uint256 totalBallot, uint256 totalVote) = _generateInput_shareRewardProportionally();
+    uint256 period = _validatorSetContract.currentPeriod();
+
+    uint nOperator = operators.length;
+    uint rewardShared = _rewardPerPeriod / nOperator;
+
+    ballots[0] = 0;
+    ballots[1] = 0;
+    ballots[2] = 0;
+    ballots[3] = 0;
+    totalBallot = 0;
+    totalVote = 100;
+
+    uint cheatBalance = rewardShared * (nOperator - 1);
+    vm.deal(address(_bridgeReward), cheatBalance);
+
+    for (uint i; i < nOperator - 1; i++) {
+      vm.expectEmit({ emitter: address(_bridgeReward) });
+      emit BridgeRewardScattered(period, operators[i], _rewardPerPeriod / nOperator);
+    }
+
+    vm.expectEmit({ emitter: address(_bridgeReward) });
+    emit BridgeRewardScatterFailed(period, operators[nOperator - 1], _rewardPerPeriod / nOperator);
+
+    _bridgeReward.exposed_settleReward({ operators: operators, ballots: ballots, totalBallot: totalBallot, totalVote: totalVote, period: period });
+    assertEq(_bridgeReward.getLatestRewardedPeriod(), period);
+
+    BridgeRewardInfo memory rewardInfo;
+    for (uint i; i < nOperator - 1; i++) {
+      rewardInfo = _bridgeReward.getRewardInfo(operators[i]);
+      assertEq(rewardInfo.claimed, rewardShared);
+    }
+
+    rewardInfo = _bridgeReward.getRewardInfo(operators[nOperator - 1]);
+    assertEq(rewardInfo.claimed, 0);
+    assertEq(_bridgeReward.getTotalRewardScattered(), cheatBalance);
   }
 
   function test_settleReward_SharePropotionally() public {

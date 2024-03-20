@@ -70,7 +70,7 @@ contract BridgeReward is IBridgeReward, BridgeTrackingHelper, HasContracts, RONT
   }
 
   /**
-   @dev The following must be assured after initializing V2:
+   * @dev The following must be assured after initializing V2:
    * ```
    *     {BridgeTracking}._lastSyncPeriod
    *     == {RoninValidatorSet}.currentPeriod()
@@ -228,8 +228,8 @@ contract BridgeReward is IBridgeReward, BridgeTrackingHelper, HasContracts, RONT
         slashUntilPeriod: slashedDurationList[i]
       });
 
-      sumRewards += shouldSlash ? 0 : reward;
-      _updateRewardAndTransfer({ period: period, operator: operators[i], reward: reward, shouldSlash: shouldSlash });
+      bool scattered = _updateRewardAndTransfer({ period: period, operator: operators[i], reward: reward, shouldSlash: shouldSlash });
+      sumRewards += (shouldSlash || !scattered) ? 0 : reward;
     }
 
     $_TOTAL_REWARDS_SCATTERED.addAssign(sumRewards);
@@ -307,19 +307,22 @@ contract BridgeReward is IBridgeReward, BridgeTrackingHelper, HasContracts, RONT
   /**
    * @dev Transfer `reward` to a `operator` or only emit event based on the operator `slashed` status.
    */
-  function _updateRewardAndTransfer(uint256 period, address operator, uint256 reward, bool shouldSlash) private {
+  function _updateRewardAndTransfer(uint256 period, address operator, uint256 reward, bool shouldSlash) private returns (bool scattered) {
     BridgeRewardInfo storage _iRewardInfo = _getRewardInfo()[operator];
 
     if (shouldSlash) {
       _iRewardInfo.slashed += reward;
       emit BridgeRewardSlashed(period, operator, reward);
-    } else {
+      return false;
+    }
+
+    if (_unsafeSendRONLimitGas({ recipient: payable(operator), amount: reward, gas: 0 })) {
       _iRewardInfo.claimed += reward;
-      if (_unsafeSendRONLimitGas({ recipient: payable(operator), amount: reward, gas: 0 })) {
-        emit BridgeRewardScattered(period, operator, reward);
-      } else {
-        emit BridgeRewardScatterFailed(period, operator, reward);
-      }
+      emit BridgeRewardScattered(period, operator, reward);
+      return true;
+    } else {
+      emit BridgeRewardScatterFailed(period, operator, reward);
+      return false;
     }
   }
 
@@ -335,6 +338,13 @@ contract BridgeReward is IBridgeReward, BridgeTrackingHelper, HasContracts, RONT
    */
   function getLatestRewardedPeriod() public view returns (uint256) {
     return $_LATEST_REWARDED_PERIOD.load();
+  }
+
+  /**
+   * @inheritdoc IBridgeReward
+   */
+  function getRewardInfo(address operator) external view returns (BridgeRewardInfo memory rewardInfo) {
+    return _getRewardInfo()[operator];
   }
 
   /**
