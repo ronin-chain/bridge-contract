@@ -433,6 +433,10 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
   //                CALLBACKS
   ///////////////////////////////////////////////
 
+  function supportsInterface(bytes4 interfaceId) public view override(AccessControlEnumerable, IERC165) returns (bool) {
+    return interfaceId == type(IMainchainGatewayV3).interfaceId || super.supportsInterface(interfaceId);
+  }
+
   /**
    * @inheritdoc IBridgeManagerCallback
    */
