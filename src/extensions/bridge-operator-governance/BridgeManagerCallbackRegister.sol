@@ -96,7 +96,7 @@ abstract contract BridgeManagerCallbackRegister is IdentityGuard, IBridgeManager
    */
   function _notifyRegisters(bytes4 callbackFnSig, bytes memory inputs) internal {
     if (!_notifyRegistersUnsafe(callbackFnSig, inputs)) {
-      // revert ErrExistOneInternalCallFailed(msg.sender, callbackFnSig, inputs);
+      revert ErrExistOneInternalCallFailed(msg.sender, callbackFnSig, inputs);
     }
   }
 
