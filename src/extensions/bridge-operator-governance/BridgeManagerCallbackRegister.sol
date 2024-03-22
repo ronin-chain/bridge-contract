@@ -58,17 +58,13 @@ abstract contract BridgeManagerCallbackRegister is IdentityGuard, IBridgeManager
     address register;
     bytes4 callbackInterface = type(IBridgeManagerCallback).interfaceId;
 
-    for (uint256 i; i < length;) {
+    for (uint256 i; i < length; i++) {
       register = registers[i];
 
       _requireHasCode(register);
       _requireSupportsInterface(register, callbackInterface);
 
       registereds[i] = _callbackRegisters.add(register);
-
-      unchecked {
-        ++i;
-      }
     }
   }
 
@@ -82,12 +78,8 @@ abstract contract BridgeManagerCallbackRegister is IdentityGuard, IBridgeManager
     unregistereds = new bool[](length);
     EnumerableSet.AddressSet storage _callbackRegisters = _getCallbackRegisters();
 
-    for (uint256 i; i < length;) {
+    for (uint256 i; i < length; i++) {
       unregistereds[i] = _callbackRegisters.remove(registers[i]);
-
-      unchecked {
-        ++i;
-      }
     }
   }
 
