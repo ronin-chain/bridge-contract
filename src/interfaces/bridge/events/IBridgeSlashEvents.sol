@@ -26,7 +26,7 @@ interface IBridgeSlashEvents {
    * @param period The period in which the operator is slashed.
    * @param slashUntilPeriod The period until which the operator is penalized.
    */
-  event Slashed(Tier indexed tier, address indexed bridgeOperator, uint256 indexed period, uint256 slashUntilPeriod);
+  event BridgeSlashed(Tier indexed tier, address indexed bridgeOperator, uint256 indexed period, uint256 slashUntilPeriod);
 
   /**
    * @dev Emitted when a removal request is made for a bridge operator.

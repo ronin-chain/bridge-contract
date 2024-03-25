@@ -539,7 +539,7 @@ contract BaseIntegration_Test is Base_Test {
     );
 
     _mainchainGatewayV3.initializeV2(address(_mainchainBridgeManager));
-    _mainchainGatewayV3.initializeV3(_param.mainchainBridgeManager.bridgeOperators, _param.mainchainBridgeManager.voteWeights);
+    _mainchainGatewayV3.initializeV3();
   }
 
   function _mainchainPauseEnforcerInitialize() internal {

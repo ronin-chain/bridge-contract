@@ -10,14 +10,7 @@ import "../extensions/WithdrawalLimitation.sol";
 import "../libraries/Transfer.sol";
 import "../interfaces/IMainchainGatewayV3.sol";
 
-contract MainchainGatewayV3 is
-  WithdrawalLimitation,
-  Initializable,
-  AccessControlEnumerable,
-  IMainchainGatewayV3,
-  HasContracts,
-  IBridgeManagerCallback
-{
+contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessControlEnumerable, IMainchainGatewayV3, HasContracts, IBridgeManagerCallback {
   using Token for Token.Info;
   using Transfer for Transfer.Request;
   using Transfer for Transfer.Receipt;
@@ -106,7 +99,10 @@ contract MainchainGatewayV3 is
     _setContract(ContractType.BRIDGE_MANAGER, bridgeManagerContract);
   }
 
-  function initializeV3(address[] calldata operators, uint96[] calldata weights) external reinitializer(3) {
+  function initializeV3() external reinitializer(3) {
+    IBridgeManager mainchainBridgeManager = IBridgeManager(getContract(ContractType.BRIDGE_MANAGER));
+    (, address[] memory operators, uint96[] memory weights) = mainchainBridgeManager.getFullBridgeOperatorInfos();
+
     uint96 totalWeight;
     for (uint i; i < operators.length; i++) {
       _operatorWeight[operators[i]] = weights[i];
@@ -118,7 +114,7 @@ contract MainchainGatewayV3 is
   /**
    * @dev Receives ether without doing anything. Use this function to topup native token.
    */
-  function receiveEther() external payable {}
+  function receiveEther() external payable { }
 
   /**
    * @inheritdoc IMainchainGatewayV3
@@ -144,10 +140,7 @@ contract MainchainGatewayV3 is
   /**
    * @inheritdoc IMainchainGatewayV3
    */
-  function submitWithdrawal(
-    Transfer.Receipt calldata _receipt,
-    Signature[] calldata _signatures
-  ) external virtual whenNotPaused returns (bool _locked) {
+  function submitWithdrawal(Transfer.Receipt calldata _receipt, Signature[] calldata _signatures) external virtual whenNotPaused returns (bool _locked) {
     return _submitWithdrawal(_receipt, _signatures);
   }
 
@@ -184,11 +177,7 @@ contract MainchainGatewayV3 is
   /**
    * @inheritdoc IMainchainGatewayV3
    */
-  function mapTokens(
-    address[] calldata _mainchainTokens,
-    address[] calldata _roninTokens,
-    Token.Standard[] calldata _standards
-  ) external virtual onlyAdmin {
+  function mapTokens(address[] calldata _mainchainTokens, address[] calldata _roninTokens, Token.Standard[] calldata _standards) external virtual onlyAdmin {
     if (_mainchainTokens.length == 0) revert ErrEmptyArray();
     _mapTokens(_mainchainTokens, _roninTokens, _standards);
   }
@@ -270,7 +259,9 @@ contract MainchainGatewayV3 is
 
     MappedToken memory token = getRoninToken(receipt.mainchain.tokenAddr);
 
-    if (!(token.erc == receipt.info.erc && token.tokenAddr == receipt.ronin.tokenAddr)) revert ErrInvalidReceipt();
+    if (!(token.erc == receipt.info.erc && token.tokenAddr == receipt.ronin.tokenAddr && receipt.ronin.chainId == roninChainId)) {
+      revert ErrInvalidReceipt();
+    }
 
     if (withdrawalHash[id] != 0) revert ErrQueryForProcessedWithdrawal();
 
@@ -445,6 +436,10 @@ contract MainchainGatewayV3 is
   //                CALLBACKS
   ///////////////////////////////////////////////
 
+  function supportsInterface(bytes4 interfaceId) public view override(AccessControlEnumerable, IERC165) returns (bool) {
+    return interfaceId == type(IMainchainGatewayV3).interfaceId || super.supportsInterface(interfaceId);
+  }
+
   /**
    * @inheritdoc IBridgeManagerCallback
    */
@@ -474,20 +469,7 @@ contract MainchainGatewayV3 is
   /**
    * @inheritdoc IBridgeManagerCallback
    */
-  function onBridgeOperatorUpdated(address currOperator, address newOperator) external onlyContract(ContractType.BRIDGE_MANAGER) returns (bytes4) {
-    _operatorWeight[newOperator] = _operatorWeight[currOperator];
-    delete _operatorWeight[currOperator];
-
-    return IBridgeManagerCallback.onBridgeOperatorUpdated.selector;
-  }
-
-  /**
-   * @inheritdoc IBridgeManagerCallback
-   */
-  function onBridgeOperatorsRemoved(
-    address[] calldata operators,
-    bool[] calldata removeds
-  ) external onlyContract(ContractType.BRIDGE_MANAGER) returns (bytes4) {
+  function onBridgeOperatorsRemoved(address[] calldata operators, bool[] calldata removeds) external onlyContract(ContractType.BRIDGE_MANAGER) returns (bytes4) {
     uint length = operators.length;
     if (length != removeds.length) revert ErrLengthMismatch(msg.sig);
     if (length == 0) {

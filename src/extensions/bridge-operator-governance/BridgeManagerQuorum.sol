@@ -60,7 +60,7 @@ abstract contract BridgeManagerQuorum is IQuorum, Initializable, IdentityGuard {
    *
    */
   function _setThreshold(uint256 numerator, uint256 denominator) internal virtual returns (uint256 previousNum, uint256 previousDenom) {
-    if (numerator > denominator) revert ErrInvalidThreshold(msg.sig);
+    if (numerator > denominator || denominator <= 1) revert ErrInvalidThreshold(msg.sig);
 
     BridgeManagerQuorumStorage storage $ = _getBridgeManagerQuorumStorage();
 

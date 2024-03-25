@@ -59,17 +59,13 @@ abstract contract BridgeManagerCallbackRegister is Initializable, IdentityGuard,
     address register;
     bytes4 callbackInterface = type(IBridgeManagerCallback).interfaceId;
 
-    for (uint256 i; i < length; ) {
+    for (uint256 i; i < length; i++) {
       register = registers[i];
 
       _requireHasCode(register);
       _requireSupportsInterface(register, callbackInterface);
 
       registereds[i] = _callbackRegisters.add(register);
-
-      unchecked {
-        ++i;
-      }
     }
   }
 
@@ -83,12 +79,17 @@ abstract contract BridgeManagerCallbackRegister is Initializable, IdentityGuard,
     unregistereds = new bool[](length);
     EnumerableSet.AddressSet storage _callbackRegisters = _getCallbackRegisters();
 
-    for (uint256 i; i < length; ) {
+    for (uint256 i; i < length; i++) {
       unregistereds[i] = _callbackRegisters.remove(registers[i]);
+    }
+  }
 
-      unchecked {
-        ++i;
-      }
+  /**
+   * @dev Same as {_notifyRegistersUnsafe} but revert when there at least one failed internal call.
+   */
+  function _notifyRegisters(bytes4 callbackFnSig, bytes memory inputs) internal {
+    if (!_notifyRegistersUnsafe(callbackFnSig, inputs)) {
+      revert ErrExistOneInternalCallFailed(msg.sender, callbackFnSig, inputs);
     }
   }
 
@@ -96,25 +97,28 @@ abstract contract BridgeManagerCallbackRegister is Initializable, IdentityGuard,
    * @dev Internal function to notify all registered callbacks with the provided function signature and data.
    * @param callbackFnSig The function signature of the callback method.
    * @param inputs The data to pass to the callback method.
+   * @return allSuccess Return true if all internal calls are success
    */
-  function _notifyRegisters(bytes4 callbackFnSig, bytes memory inputs) internal {
+  function _notifyRegistersUnsafe(bytes4 callbackFnSig, bytes memory inputs) internal returns (bool allSuccess) {
+    allSuccess = true;
+
     address[] memory registers = _getCallbackRegisters().values();
     uint256 length = registers.length;
-    if (length == 0) return;
+    if (length == 0) return allSuccess;
 
     bool[] memory successes = new bool[](length);
     bytes[] memory returnDatas = new bytes[](length);
     bytes memory callData = abi.encodePacked(callbackFnSig, inputs);
     bytes memory proxyCallData = abi.encodeCall(TransparentUpgradeableProxyV2.functionDelegateCall, (callData));
 
-    for (uint256 i; i < length; ) {
+    for (uint256 i; i < length; i++) {
+      // First, attempt to call normally
       (successes[i], returnDatas[i]) = registers[i].call(callData);
+
+      // If cannot call normally, attempt to call as the recipient is the proxy, and this caller is its admin.
       if (!successes[i]) {
         (successes[i], returnDatas[i]) = registers[i].call(proxyCallData);
-      }
-
-      unchecked {
-        ++i;
+        allSuccess = allSuccess && successes[i];
       }
     }
 

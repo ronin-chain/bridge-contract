@@ -27,10 +27,10 @@ contract SubmitWithdrawal_MainchainGatewayV3_Weth_Benchmark_Test is BaseIntegrat
     _withdrawalReceipt.kind = Transfer.Kind.Withdrawal;
     _withdrawalReceipt.ronin.addr = makeAddr("requester");
     _withdrawalReceipt.ronin.tokenAddr = address(_roninWeth);
-    _withdrawalReceipt.ronin.chainId =block.chainid;
+    _withdrawalReceipt.ronin.chainId = block.chainid;
     _withdrawalReceipt.mainchain.addr = address(notReceiveEtherRecipient);
     _withdrawalReceipt.mainchain.tokenAddr = address(_mainchainWeth);
-    _withdrawalReceipt.mainchain.chainId =block.chainid;
+    _withdrawalReceipt.mainchain.chainId = block.chainid;
     _withdrawalReceipt.info.erc = Token.Standard.ERC20;
     _withdrawalReceipt.info.id = 0;
     _withdrawalReceipt.info.quantity = 0;
@@ -60,7 +60,7 @@ contract DiscardEther {
     _fallback();
   }
 
-  function _fallback() internal {
+  function _fallback() internal pure {
     revert("Not receive ether");
   }
 }
