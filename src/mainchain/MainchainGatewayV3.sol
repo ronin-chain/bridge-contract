@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import { IBridgeManager } from "../interfaces/bridge/IBridgeManager.sol";
 import { IBridgeManagerCallback } from "../interfaces/bridge/IBridgeManagerCallback.sol";
 import { HasContracts, ContractType } from "../extensions/collections/HasContracts.sol";
-import "../extensions/WethMediator.sol";
+import "../extensions/WethUnwrapper.sol";
 import "../extensions/WithdrawalLimitation.sol";
 import "../libraries/Transfer.sol";
 import "../interfaces/IMainchainGatewayV3.sol";
@@ -41,14 +41,14 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
 
   uint96 private _totalOperatorWeight;
   mapping(address operator => uint96 weight) private _operatorWeight;
-  WethMediator public wethMediator;
+  WethUnwrapper public wethUnwrapper;
 
   fallback() external payable {
-    // _fallback();
+    _fallback();
   }
 
   receive() external payable {
-    // _fallback();
+    _fallback();
   }
 
   /**
@@ -101,7 +101,10 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
     _setContract(ContractType.BRIDGE_MANAGER, bridgeManagerContract);
   }
 
-  function initializeV3(address[] calldata operators, uint96[] calldata weights) external reinitializer(3) {
+  function initializeV3() external reinitializer(3) {
+    IBridgeManager mainchainBridgeManager = IBridgeManager(getContract(ContractType.BRIDGE_MANAGER));
+    (, address[] memory operators, uint96[] memory weights) = mainchainBridgeManager.getFullBridgeOperatorInfos();
+
     uint96 totalWeight;
     for (uint i; i < operators.length; i++) {
       _operatorWeight[operators[i]] = weights[i];
@@ -110,8 +113,8 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
     _totalOperatorWeight = totalWeight;
   }
 
-  function initializeV4(address payable wethMediator_) external reinitializer(4) {
-    wethMediator = WethMediator(wethMediator_);
+  function initializeV4(address payable wethUnwrapper_) external reinitializer(4) {
+    wethUnwrapper = WethUnwrapper(wethUnwrapper_);
   }
 
   /**
@@ -262,7 +265,9 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
 
     MappedToken memory token = getRoninToken(receipt.mainchain.tokenAddr);
 
-    if (!(token.erc == receipt.info.erc && token.tokenAddr == receipt.ronin.tokenAddr)) revert ErrInvalidReceipt();
+    if (!(token.erc == receipt.info.erc && token.tokenAddr == receipt.ronin.tokenAddr && receipt.ronin.chainId == roninChainId)) {
+      revert ErrInvalidReceipt();
+    }
 
     if (withdrawalHash[id] != 0) revert ErrQueryForProcessedWithdrawal();
 
@@ -343,11 +348,10 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
       _request.info.transferFrom(_requester, address(this), _request.tokenAddr);
 
       // Withdraw if token is WETH
-      // The withdraw of WETH must go via `WethMediator`, because `WETH.withdraw` only sends 2300 gas, which is insufficient when recipient is a proxy.
+      // The withdraw of WETH must go via `WethUnwrapper`, because `WETH.withdraw` only sends 2300 gas, which is insufficient when recipient is a proxy.
       if (_roninWeth == _request.tokenAddr) {
-        IWETH(_roninWeth).transfer(address(wethMediator), _request.info.quantity);
-        wethMediator.transferToVault(_request.info.quantity);
-        wethMediator.withdrawToOwner(_request.info.quantity);
+        wrappedNativeToken.approve(address(wethUnwrapper), _request.info.quantity);
+        wethUnwrapper.unwrap(_request.info.quantity);
       }
     }
 
@@ -412,10 +416,10 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
   }
 
   /**
-   * @dev Receives ETH from WETH or creates deposit request if sender is not WETH.
+   * @dev Receives ETH from WETH or creates deposit request if sender is not WETH or WETHUnwrapper.
    */
   function _fallback() internal virtual {
-    if (msg.sender == address(wrappedNativeToken)) {
+    if (msg.sender == address(wrappedNativeToken) || msg.sender == address(wethUnwrapper)) {
       return;
     }
 
@@ -450,6 +454,10 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
   //                CALLBACKS
   ///////////////////////////////////////////////
 
+  function supportsInterface(bytes4 interfaceId) public view override(AccessControlEnumerable, IERC165) returns (bool) {
+    return interfaceId == type(IMainchainGatewayV3).interfaceId || super.supportsInterface(interfaceId);
+  }
+
   /**
    * @inheritdoc IBridgeManagerCallback
    */
@@ -474,16 +482,6 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
     }
 
     return IBridgeManagerCallback.onBridgeOperatorsAdded.selector;
-  }
-
-  /**
-   * @inheritdoc IBridgeManagerCallback
-   */
-  function onBridgeOperatorUpdated(address currOperator, address newOperator) external onlyContract(ContractType.BRIDGE_MANAGER) returns (bytes4) {
-    _operatorWeight[newOperator] = _operatorWeight[currOperator];
-    delete _operatorWeight[currOperator];
-
-    return IBridgeManagerCallback.onBridgeOperatorUpdated.selector;
   }
 
   /**

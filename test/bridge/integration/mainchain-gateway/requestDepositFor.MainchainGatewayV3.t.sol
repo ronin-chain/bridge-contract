@@ -49,9 +49,7 @@ contract RequestDepositFor_MainchainGatewayV3_Test is BaseIntegration_Test {
     cachedRequest.tokenAddr = address(_mainchainWeth);
 
     vm.expectEmit(address(_mainchainGatewayV3));
-    LibTransfer.Receipt memory receipt = cachedRequest.into_deposit_receipt(
-      _sender, _mainchainGatewayV3.depositCount(), address(_roninWeth), block.chainid
-    );
+    LibTransfer.Receipt memory receipt = cachedRequest.into_deposit_receipt(_sender, _mainchainGatewayV3.depositCount(), address(_roninWeth), block.chainid);
     emit DepositRequested(receipt.hash(), receipt);
 
     vm.prank(_sender);
@@ -70,9 +68,7 @@ contract RequestDepositFor_MainchainGatewayV3_Test is BaseIntegration_Test {
     _depositRequest.tokenAddr = address(_mainchainAxs);
 
     vm.expectEmit(address(_mainchainGatewayV3));
-    LibTransfer.Receipt memory receipt = _depositRequest.into_deposit_receipt(
-      _sender, _mainchainGatewayV3.depositCount(), address(_roninAxs), block.chainid
-    );
+    LibTransfer.Receipt memory receipt = _depositRequest.into_deposit_receipt(_sender, _mainchainGatewayV3.depositCount(), address(_roninAxs), block.chainid);
     emit DepositRequested(receipt.hash(), receipt);
 
     vm.prank(_sender);
@@ -94,9 +90,8 @@ contract RequestDepositFor_MainchainGatewayV3_Test is BaseIntegration_Test {
     _depositRequest.info.id = tokenId;
     _depositRequest.info.quantity = 0;
 
-    LibTransfer.Receipt memory receipt = _depositRequest.into_deposit_receipt(
-      _sender, _mainchainGatewayV3.depositCount(), address(_roninMockERC721), block.chainid
-    );
+    LibTransfer.Receipt memory receipt =
+      _depositRequest.into_deposit_receipt(_sender, _mainchainGatewayV3.depositCount(), address(_roninMockERC721), block.chainid);
     vm.expectEmit(address(_mainchainGatewayV3));
     emit DepositRequested(receipt.hash(), receipt);
 
@@ -118,15 +113,13 @@ contract RequestDepositFor_MainchainGatewayV3_Test is BaseIntegration_Test {
 
     _depositRequest.tokenAddr = address(_mainchainWeth);
 
-    LibTransfer.Receipt memory receipt = _depositRequest.into_deposit_receipt(
-      _sender, _mainchainGatewayV3.depositCount(), address(_roninWeth), block.chainid
-    );
+    LibTransfer.Receipt memory receipt = _depositRequest.into_deposit_receipt(_sender, _mainchainGatewayV3.depositCount(), address(_roninWeth), block.chainid);
     vm.expectEmit(address(_mainchainGatewayV3));
     emit DepositRequested(receipt.hash(), receipt);
 
     assertEq(address(_mainchainWeth).balance, _quantity);
 
-    vm.prank(_sender);
+    vm.startPrank(_sender);
     _mainchainGatewayV3.requestDepositFor(_depositRequest);
 
     assertEq(address(_mainchainGatewayV3).balance, _quantity);

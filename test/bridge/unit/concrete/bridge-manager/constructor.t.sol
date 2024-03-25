@@ -33,7 +33,7 @@ contract Constructor_BridgeManager_Unit_Concrete_Test is BridgeManager_Unit_Conc
       comparingWeights: _voteWeights,
       expectingWeights: voteWeights
     });
-    assertEq(_bridgeManager.totalBridgeOperator(), 3);
+    assertEq(_bridgeManager.totalBridgeOperator(), 5);
     assertEq(_bridgeManager.getTotalWeight(), _totalWeight);
   }
 

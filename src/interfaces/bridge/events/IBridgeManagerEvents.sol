@@ -26,4 +26,9 @@ interface IBridgeManagerEvents {
    * @dev Emitted when a bridge operator is updated.
    */
   event BridgeOperatorUpdated(address indexed governor, address indexed fromBridgeOperator, address indexed toBridgeOperator);
+
+  /**
+   * @dev Emitted when the minimum number of required governors is updated.
+   */
+  event MinRequiredGovernorUpdated(uint min);
 }

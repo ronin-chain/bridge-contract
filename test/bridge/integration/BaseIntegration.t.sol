@@ -16,7 +16,7 @@ import { BridgeSlash } from "@ronin/contracts/ronin/gateway/BridgeSlash.sol";
 import { BridgeReward } from "@ronin/contracts/ronin/gateway/BridgeReward.sol";
 import { MainchainGatewayV3 } from "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
 import { MainchainBridgeManager } from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
-import { WethMediator } from "@ronin/contracts/extensions/WethMediator.sol";
+import { WethUnwrapper } from "@ronin/contracts/extensions/WethUnwrapper.sol";
 import { MockERC20 } from "@ronin/contracts/mocks/token/MockERC20.sol";
 import { MockERC721 } from "@ronin/contracts/mocks/token/MockERC721.sol";
 
@@ -29,6 +29,7 @@ import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/Signatu
 import { Ballot } from "@ronin/contracts/libraries/Ballot.sol";
 import { Transfer as LibTransfer } from "@ronin/contracts/libraries/Transfer.sol";
 import { GlobalCoreGovernance } from "@ronin/contracts/extensions/sequential-governance/GlobalCoreGovernance.sol";
+import { IBridgeManager } from "@ronin/contracts/interfaces/bridge/IBridgeManager.sol";
 import { IHasContracts } from "@ronin/contracts/interfaces/collections/IHasContracts.sol";
 import { IBridgeManagerCallbackRegister } from "@ronin/contracts/interfaces/bridge/IBridgeManagerCallbackRegister.sol";
 import { ContractType } from "@ronin/contracts/utils/ContractType.sol";
@@ -49,7 +50,7 @@ import { RoninPauseEnforcerDeploy } from "@ronin/script/contracts/RoninPauseEnfo
 import { MainchainGatewayV3Deploy } from "@ronin/script/contracts/MainchainGatewayV3Deploy.s.sol";
 import { MainchainBridgeManagerDeploy } from "@ronin/script/contracts/MainchainBridgeManagerDeploy.s.sol";
 import { MainchainPauseEnforcerDeploy } from "@ronin/script/contracts/MainchainPauseEnforcerDeploy.s.sol";
-import { MainchainWethMediatorDeploy } from "@ronin/script/contracts/MainchainWethMediatorDeploy.s.sol";
+import { MainchainWethUnwrapperDeploy } from "@ronin/script/contracts/MainchainWethUnwrapperDeploy.s.sol";
 import { WETHDeploy } from "@ronin/script/contracts/token/WETHDeploy.s.sol";
 import { WRONDeploy } from "@ronin/script/contracts/token/WRONDeploy.s.sol";
 import { AXSDeploy } from "@ronin/script/contracts/token/AXSDeploy.s.sol";
@@ -76,7 +77,7 @@ contract BaseIntegration_Test is Base_Test {
   PauseEnforcer _mainchainPauseEnforcer;
   MainchainGatewayV3 _mainchainGatewayV3;
   MainchainBridgeManager _mainchainBridgeManager;
-  WethMediator _mainchainWethMediator;
+  WethUnwrapper _mainchainWethUnwrapper;
 
   MockWrappedToken _roninWeth;
   MockWrappedToken _roninWron;
@@ -138,13 +139,15 @@ contract BaseIntegration_Test is Base_Test {
     _mainchainPauseEnforcer = new MainchainPauseEnforcerDeploy().run();
     _mainchainGatewayV3 = new MainchainGatewayV3Deploy().run();
     _mainchainBridgeManager = new MainchainBridgeManagerDeploy().run();
-    _mainchainWethMediator = new MainchainWethMediatorDeploy().run();
 
     _mainchainWeth = new WETHDeploy().run();
     _mainchainAxs = new AXSDeploy().run();
     _mainchainSlp = new SLPDeploy().run();
     _mainchainUsdc = new USDCDeploy().run();
     _mainchainMockERC721 = new MockERC721Deploy().run();
+
+    bytes memory args = abi.encode(_mainchainWeth);
+    _mainchainWethUnwrapper = new MainchainWethUnwrapperDeploy().runWithArgs(args);
 
     _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
     _mainchainProposalUtils = new MainchainBridgeAdminUtils(_param.test.governorPKs, _mainchainBridgeManager, _param.mainchainBridgeManager.governors[0]);
@@ -167,7 +170,6 @@ contract BaseIntegration_Test is Base_Test {
     _mainchainPauseEnforcerInitialize();
     _constructForMainchainBridgeManager();
     _mainchainGatewayV3Initialize();
-    _constructForMainchainWethMediator();
   }
 
   function _getMainchainAndRoninTokens() internal view returns (address[] memory mainchainTokens, address[] memory roninTokens) {
@@ -303,6 +305,7 @@ contract BaseIntegration_Test is Base_Test {
     _param.roninBridgeManager.callbackRegisters = wrapAddress(address(_bridgeSlash));
     _param.roninBridgeManager.targetOptions = options;
     _param.roninBridgeManager.targets = targets;
+    _param.roninBridgeManager.minRequiredGovernor = 3;
 
     ISharedArgument.BridgeManagerParam memory param = _param.roninBridgeManager;
     uint256 length = param.governors.length;
@@ -360,6 +363,23 @@ contract BaseIntegration_Test is Base_Test {
       vm.prank(_param.roninBridgeManager.governors[0]);
       _roninBridgeManager.proposeGlobalProposalStructAndCastVotes(globalProposal, supports_, signatures);
     }
+
+    {
+      // set min governors
+      GlobalProposal.GlobalProposalDetail memory globalProposal = _roninProposalUtils.createGlobalProposal({
+        expiryTimestamp: block.timestamp + 10,
+        targetOption: GlobalProposal.TargetOption.BridgeManager,
+        value: 0,
+        calldata_: abi.encodeCall(IBridgeManager.setMinRequiredGovernor, (_param.roninBridgeManager.minRequiredGovernor)),
+        gasAmount: 500_000,
+        nonce: _roninBridgeManager.round(0) + 1
+      });
+
+      SignatureConsumer.Signature[] memory signatures = _roninProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
+
+      vm.prank(_param.roninBridgeManager.governors[0]);
+      _roninBridgeManager.proposeGlobalProposalStructAndCastVotes(globalProposal, supports_, signatures);
+    }
   }
 
   function _constructForMainchainBridgeManager() internal {
@@ -374,6 +394,7 @@ contract BaseIntegration_Test is Base_Test {
     _param.mainchainBridgeManager.callbackRegisters = getEmptyAddressArray();
     _param.mainchainBridgeManager.targetOptions = options;
     _param.mainchainBridgeManager.targets = targets;
+    _param.mainchainBridgeManager.minRequiredGovernor = 3;
 
     ISharedArgument.BridgeManagerParam memory param = _param.mainchainBridgeManager;
     uint256 length = param.governors.length;
@@ -431,13 +452,40 @@ contract BaseIntegration_Test is Base_Test {
       vm.prank(_param.roninBridgeManager.governors[0]);
       _mainchainBridgeManager.relayGlobalProposal(globalProposal, supports_, signatures);
     }
+
+    {
+      // set min governors
+      GlobalProposal.GlobalProposalDetail memory globalProposal = _roninProposalUtils.createGlobalProposal({
+        expiryTimestamp: block.timestamp + 10,
+        targetOption: GlobalProposal.TargetOption.BridgeManager,
+        value: 0,
+        calldata_: abi.encodeCall(IBridgeManager.setMinRequiredGovernor, (_param.roninBridgeManager.minRequiredGovernor)),
+        gasAmount: 500_000,
+        nonce: _mainchainBridgeManager.round(0) + 1
+      });
+
+      SignatureConsumer.Signature[] memory signatures = _mainchainProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
+
+      vm.prank(_param.roninBridgeManager.governors[0]);
+      _mainchainBridgeManager.relayGlobalProposal(globalProposal, supports_, signatures);
+    }
   }
 
-  function _constructForMainchainWethMediator() internal {
-    vm.startPrank(_config.getSender());
-    _mainchainWethMediator.setWeth(address(_mainchainWeth));
-    _mainchainWethMediator.transferOwnership(address(_mainchainGatewayV3));
-    vm.stopPrank();
+  function _mainchainBridgeManagerInitialize() internal {
+    ISharedArgument.BridgeManagerParam memory param = _param.mainchainBridgeManager;
+
+    _mainchainBridgeManager.initialize(
+      param.num,
+      param.denom,
+      param.roninChainId,
+      param.bridgeContract,
+      param.callbackRegisters,
+      param.bridgeOperators,
+      param.governors,
+      param.voteWeights,
+      param.targetOptions,
+      param.targets
+    );
   }
 
   function _mainchainGatewayV3Initialize() internal {
@@ -497,8 +545,8 @@ contract BaseIntegration_Test is Base_Test {
     );
 
     _mainchainGatewayV3.initializeV2(address(_mainchainBridgeManager));
-    _mainchainGatewayV3.initializeV3(_param.mainchainBridgeManager.bridgeOperators, _param.mainchainBridgeManager.voteWeights);
-    _mainchainGatewayV3.initializeV4(payable(address(_mainchainWethMediator)));
+    _mainchainGatewayV3.initializeV3();
+    _mainchainGatewayV3.initializeV4(payable(address(_mainchainWethUnwrapper)));
   }
 
   function _mainchainPauseEnforcerInitialize() internal {

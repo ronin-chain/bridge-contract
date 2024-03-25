@@ -30,15 +30,4 @@ interface IBridgeManagerCallback is IERC165 {
     address[] memory bridgeOperators,
     bool[] memory removeds
   ) external returns (bytes4 selector);
-
-  /**
-   * @dev Handles the event when a bridge operator is updated.
-   * @param currentBridgeOperator The address of the current bridge operator.
-   * @param newbridgeOperator The new address of the bridge operator.
-   * @return selector The selector of the function being called.
-   */
-  function onBridgeOperatorUpdated(
-    address currentBridgeOperator,
-    address newbridgeOperator
-  ) external returns (bytes4 selector);
 }

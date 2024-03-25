@@ -46,6 +46,8 @@ contract MockBridgeManager is IBridgeManager {
     _weights[operator] = weight;
   }
 
+  function setMinRequiredGovernor(uint min) external { }
+
   function getBridgeOperatorOf(address[] calldata gorvernors) external view returns (address[] memory bridgeOperators_) { }
 
   function getOperatorOf(address governor) external view returns (address operator) { }
