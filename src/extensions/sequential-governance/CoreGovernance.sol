@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "../../libraries/Proposal.sol";
 import "../../libraries/GlobalProposal.sol";
 import "../../utils/CommonErrors.sol";
@@ -9,7 +10,7 @@ import "../../interfaces/consumers/ChainTypeConsumer.sol";
 import "../../interfaces/consumers/SignatureConsumer.sol";
 import "../../interfaces/consumers/VoteStatusConsumer.sol";
 
-abstract contract CoreGovernance is SignatureConsumer, VoteStatusConsumer, ChainTypeConsumer {
+abstract contract CoreGovernance is Initializable, SignatureConsumer, VoteStatusConsumer, ChainTypeConsumer {
   using Proposal for Proposal.ProposalDetail;
 
   /**
@@ -35,13 +36,7 @@ abstract contract CoreGovernance is SignatureConsumer, VoteStatusConsumer, Chain
   }
 
   /// @dev Emitted when a proposal is created
-  event ProposalCreated(
-    uint256 indexed chainId,
-    uint256 indexed round,
-    bytes32 indexed proposalHash,
-    Proposal.ProposalDetail proposal,
-    address creator
-  );
+  event ProposalCreated(uint256 indexed chainId, uint256 indexed round, bytes32 indexed proposalHash, Proposal.ProposalDetail proposal, address creator);
   /// @dev Emitted when the proposal is voted
   event ProposalVoted(bytes32 indexed proposalHash, address indexed voter, Ballot.VoteType support, uint256 weight);
   /// @dev Emitted when the proposal is approved
@@ -63,8 +58,12 @@ abstract contract CoreGovernance is SignatureConsumer, VoteStatusConsumer, Chain
 
   uint256 internal _proposalExpiryDuration;
 
-  constructor(uint256 _expiryDuration) {
-    _setProposalExpiryDuration(_expiryDuration);
+  function __CoreGovernance_init(uint256 expiryDuration) internal onlyInitializing {
+    __CoreGovernance_init_unchained(expiryDuration);
+  }
+
+  function __CoreGovernance_init_unchained(uint256 expiryDuration) internal onlyInitializing {
+    _setProposalExpiryDuration(expiryDuration);
   }
 
   /**
@@ -137,10 +136,7 @@ abstract contract CoreGovernance is SignatureConsumer, VoteStatusConsumer, Chain
    * Emits the `ProposalCreated` event.
    *
    */
-  function _proposeProposalStruct(
-    Proposal.ProposalDetail memory proposal,
-    address creator
-  ) internal virtual returns (uint256 round_) {
+  function _proposeProposalStruct(Proposal.ProposalDetail memory proposal, address creator) internal virtual returns (uint256 round_) {
     uint256 chainId = proposal.chainId;
     if (chainId == 0) revert ErrInvalidChainId(msg.sig, 0, block.chainid);
     proposal.validate(_proposalExpiryDuration);
@@ -200,7 +196,9 @@ abstract contract CoreGovernance is SignatureConsumer, VoteStatusConsumer, Chain
     } else if (support == Ballot.VoteType.Against) {
       _vote.againstVoteds.push(voter);
       _againstVoteWeight = _vote.againstVoteWeight += voterWeight;
-    } else revert ErrUnsupportedVoteType(msg.sig);
+    } else {
+      revert ErrUnsupportedVoteType(msg.sig);
+    }
 
     if (_forVoteWeight >= minimumForVoteWeight) {
       done = true;
@@ -223,15 +221,12 @@ abstract contract CoreGovernance is SignatureConsumer, VoteStatusConsumer, Chain
    * before or it will emit an unexpected event of `ProposalExpired`.
    */
   function _tryDeleteExpiredVotingRound(ProposalVote storage proposalVote) internal returns (bool isExpired) {
-    isExpired =
-      _getChainType() == ChainType.RoninChain &&
-      proposalVote.status == VoteStatus.Pending &&
-      proposalVote.expiryTimestamp <= block.timestamp;
+    isExpired = _getChainType() == ChainType.RoninChain && proposalVote.status == VoteStatus.Pending && proposalVote.expiryTimestamp <= block.timestamp;
 
     if (isExpired) {
       emit ProposalExpired(proposalVote.hash);
 
-      for (uint256 _i; _i < proposalVote.forVoteds.length; ) {
+      for (uint256 _i; _i < proposalVote.forVoteds.length;) {
         delete proposalVote.voted[proposalVote.forVoteds[_i]];
         delete proposalVote.sig[proposalVote.forVoteds[_i]];
 
@@ -239,7 +234,7 @@ abstract contract CoreGovernance is SignatureConsumer, VoteStatusConsumer, Chain
           ++_i;
         }
       }
-      for (uint256 _i; _i < proposalVote.againstVoteds.length; ) {
+      for (uint256 _i; _i < proposalVote.againstVoteds.length;) {
         delete proposalVote.voted[proposalVote.againstVoteds[_i]];
         delete proposalVote.sig[proposalVote.againstVoteds[_i]];
 

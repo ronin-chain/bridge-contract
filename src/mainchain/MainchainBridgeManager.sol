@@ -13,7 +13,7 @@ import "../utils/CommonErrors.sol";
 contract MainchainBridgeManager is BridgeManager, GovernanceRelay, GlobalGovernanceRelay {
   uint256 private constant DEFAULT_EXPIRY_DURATION = 1 << 255;
 
-  constructor(
+  function initialize(
     uint256 num,
     uint256 denom,
     uint256 roninChainId,
@@ -24,12 +24,11 @@ contract MainchainBridgeManager is BridgeManager, GovernanceRelay, GlobalGoverna
     uint96[] memory voteWeights,
     GlobalProposal.TargetOption[] memory targetOptions,
     address[] memory targets
-  )
-    payable
-    CoreGovernance(DEFAULT_EXPIRY_DURATION)
-    GlobalCoreGovernance(targetOptions, targets)
-    BridgeManager(num, denom, roninChainId, bridgeContract, callbackRegisters, bridgeOperators, governors, voteWeights)
-  { }
+  ) external initializer {
+    __CoreGovernance_init(DEFAULT_EXPIRY_DURATION);
+    __GlobalCoreGovernance_init(targetOptions, targets);
+    __BridgeManager_init(num, denom, roninChainId, bridgeContract, callbackRegisters, bridgeOperators, governors, voteWeights);
+  }
 
   /**
    * @dev See `GovernanceRelay-_relayProposal`.

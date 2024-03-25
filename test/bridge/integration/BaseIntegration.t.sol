@@ -465,6 +465,23 @@ contract BaseIntegration_Test is Base_Test {
     }
   }
 
+  function _mainchainBridgeManagerInitialize() internal {
+    ISharedArgument.BridgeManagerParam memory param = _param.mainchainBridgeManager;
+
+    _mainchainBridgeManager.initialize(
+      param.num,
+      param.denom,
+      param.roninChainId,
+      param.bridgeContract,
+      param.callbackRegisters,
+      param.bridgeOperators,
+      param.governors,
+      param.voteWeights,
+      param.targetOptions,
+      param.targets
+    );
+  }
+
   function _mainchainGatewayV3Initialize() internal {
     (address[] memory mainchainTokens, address[] memory roninTokens) = _getMainchainAndRoninTokens();
     uint256 tokenNum = mainchainTokens.length;

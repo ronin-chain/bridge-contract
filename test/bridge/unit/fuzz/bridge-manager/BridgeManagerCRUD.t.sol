@@ -5,6 +5,7 @@ import { console } from "forge-std/console.sol";
 import { IBridgeManager, BridgeManagerUtils } from "../utils/BridgeManagerUtils.t.sol";
 import { RoninGatewayV3 } from "@ronin/contracts/ronin/gateway/RoninGatewayV3.sol";
 import { RoleAccess, ContractType, MockBridgeManager } from "@ronin/contracts/mocks/ronin/MockBridgeManager.sol";
+import { TransparentUpgradeableProxyV2 } from "@ronin/contracts/extensions/TransparentUpgradeableProxyV2.sol";
 import "@ronin/contracts/libraries/Uint96ArrayUtils.sol";
 import "@ronin/contracts/libraries/AddressArrayUtils.sol";
 import {
@@ -38,17 +39,15 @@ contract BridgeManagerCRUDTest is BridgeManagerUtils {
   uint96[] private _initWeights;
 
   function testFail_MaliciousUpdateBridgeOperator() external {
-    (address[] memory bridgeOperators, address[] memory governors, uint96[] memory voteWeights) =
+    (address[] memory bridgeOperators, address[] memory governors, ) =
       getValidInputs(DEFAULT_R1, DEFAULT_R2, DEFAULT_R3, DEFAULT_NUM_BRIDGE_OPERATORS);
-    _bridgeManager = address(new MockBridgeManager(bridgeOperators, governors, voteWeights));
-    MockBridgeManager bridgeManager = MockBridgeManager(_bridgeManager);
 
     vm.startPrank(governors[0]);
     address lastOperator;
 
     for (uint256 i = 1; i < bridgeOperators.length; ++i) {
       lastOperator = bridgeOperators[i];
-      bridgeManager.updateBridgeOperator(bridgeOperators[0], lastOperator);
+      MockBridgeManager(_bridgeManager).updateBridgeOperator(bridgeOperators[0], lastOperator);
       vm.expectRevert(abi.encodeWithSelector(ErrBridgeOperatorUpdateFailed.selector, lastOperator));
     }
 
@@ -225,11 +224,13 @@ contract BridgeManagerCRUDTest is BridgeManagerUtils {
   function _setUp() internal virtual {
     (address[] memory bridgeOperators, address[] memory governors, uint96[] memory voteWeights) =
       getValidInputs(DEFAULT_R1, DEFAULT_R2, DEFAULT_R3, DEFAULT_NUM_BRIDGE_OPERATORS);
-    _bridgeManager = address(new MockBridgeManager(bridgeOperators, governors, voteWeights));
 
-    // empty storage for testing
-    // vm.prank(_bridgeManager);
-    // IBridgeManager(_bridgeManager).removeBridgeOperators(bridgeOperators);
+    address admin = makeAddr("bridgeManagerAdmin");
+    address bridgeManagerLogic = address(new MockBridgeManager());
+    _bridgeManager = address(
+      new TransparentUpgradeableProxyV2(bridgeManagerLogic, admin, abi.encodeCall(MockBridgeManager.initialize, (bridgeOperators, governors, voteWeights)))
+    );
+
     _initOperators = bridgeOperators;
     _initGovernors = governors;
     _initWeights = voteWeights;
