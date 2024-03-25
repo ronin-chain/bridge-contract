@@ -416,10 +416,10 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
   }
 
   /**
-   * @dev Receives ETH from WETH or creates deposit request if sender is not WETH.
+   * @dev Receives ETH from WETH or creates deposit request if sender is not WETH or WETHUnwrapper.
    */
   function _fallback() internal virtual {
-    if (msg.sender == address(wrappedNativeToken)) {
+    if (msg.sender == address(wrappedNativeToken) || msg.sender == address(wethUnwrapper)) {
       return;
     }
 
