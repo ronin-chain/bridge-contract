@@ -44,6 +44,10 @@ contract MainchainGatewayV3 is
   /// @custom:deprecated Previously `_bridgeOperators` (uint256[])
   uint256 private ______deprecatedBridgeOperators;
 
+  constructor() {
+    _disableInitializers();
+  }
+
   fallback() external payable {
     _fallback();
   }
