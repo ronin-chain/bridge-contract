@@ -13,13 +13,13 @@ contract MockBridgeTracking is IBridgeTracking {
   // Mapping from period number => period tracking
   mapping(uint256 => PeriodTracking) _tracks;
 
-  function setPeriodTracking(
+  function cheat_setPeriodTracking(
     uint256 period,
     address[] memory operators,
     uint256[] calldata ballots,
     uint256 totalVote_
   ) external {
-    require(operators.length != ballots.length, "mismatch length");
+    require(operators.length == ballots.length, "mismatch length");
     PeriodTracking storage _sTrack = _tracks[period];
     _sTrack.operators = operators;
     _sTrack.totalVote = totalVote_;
