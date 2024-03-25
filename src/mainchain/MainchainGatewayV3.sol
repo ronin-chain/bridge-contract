@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import { IBridgeManager } from "../interfaces/bridge/IBridgeManager.sol";
 import { IBridgeManagerCallback } from "../interfaces/bridge/IBridgeManagerCallback.sol";
 import { HasContracts, ContractType } from "../extensions/collections/HasContracts.sol";
+import "../extensions/WethUnwrapper.sol";
 import "../extensions/WithdrawalLimitation.sol";
 import "../libraries/Transfer.sol";
 import "../interfaces/IMainchainGatewayV3.sol";
@@ -40,6 +41,7 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
 
   uint96 private _totalOperatorWeight;
   mapping(address operator => uint96 weight) private _operatorWeight;
+  WethUnwrapper public wethUnwrapper;
 
   fallback() external payable {
     _fallback();
@@ -109,6 +111,10 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
       totalWeight += weights[i];
     }
     _totalOperatorWeight = totalWeight;
+  }
+
+  function initializeV4(address payable wethUnwrapper_) external reinitializer(4) {
+    wethUnwrapper = WethUnwrapper(wethUnwrapper_);
   }
 
   /**
@@ -340,9 +346,12 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
       if (_token.erc != _request.info.erc) revert ErrInvalidTokenStandard();
 
       _request.info.transferFrom(_requester, address(this), _request.tokenAddr);
+
       // Withdraw if token is WETH
+      // The withdraw of WETH must go via `WethUnwrapper`, because `WETH.withdraw` only sends 2300 gas, which is insufficient when recipient is a proxy.
       if (_roninWeth == _request.tokenAddr) {
-        IWETH(_roninWeth).withdraw(_request.info.quantity);
+        wrappedNativeToken.approve(address(wethUnwrapper), _request.info.quantity);
+        wethUnwrapper.unwrap(_request.info.quantity);
       }
     }
 
@@ -407,15 +416,24 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
   }
 
   /**
-   * @dev Receives ETH from WETH or creates deposit request.
+   * @dev Receives ETH from WETH or creates deposit request if sender is not WETH or WETHUnwrapper.
    */
-  function _fallback() internal virtual whenNotPaused {
-    if (msg.sender != address(wrappedNativeToken)) {
-      Transfer.Request memory _request;
-      _request.recipientAddr = msg.sender;
-      _request.info.quantity = msg.value;
-      _requestDepositFor(_request, _request.recipientAddr);
+  function _fallback() internal virtual {
+    if (msg.sender == address(wrappedNativeToken) || msg.sender == address(wethUnwrapper)) {
+      return;
     }
+
+    _createDepositOnFallback();
+  }
+
+  /**
+   * @dev Creates deposit request.
+   */
+  function _createDepositOnFallback() internal virtual whenNotPaused {
+    Transfer.Request memory _request;
+    _request.recipientAddr = msg.sender;
+    _request.info.quantity = msg.value;
+    _requestDepositFor(_request, _request.recipientAddr);
   }
 
   /**

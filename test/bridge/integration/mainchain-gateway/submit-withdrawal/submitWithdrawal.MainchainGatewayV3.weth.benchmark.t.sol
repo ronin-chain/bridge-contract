@@ -6,6 +6,7 @@ import { ContractType } from "@ronin/contracts/utils/ContractType.sol";
 import { Transfer } from "@ronin/contracts/libraries/Transfer.sol";
 import { Token } from "@ronin/contracts/libraries/Token.sol";
 import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/SignatureConsumer.sol";
+import { MockDiscardEther } from "@ronin/test/mocks/MockDiscardEther.sol";
 import "../../BaseIntegration.t.sol";
 
 contract SubmitWithdrawal_MainchainGatewayV3_Weth_Benchmark_Test is BaseIntegration_Test {
@@ -19,7 +20,7 @@ contract SubmitWithdrawal_MainchainGatewayV3_Weth_Benchmark_Test is BaseIntegrat
   function setUp() public virtual override {
     super.setUp();
 
-    DiscardEther notReceiveEtherRecipient = new DiscardEther();
+    MockDiscardEther notReceiveEtherRecipient = new MockDiscardEther();
 
     _domainSeparator = _mainchainGatewayV3.DOMAIN_SEPARATOR();
 
@@ -48,19 +49,5 @@ contract SubmitWithdrawal_MainchainGatewayV3_Weth_Benchmark_Test is BaseIntegrat
 
   function test_benchmark_submitWithdrawal_Weth() public {
     _mainchainGatewayV3.submitWithdrawal(_withdrawalReceipt, _signatures);
-  }
-}
-
-contract DiscardEther {
-  fallback() external payable {
-    _fallback();
-  }
-
-  receive() external payable {
-    _fallback();
-  }
-
-  function _fallback() internal pure {
-    revert("Not receive ether");
   }
 }
