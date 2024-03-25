@@ -4,47 +4,45 @@ pragma solidity >=0.8.17 <0.9.0;
 import { IBridgeManager } from "@ronin/contracts/interfaces/bridge/IBridgeManager.sol";
 
 contract MockBridgeManager is IBridgeManager {
-  function DOMAIN_SEPARATOR() external view returns (bytes32) {}
+  function DOMAIN_SEPARATOR() external view returns (bytes32) { }
 
   function addBridgeOperators(
     uint96[] calldata voteWeights,
     address[] calldata governors,
     address[] calldata bridgeOperators
-  ) external returns (bool[] memory addeds) {}
+  ) external returns (bool[] memory addeds) { }
 
-  function getBridgeOperatorOf(address[] calldata gorvernors) external view returns (address[] memory bridgeOperators_) {}
+  function setMinRequiredGovernor(uint min) external { }
 
-  function getOperatorOf(address governor) external view returns (address operator) {}
+  function getBridgeOperatorOf(address[] calldata gorvernors) external view returns (address[] memory bridgeOperators_) { }
 
-  function getBridgeOperatorWeight(address bridgeOperator) external view returns (uint96 weight) {}
+  function getOperatorOf(address governor) external view returns (address operator) { }
 
-  function getBridgeOperators() external view returns (address[] memory) {}
+  function getBridgeOperatorWeight(address bridgeOperator) external view returns (uint96 weight) { }
 
-  function getFullBridgeOperatorInfos()
-    external
-    view
-    returns (address[] memory governors, address[] memory bridgeOperators, uint96[] memory weights)
-  {}
+  function getBridgeOperators() external view returns (address[] memory) { }
 
-  function getGovernorWeight(address governor) external view returns (uint96) {}
+  function getFullBridgeOperatorInfos() external view returns (address[] memory governors, address[] memory bridgeOperators, uint96[] memory weights) { }
 
-  function getGovernorWeights(address[] calldata governors) external view returns (uint96[] memory weights) {}
+  function getGovernorWeight(address governor) external view returns (uint96) { }
 
-  function getGovernors() external view returns (address[] memory) {}
+  function getGovernorWeights(address[] calldata governors) external view returns (uint96[] memory weights) { }
 
-  function getGovernorsOf(address[] calldata bridgeOperators) external view returns (address[] memory governors) {}
+  function getGovernors() external view returns (address[] memory) { }
 
-  function getGovernorOf(address operator) external view returns (address governor) {}
+  function getGovernorsOf(address[] calldata bridgeOperators) external view returns (address[] memory governors) { }
 
-  function getTotalWeight() external view returns (uint256) {}
+  function getGovernorOf(address operator) external view returns (address governor) { }
 
-  function isBridgeOperator(address addr) external view returns (bool) {}
+  function getTotalWeight() external view returns (uint256) { }
 
-  function removeBridgeOperators(address[] calldata bridgeOperators) external returns (bool[] memory removeds) {}
+  function isBridgeOperator(address addr) external view returns (bool) { }
 
-  function sumGovernorsWeight(address[] calldata governors) external view returns (uint256 sum) {}
+  function removeBridgeOperators(address[] calldata bridgeOperators) external returns (bool[] memory removeds) { }
 
-  function totalBridgeOperator() external view returns (uint256) {}
+  function sumGovernorsWeight(address[] calldata governors) external view returns (uint256 sum) { }
 
-  function updateBridgeOperator(address currOperator, address newOperator) external {}
+  function totalBridgeOperator() external view returns (uint256) { }
+
+  function updateBridgeOperator(address currOperator, address newOperator) external { }
 }

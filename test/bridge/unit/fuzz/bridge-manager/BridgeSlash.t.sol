@@ -27,6 +27,7 @@ contract BridgeSlashTest is IBridgeSlashEvents, BridgeManagerUtils {
   /// @dev immutable contracts
   address internal _admin;
   address internal _validatorContract;
+  address internal _bridgeManagerLogic;
   address internal _bridgeManagerContract;
   /// @dev proxy contracts
   address internal _gatewayLogic;
@@ -110,9 +111,6 @@ contract BridgeSlashTest is IBridgeSlashEvents, BridgeManagerUtils {
     uint256 numBridgeOperators,
     uint256 period
   ) external {
-    address[] memory currentOperators = IBridgeManager(_bridgeManagerContract).getBridgeOperators();
-    vm.prank(_bridgeManagerContract, _bridgeManagerContract);
-    IBridgeManager(_bridgeManagerContract).removeBridgeOperators(currentOperators);
     // Assume the input values are not equal to the default values
     vm.assume(r1 != DEFAULT_R1 && r2 != DEFAULT_R2 && r3 != DEFAULT_R3);
     // Bound the period between 1 and the maximum value of uint64
@@ -128,7 +126,8 @@ contract BridgeSlashTest is IBridgeSlashEvents, BridgeManagerUtils {
     MockBridgeManager(payable(_bridgeManagerContract)).registerCallbacks(registers);
 
     // Generate valid inputs for bridge operators
-    (address[] memory bridgeOperators, address[] memory governors, uint96[] memory voteWeights) = getValidInputs(
+    (address[] memory bridgeOperators, address[] memory governors, uint96[] memory voteWeights) = getValidAndNonExistingInputs(
+      _bridgeManagerContract,
       r1,
       r2,
       r3,
@@ -288,7 +287,7 @@ contract BridgeSlashTest is IBridgeSlashEvents, BridgeManagerUtils {
   }
 
   function _setUp() internal virtual {
-    _admin = vm.addr(1);
+    _admin = makeAddr("central-admin");
     _validatorContract = address(new MockValidatorSet_ForFoundryTest());
     (address[] memory bridgeOperators, address[] memory governors, uint96[] memory voteWeights) = getValidInputs(
       DEFAULT_R1,
@@ -297,7 +296,11 @@ contract BridgeSlashTest is IBridgeSlashEvents, BridgeManagerUtils {
       DEFAULT_NUM_BRIDGE_OPERATORS
     );
     _defaultBridgeManagerInputs = abi.encode(bridgeOperators, governors, voteWeights);
-    _bridgeManagerContract = address(new MockBridgeManager(bridgeOperators, governors, voteWeights));
+
+    _bridgeManagerLogic = address(new MockBridgeManager());
+    _bridgeManagerContract = address(
+      new TransparentUpgradeableProxyV2(_bridgeManagerLogic, _admin, abi.encodeCall(MockBridgeManager.initialize, (bridgeOperators, governors, voteWeights)))
+    );
 
     _gatewayLogic = address(new RoninGatewayV3());
     _gatewayContract = address(new TransparentUpgradeableProxyV2(_gatewayLogic, _admin, ""));

@@ -119,21 +119,6 @@ contract BridgeSlash is
   }
 
   /**
-   * @inheritdoc IBridgeManagerCallback
-   */
-  function onBridgeOperatorUpdated(
-    address currentBridgeOperator,
-    address newBridgeOperator
-  ) external onlyContract(ContractType.BRIDGE_MANAGER) returns (bytes4) {
-    mapping(address => BridgeSlashInfo) storage _bridgeSlashInfos = _getBridgeSlashInfos();
-
-    _bridgeSlashInfos[newBridgeOperator] = _bridgeSlashInfos[currentBridgeOperator];
-    delete _bridgeSlashInfos[currentBridgeOperator];
-
-    return IBridgeManagerCallback.onBridgeOperatorUpdated.selector;
-  }
-
-  /**
    * @inheritdoc IBridgeSlash
    */
   function execSlashBridgeOperators(
@@ -179,11 +164,11 @@ contract BridgeSlash is
           emit RemovalRequested(period, bridgeOperator);
         }
 
-        // Emit the Slashed event if the tier is not Tier 0 and bridge operator will not be removed.
+        // Emit the {BridgeSlashed} event if the tier is not Tier 0 and bridge operator will not be removed.
         // Update the slash until period number for the bridge operator if the tier is not Tier 0.
         if (tier != Tier.Tier0) {
           if (slashUntilPeriod != SLASH_PERMANENT_DURATION) {
-            emit Slashed(tier, bridgeOperator, period, slashUntilPeriod);
+            emit BridgeSlashed(tier, bridgeOperator, period, slashUntilPeriod);
           }
 
           // Store updated slash until period

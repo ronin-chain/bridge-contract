@@ -18,6 +18,7 @@ interface ISharedArgument is IGeneralConfig {
     uint96[] voteWeights;
     GlobalProposal.TargetOption[] targetOptions;
     address[] targets;
+    uint256 minRequiredGovernor;
   }
 
   struct MainchainGatewayV3Param {

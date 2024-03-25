@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
+import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { IBridgeManagerCallback, BridgeManagerCallbackRegister } from "./BridgeManagerCallbackRegister.sol";
 import { IHasContracts, HasContracts } from "../../extensions/collections/HasContracts.sol";
@@ -13,7 +14,7 @@ import { TUint256Slot } from "../../types/Types.sol";
 import "../../utils/CommonErrors.sol";
 import "./BridgeManagerQuorum.sol";
 
-abstract contract BridgeManager is IBridgeManager, HasContracts, BridgeManagerQuorum, BridgeManagerCallbackRegister {
+abstract contract BridgeManager is IBridgeManager, Initializable, HasContracts, BridgeManagerQuorum, BridgeManagerCallbackRegister {
   using AddressArrayUtils for address[];
   using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -28,6 +29,8 @@ abstract contract BridgeManager is IBridgeManager, HasContracts, BridgeManagerQu
     mapping(address operator => uint96 weight) _operatorWeight;
     /// @dev Total weight of all governors / operators.
     uint256 _totalWeight;
+    /// @dev The minimum number of governors that must exist in the contract, to avoid the contract become non-accessible.
+    uint256 _minRequiredGovernor;
   }
 
   // keccak256(abi.encode(uint256(keccak256("ronin.storage.BridgeManagerStorageLocation")) - 1)) & ~bytes32(uint256(0xff))
@@ -36,20 +39,18 @@ abstract contract BridgeManager is IBridgeManager, HasContracts, BridgeManagerQu
   /**
    * @inheritdoc IBridgeManager
    */
-  bytes32 public immutable DOMAIN_SEPARATOR;
-
-  function _getBridgeManagerStorage() private pure returns (BridgeManagerStorage storage $) {
-    assembly {
-      $.slot := $$_BridgeManagerStorageLocation
-    }
-  }
+  bytes32 public DOMAIN_SEPARATOR;
 
   modifier onlyGovernor() virtual {
     _requireGovernor(msg.sender);
     _;
   }
 
-  constructor(
+  constructor() {
+    _disableInitializers();
+  }
+
+  function __BridgeManager_init(
     uint256 num,
     uint256 denom,
     uint256 roninChainId,
@@ -58,7 +59,19 @@ abstract contract BridgeManager is IBridgeManager, HasContracts, BridgeManagerQu
     address[] memory bridgeOperators,
     address[] memory governors,
     uint96[] memory voteWeights
-  ) payable BridgeManagerQuorum(num, denom) BridgeManagerCallbackRegister(callbackRegisters) {
+  ) internal onlyInitializing {
+    __BridgeManagerQuorum_init_unchained(num, denom);
+    __BridgeManagerCallbackRegister_init_unchained(callbackRegisters);
+    __BridgeManager_init_unchained(roninChainId, bridgeContract, bridgeOperators, governors, voteWeights);
+  }
+
+  function __BridgeManager_init_unchained(
+    uint256 roninChainId,
+    address bridgeContract,
+    address[] memory bridgeOperators,
+    address[] memory governors,
+    uint96[] memory voteWeights
+  ) internal onlyInitializing {
     _setContract(ContractType.BRIDGE, bridgeContract);
 
     DOMAIN_SEPARATOR = keccak256(
@@ -71,6 +84,13 @@ abstract contract BridgeManager is IBridgeManager, HasContracts, BridgeManagerQu
     );
 
     _addBridgeOperators(voteWeights, governors, bridgeOperators);
+    _setMinRequiredGovernor(3);
+  }
+
+  function _getBridgeManagerStorage() private pure returns (BridgeManagerStorage storage $) {
+    assembly {
+      $.slot := $$_BridgeManagerStorageLocation
+    }
   }
 
   // ===================== CONFIG ========================
@@ -81,6 +101,20 @@ abstract contract BridgeManager is IBridgeManager, HasContracts, BridgeManagerQu
   function setContract(ContractType contractType, address addr) external override onlySelfCall {
     _requireHasCode(addr);
     _setContract(contractType, addr);
+  }
+
+  /**
+   * @inheritdoc IBridgeManager
+   */
+  function setMinRequiredGovernor(uint min) external override onlySelfCall {
+    _setMinRequiredGovernor(min);
+  }
+
+  function _setMinRequiredGovernor(uint min) internal {
+    if (min < 3) revert ErrInvalidInput();
+    BridgeManagerStorage storage $ = _getBridgeManagerStorage();
+    $._minRequiredGovernor = min;
+    emit MinRequiredGovernorUpdated(min);
   }
 
   /**
@@ -289,6 +323,9 @@ abstract contract BridgeManager is IBridgeManager, HasContracts, BridgeManagerQu
 
     // simply skip remove operations if inputs are empty.
     if (length == 0) return removeds;
+    if ($._governors.length - length < $._minRequiredGovernor) {
+      revert ErrBelowMinRequiredGovernors();
+    }
 
     address iGovernor;
     address iOperator;

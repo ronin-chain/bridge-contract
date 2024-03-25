@@ -12,21 +12,24 @@ contract MainchainBridgeManagerDeploy is Migration {
   function _defaultArguments() internal virtual override returns (bytes memory args) {
     ISharedArgument.BridgeManagerParam memory param = config.sharedArguments().mainchainBridgeManager;
 
-    args = abi.encode(
-      param.num,
-      param.denom,
-      param.roninChainId,
-      param.bridgeContract,
-      param.callbackRegisters,
-      param.bridgeOperators,
-      param.governors,
-      param.voteWeights,
-      param.targetOptions,
-      param.targets
+    args = abi.encodeCall(
+      MainchainBridgeManager.initialize,
+      (
+        param.num,
+        param.denom,
+        param.roninChainId,
+        param.bridgeContract,
+        param.callbackRegisters,
+        param.bridgeOperators,
+        param.governors,
+        param.voteWeights,
+        param.targetOptions,
+        param.targets
+      )
     );
   }
 
   function run() public virtual returns (MainchainBridgeManager) {
-    return MainchainBridgeManager(_deployImmutable(Contract.MainchainBridgeManager.key()));
+    return MainchainBridgeManager(_deployProxy(Contract.MainchainBridgeManager.key()));
   }
 }

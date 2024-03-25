@@ -29,6 +29,7 @@ import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/Signatu
 import { Ballot } from "@ronin/contracts/libraries/Ballot.sol";
 import { Transfer as LibTransfer } from "@ronin/contracts/libraries/Transfer.sol";
 import { GlobalCoreGovernance } from "@ronin/contracts/extensions/sequential-governance/GlobalCoreGovernance.sol";
+import { IBridgeManager } from "@ronin/contracts/interfaces/bridge/IBridgeManager.sol";
 import { IHasContracts } from "@ronin/contracts/interfaces/collections/IHasContracts.sol";
 import { IBridgeManagerCallbackRegister } from "@ronin/contracts/interfaces/bridge/IBridgeManagerCallbackRegister.sol";
 import { ContractType } from "@ronin/contracts/utils/ContractType.sol";
@@ -304,6 +305,7 @@ contract BaseIntegration_Test is Base_Test {
     _param.roninBridgeManager.callbackRegisters = wrapAddress(address(_bridgeSlash));
     _param.roninBridgeManager.targetOptions = options;
     _param.roninBridgeManager.targets = targets;
+    _param.roninBridgeManager.minRequiredGovernor = 3;
 
     ISharedArgument.BridgeManagerParam memory param = _param.roninBridgeManager;
     uint256 length = param.governors.length;
@@ -361,6 +363,23 @@ contract BaseIntegration_Test is Base_Test {
       vm.prank(_param.roninBridgeManager.governors[0]);
       _roninBridgeManager.proposeGlobalProposalStructAndCastVotes(globalProposal, supports_, signatures);
     }
+
+    {
+      // set min governors
+      GlobalProposal.GlobalProposalDetail memory globalProposal = _roninProposalUtils.createGlobalProposal({
+        expiryTimestamp: block.timestamp + 10,
+        targetOption: GlobalProposal.TargetOption.BridgeManager,
+        value: 0,
+        calldata_: abi.encodeCall(IBridgeManager.setMinRequiredGovernor, (_param.roninBridgeManager.minRequiredGovernor)),
+        gasAmount: 500_000,
+        nonce: _roninBridgeManager.round(0) + 1
+      });
+
+      SignatureConsumer.Signature[] memory signatures = _roninProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
+
+      vm.prank(_param.roninBridgeManager.governors[0]);
+      _roninBridgeManager.proposeGlobalProposalStructAndCastVotes(globalProposal, supports_, signatures);
+    }
   }
 
   function _constructForMainchainBridgeManager() internal {
@@ -375,6 +394,7 @@ contract BaseIntegration_Test is Base_Test {
     _param.mainchainBridgeManager.callbackRegisters = getEmptyAddressArray();
     _param.mainchainBridgeManager.targetOptions = options;
     _param.mainchainBridgeManager.targets = targets;
+    _param.mainchainBridgeManager.minRequiredGovernor = 3;
 
     ISharedArgument.BridgeManagerParam memory param = _param.mainchainBridgeManager;
     uint256 length = param.governors.length;
@@ -432,6 +452,40 @@ contract BaseIntegration_Test is Base_Test {
       vm.prank(_param.roninBridgeManager.governors[0]);
       _mainchainBridgeManager.relayGlobalProposal(globalProposal, supports_, signatures);
     }
+
+    {
+      // set min governors
+      GlobalProposal.GlobalProposalDetail memory globalProposal = _roninProposalUtils.createGlobalProposal({
+        expiryTimestamp: block.timestamp + 10,
+        targetOption: GlobalProposal.TargetOption.BridgeManager,
+        value: 0,
+        calldata_: abi.encodeCall(IBridgeManager.setMinRequiredGovernor, (_param.roninBridgeManager.minRequiredGovernor)),
+        gasAmount: 500_000,
+        nonce: _mainchainBridgeManager.round(0) + 1
+      });
+
+      SignatureConsumer.Signature[] memory signatures = _mainchainProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
+
+      vm.prank(_param.roninBridgeManager.governors[0]);
+      _mainchainBridgeManager.relayGlobalProposal(globalProposal, supports_, signatures);
+    }
+  }
+
+  function _mainchainBridgeManagerInitialize() internal {
+    ISharedArgument.BridgeManagerParam memory param = _param.mainchainBridgeManager;
+
+    _mainchainBridgeManager.initialize(
+      param.num,
+      param.denom,
+      param.roninChainId,
+      param.bridgeContract,
+      param.callbackRegisters,
+      param.bridgeOperators,
+      param.governors,
+      param.voteWeights,
+      param.targetOptions,
+      param.targets
+    );
   }
 
   function _mainchainGatewayV3Initialize() internal {
@@ -491,7 +545,7 @@ contract BaseIntegration_Test is Base_Test {
     );
 
     _mainchainGatewayV3.initializeV2(address(_mainchainBridgeManager));
-    _mainchainGatewayV3.initializeV3(_param.mainchainBridgeManager.bridgeOperators, _param.mainchainBridgeManager.voteWeights);
+    _mainchainGatewayV3.initializeV3();
     _mainchainGatewayV3.initializeV4(payable(address(_mainchainWethUnwrapper)));
   }
 

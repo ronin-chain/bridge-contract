@@ -101,7 +101,10 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
     _setContract(ContractType.BRIDGE_MANAGER, bridgeManagerContract);
   }
 
-  function initializeV3(address[] calldata operators, uint96[] calldata weights) external reinitializer(3) {
+  function initializeV3() external reinitializer(3) {
+    IBridgeManager mainchainBridgeManager = IBridgeManager(getContract(ContractType.BRIDGE_MANAGER));
+    (, address[] memory operators, uint96[] memory weights) = mainchainBridgeManager.getFullBridgeOperatorInfos();
+
     uint96 totalWeight;
     for (uint i; i < operators.length; i++) {
       _operatorWeight[operators[i]] = weights[i];
@@ -262,7 +265,9 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
 
     MappedToken memory token = getRoninToken(receipt.mainchain.tokenAddr);
 
-    if (!(token.erc == receipt.info.erc && token.tokenAddr == receipt.ronin.tokenAddr)) revert ErrInvalidReceipt();
+    if (!(token.erc == receipt.info.erc && token.tokenAddr == receipt.ronin.tokenAddr && receipt.ronin.chainId == roninChainId)) {
+      revert ErrInvalidReceipt();
+    }
 
     if (withdrawalHash[id] != 0) revert ErrQueryForProcessedWithdrawal();
 
@@ -449,6 +454,10 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
   //                CALLBACKS
   ///////////////////////////////////////////////
 
+  function supportsInterface(bytes4 interfaceId) public view override(AccessControlEnumerable, IERC165) returns (bool) {
+    return interfaceId == type(IMainchainGatewayV3).interfaceId || super.supportsInterface(interfaceId);
+  }
+
   /**
    * @inheritdoc IBridgeManagerCallback
    */
@@ -473,16 +482,6 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
     }
 
     return IBridgeManagerCallback.onBridgeOperatorsAdded.selector;
-  }
-
-  /**
-   * @inheritdoc IBridgeManagerCallback
-   */
-  function onBridgeOperatorUpdated(address currOperator, address newOperator) external onlyContract(ContractType.BRIDGE_MANAGER) returns (bytes4) {
-    _operatorWeight[newOperator] = _operatorWeight[currOperator];
-    delete _operatorWeight[currOperator];
-
-    return IBridgeManagerCallback.onBridgeOperatorUpdated.selector;
   }
 
   /**
