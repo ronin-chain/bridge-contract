@@ -20,7 +20,7 @@ contract Remove_Unit_Concrete_Test is BridgeManager_Unit_Concrete_Test {
 
   function test_RevertWhen_NotSelfCall() external {
     // Prepare data
-    (address[] memory removingOperators, , , , , ) = _generateRemovingOperators(1);
+    (address[] memory removingOperators,,,,,) = _generateRemovingOperators(1);
 
     // Make the caller not self-call.
     changePrank({ msgSender: _bridgeOperators[0] });
@@ -62,9 +62,8 @@ contract Remove_Unit_Concrete_Test is BridgeManager_Unit_Concrete_Test {
     _bridgeManager.getGovernorOf(removingOperators[0]);
 
     // Compare after and before state
-    (address[] memory afterBridgeOperators, address[] memory afterGovernors, uint96[] memory afterVoteWeights) = _getBridgeMembersByGovernors(
-      remainingGovernors
-    );
+    (address[] memory afterBridgeOperators, address[] memory afterGovernors, uint96[] memory afterVoteWeights) =
+      _getBridgeMembersByGovernors(remainingGovernors);
 
     _assertBridgeMembers({
       comparingOperators: afterBridgeOperators,
@@ -77,7 +76,7 @@ contract Remove_Unit_Concrete_Test is BridgeManager_Unit_Concrete_Test {
   }
 
   function test_RevertWhen_TwoAddress_Duplicated() external {
-    (address[] memory removingOperators, address[] memory removingGovernors, uint96[] memory removingWeights, , , ) = _generateRemovingOperators(2);
+    (address[] memory removingOperators, address[] memory removingGovernors, uint96[] memory removingWeights,,,) = _generateRemovingOperators(2);
 
     removingOperators[1] = removingOperators[0];
     removingGovernors[1] = removingGovernors[0];
@@ -122,9 +121,8 @@ contract Remove_Unit_Concrete_Test is BridgeManager_Unit_Concrete_Test {
     }
 
     // Compare after and before state
-    (address[] memory afterBridgeOperators, address[] memory afterGovernors, uint96[] memory afterVoteWeights) = _getBridgeMembersByGovernors(
-      remainingGovernors
-    );
+    (address[] memory afterBridgeOperators, address[] memory afterGovernors, uint96[] memory afterVoteWeights) =
+      _getBridgeMembersByGovernors(remainingGovernors);
 
     _assertBridgeMembers({
       comparingOperators: afterBridgeOperators,
@@ -134,5 +132,15 @@ contract Remove_Unit_Concrete_Test is BridgeManager_Unit_Concrete_Test {
       expectingGovernors: remainingGovernors,
       expectingWeights: remainingWeights
     });
+  }
+
+  function test_RevertWhen_ThreeAddress_BelowMinRequiredGovernor() external {
+    uint TO_REMOVE_NUM = 3;
+
+    (address[] memory removingOperators,,,,,) = _generateRemovingOperators(TO_REMOVE_NUM);
+
+    // Run the test.
+    vm.expectRevert(abi.encodeWithSelector(IBridgeManager.ErrBelowMinRequiredGovernors.selector));
+    _bridgeManager.removeBridgeOperators(removingOperators);
   }
 }

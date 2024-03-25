@@ -40,6 +40,17 @@ abstract contract BridgeManagerUtils is Randomizer {
     bridgeManager.addBridgeOperators(voteWeights, governors, bridgeOperators);
   }
 
+  function getValidAndNonExistingInputs(
+    address bridgeManager,
+    uint256 r1,
+    uint256 r2,
+    uint256 r3,
+    uint256 numBridgeOperators
+  ) public virtual returns (address[] memory bridgeOperators, address[] memory governors, uint96[] memory voteWeights) {
+    (bridgeOperators, governors, voteWeights) = getValidInputs(r1, r2, r3, numBridgeOperators);
+    _ensureNonExistingInputs(bridgeManager, bridgeOperators.extend(governors));
+  }
+
   function getValidInputs(
     uint256 r1,
     uint256 r2,
@@ -104,20 +115,14 @@ abstract contract BridgeManagerUtils is Randomizer {
           modifiedInputIdx == 0 ? uintVoteWeights : modifiedInputIdx == 1 ? uintGovernors : uintBridgeOperators
         )
       );
-      (outputs, ) = abi.decode(returnData, (uint256[], uint256[]));
+      (outputs,) = abi.decode(returnData, (uint256[], uint256[]));
     }
 
     // point outputs to modified inputs
     assembly {
-      if iszero(modifiedInputIdx) {
-        voteWeights := outputs
-      }
-      if eq(modifiedInputIdx, 1) {
-        governors := outputs
-      }
-      if eq(modifiedInputIdx, 2) {
-        bridgeOperators := outputs
-      }
+      if iszero(modifiedInputIdx) { voteWeights := outputs }
+      if eq(modifiedInputIdx, 1) { governors := outputs }
+      if eq(modifiedInputIdx, 2) { bridgeOperators := outputs }
     }
   }
 
@@ -137,7 +142,7 @@ abstract contract BridgeManagerUtils is Randomizer {
     // bound index to range [0, inputLength - 1]
     inputLength--;
 
-    for (uint256 i; i < duplicateAmount; ) {
+    for (uint256 i; i < duplicateAmount;) {
       r1 = _randomize(seed, 0, inputLength);
       r2 = _randomize(r1, 0, inputLength);
       vm.assume(r1 != r2);
@@ -171,7 +176,7 @@ abstract contract BridgeManagerUtils is Randomizer {
 
     uint256 r;
     nullifyIndices = new uint256[](nullAmount);
-    for (uint256 i; i < nullAmount; ) {
+    for (uint256 i; i < nullAmount;) {
       r = _randomize(seed, 0, inputLength);
       delete inputs[r];
       nullifyIndices[i] = r;
@@ -211,12 +216,13 @@ abstract contract BridgeManagerUtils is Randomizer {
     _ensureNonZero(uintBridgeOperators);
 
     _ensureNonDuplicated(governors.extend(bridgeOperators));
+    // _ensureNotExisted(governors.extend(bridgeOperators));
   }
 
   function _ensureNonZero(uint256[] memory arr) internal pure {
     uint256 length = arr.length;
 
-    for (uint256 i; i < length; ) {
+    for (uint256 i; i < length;) {
       vm.assume(arr[i] != 0);
       unchecked {
         ++i;
@@ -232,6 +238,13 @@ abstract contract BridgeManagerUtils is Randomizer {
     vm.assume(!addrs.hasDuplicate());
   }
 
+  function _ensureNonExistingInputs(address bridgeManager, address[] memory addrs) internal view {
+    for (uint i; i < addrs.length; i++) {
+      vm.assume(!IBridgeManager(bridgeManager).isBridgeOperator(addrs[i]));
+      vm.assume(IBridgeManager(bridgeManager).getGovernorWeight(addrs[i]) == 0);
+    }
+  }
+
   function _invariantTest(
     IBridgeManager bridgeManager,
     uint96[] memory voteWeights,
@@ -244,7 +257,7 @@ abstract contract BridgeManagerUtils is Randomizer {
     assertEq(bridgeOperators.length, bridgeManager.totalBridgeOperator());
 
     uint256 totalWeight;
-    for (uint256 i; i < voteWeights.length; ) {
+    for (uint256 i; i < voteWeights.length;) {
       totalWeight += voteWeights[i];
       unchecked {
         ++i;

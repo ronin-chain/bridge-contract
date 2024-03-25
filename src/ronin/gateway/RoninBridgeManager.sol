@@ -3,7 +3,11 @@ pragma solidity ^0.8.0;
 
 import { ContractType, RoleAccess, ErrUnauthorized, BridgeManager } from "../../extensions/bridge-operator-governance/BridgeManager.sol";
 import { Ballot, GlobalProposal, Proposal, GovernanceProposal } from "../../extensions/sequential-governance/governance-proposal/GovernanceProposal.sol";
-import { CoreGovernance, GlobalCoreGovernance, GlobalGovernanceProposal } from "../../extensions/sequential-governance/governance-proposal/GlobalGovernanceProposal.sol";
+import {
+  CoreGovernance,
+  GlobalCoreGovernance,
+  GlobalGovernanceProposal
+} from "../../extensions/sequential-governance/governance-proposal/GlobalGovernanceProposal.sol";
 import { VoteStatusConsumer } from "../../interfaces/consumers/VoteStatusConsumer.sol";
 import { ErrQueryForEmptyVote } from "../../utils/CommonErrors.sol";
 
@@ -25,7 +29,7 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
     CoreGovernance(expiryDuration)
     GlobalCoreGovernance(targetOptions, targets)
     BridgeManager(num, denom, roninChainId, bridgeContract, callbackRegisters, bridgeOperators, governors, voteWeights)
-  {}
+  { }
 
   /**
    * CURRENT NETWORK
@@ -101,21 +105,14 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
    * - The method caller is governor.
    *
    */
-  function castProposalVoteForCurrentNetwork(
-    Proposal.ProposalDetail calldata proposal,
-    Ballot.VoteType support
-  ) external onlyGovernor {
+  function castProposalVoteForCurrentNetwork(Proposal.ProposalDetail calldata proposal, Ballot.VoteType support) external onlyGovernor {
     _castProposalVoteForCurrentNetwork(msg.sender, proposal, support);
   }
 
   /**
    * @dev See `GovernanceProposal-_castProposalBySignatures`.
    */
-  function castProposalBySignatures(
-    Proposal.ProposalDetail calldata proposal,
-    Ballot.VoteType[] calldata supports_,
-    Signature[] calldata signatures
-  ) external {
+  function castProposalBySignatures(Proposal.ProposalDetail calldata proposal, Ballot.VoteType[] calldata supports_, Signature[] calldata signatures) external {
     _castProposalBySignatures(proposal, supports_, signatures, DOMAIN_SEPARATOR);
   }
 
@@ -176,12 +173,7 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
     Ballot.VoteType[] calldata supports_,
     Signature[] calldata signatures
   ) external {
-    _castGlobalProposalBySignatures({
-      globalProposal: globalProposal,
-      supports_: supports_,
-      signatures: signatures,
-      domainSeparator: DOMAIN_SEPARATOR
-    });
+    _castGlobalProposalBySignatures({ globalProposal: globalProposal, supports_: supports_, signatures: signatures, domainSeparator: DOMAIN_SEPARATOR });
   }
 
   /**

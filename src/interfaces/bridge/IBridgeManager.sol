@@ -14,6 +14,10 @@ interface IBridgeManager is IBridgeManagerEvents {
   error ErrGovernorNotFound(address governor);
   /// @notice Error indicating that the msg.sender is not match the required governor
   error ErrGovernorNotMatch(address required, address sender);
+  /// @notice Error indicating that the governors list will go below minimum number of required governor.
+  error ErrBelowMinRequiredGovernors();
+  /// @notice Common invalid input error
+  error ErrInvalidInput();
 
   /**
    * @dev The domain separator used for computing hash digests in the contract.
@@ -187,4 +191,10 @@ interface IBridgeManager is IBridgeManagerEvents {
    * @param newOperator The new address of the operator.
    */
   function updateBridgeOperator(address currOperator, address newOperator) external;
+
+    /**
+     * @dev Self-call to update the minimum required governor.
+     * @param min The minimum number, this must not less than 3.
+     */
+    function setMinRequiredGovernor(uint min) external;
 }
