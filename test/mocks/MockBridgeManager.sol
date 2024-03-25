@@ -12,9 +12,9 @@ contract MockBridgeManager is IBridgeManager {
     address[] calldata bridgeOperators
   ) external returns (bool[] memory addeds) {}
 
-  function getBridgeOperatorOf(
-    address[] calldata gorvernors
-  ) external view returns (address[] memory bridgeOperators_) {}
+  function getBridgeOperatorOf(address[] calldata gorvernors) external view returns (address[] memory bridgeOperators_) {}
+
+  function getOperatorOf(address governor) external view returns (address operator) {}
 
   function getBridgeOperatorWeight(address bridgeOperator) external view returns (uint96 weight) {}
 
@@ -34,6 +34,8 @@ contract MockBridgeManager is IBridgeManager {
 
   function getGovernorsOf(address[] calldata bridgeOperators) external view returns (address[] memory governors) {}
 
+  function getGovernorOf(address operator) external view returns (address governor) {}
+
   function getTotalWeight() external view returns (uint256) {}
 
   function isBridgeOperator(address addr) external view returns (bool) {}
@@ -44,5 +46,5 @@ contract MockBridgeManager is IBridgeManager {
 
   function totalBridgeOperator() external view returns (uint256) {}
 
-  function updateBridgeOperator(address bridgeOperator) external {}
+  function updateBridgeOperator(address currOperator, address newOperator) external {}
 }

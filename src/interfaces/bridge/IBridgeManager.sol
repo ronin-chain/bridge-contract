@@ -8,6 +8,13 @@ import { IBridgeManagerEvents } from "./events/IBridgeManagerEvents.sol";
  * @dev The interface for managing bridge operators.
  */
 interface IBridgeManager is IBridgeManagerEvents {
+  /// @notice Error indicating that cannot find the querying operator
+  error ErrOperatorNotFound(address operator);
+  /// @notice Error indicating that cannot find the querying governor
+  error ErrGovernorNotFound(address governor);
+  /// @notice Error indicating that the msg.sender is not match the required governor
+  error ErrGovernorNotMatch(address required, address sender);
+
   /**
    * @dev The domain separator used for computing hash digests in the contract.
    */
@@ -51,10 +58,7 @@ interface IBridgeManager is IBridgeManagerEvents {
    * ```
    *
    */
-  function getFullBridgeOperatorInfos()
-    external
-    view
-    returns (address[] memory governors, address[] memory bridgeOperators, uint96[] memory weights);
+  function getFullBridgeOperatorInfos() external view returns (address[] memory governors, address[] memory bridgeOperators, uint96[] memory weights);
 
   /**
    * @dev Returns total weights of the governor list.
@@ -73,19 +77,25 @@ interface IBridgeManager is IBridgeManagerEvents {
   function getBridgeOperators() external view returns (address[] memory);
 
   /**
-   * @dev Returns an array of bridge operators correspoding to governor addresses.
-   * @return bridgeOperators_ An array containing the addresses of all bridge operators.
+   * @dev Returns an array of bridge operators corresponding to governor addresses.
    */
   function getBridgeOperatorOf(address[] calldata gorvernors) external view returns (address[] memory bridgeOperators_);
 
   /**
+   * @dev Returns the corresponding `operator` of a `governor`.
+   */
+  function getOperatorOf(address governor) external view returns (address operator);
+
+  /**
    * @dev Retrieves the governors corresponding to a given array of bridge operators.
-   * This external function allows external callers to obtain the governors associated with a given array of bridge operators.
-   * The function takes an input array `bridgeOperators` containing bridge operator addresses and returns an array of corresponding governors.
-   * @param bridgeOperators An array of bridge operator addresses for which governors are to be retrieved.
-   * @return governors An array of addresses representing the governors corresponding to the provided bridge operators.
    */
   function getGovernorsOf(address[] calldata bridgeOperators) external view returns (address[] memory governors);
+
+  /**
+   * @dev Returns the corresponding `governor` of a `operator`.
+   */
+
+  function getGovernorOf(address operator) external view returns (address governor);
 
   /**
    * @dev External function to retrieve the vote weight of a specific governor.
@@ -168,10 +178,13 @@ interface IBridgeManager is IBridgeManagerEvents {
   function removeBridgeOperators(address[] calldata bridgeOperators) external returns (bool[] memory removeds);
 
   /**
-   * @dev Governor updates their corresponding governor and/or operator address.
+   * @dev Governor updates their corresponding or operator address.
+   *
    * Requirements:
-   * - The caller must the governor of the operator that is requested changes.
-   * @param bridgeOperator The address of the bridge operator to update.
+   * - The caller must be the governor of the operator that is requested changes.
+   *
+   * @param currOperator The address of the operator to update.
+   * @param newOperator The new address of the operator.
    */
-  function updateBridgeOperator(address bridgeOperator) external;
+  function updateBridgeOperator(address currOperator, address newOperator) external;
 }

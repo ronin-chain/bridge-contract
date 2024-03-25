@@ -30,4 +30,34 @@ library LibArrayUtils {
 
     return sum(arr256);
   }
+
+  function concat(uint96[] memory a, uint96[] memory b) internal pure returns (uint96[] memory c) {
+    c = new uint96[](a.length + b.length);
+
+    uint i;
+    for (; i < a.length; i++) {
+      c[i] = a[i];
+    }
+
+    for (uint j; j < b.length; ) {
+      c[i] = b[j];
+      ++i;
+      ++j;
+    }
+  }
+
+  function concat(address[] memory a, address[] memory b) internal pure returns (address[] memory c) {
+    c = new address[](a.length + b.length);
+
+    uint i;
+    for (; i < a.length; i++) {
+      c[i] = a[i];
+    }
+
+    for (uint j; j < b.length; ) {
+      c[i] = b[j];
+      ++i;
+      ++j;
+    }
+  }
 }

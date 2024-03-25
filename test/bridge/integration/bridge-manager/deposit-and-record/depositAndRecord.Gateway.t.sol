@@ -26,8 +26,7 @@ contract DepositAndRecord_Gateway_Test is BaseIntegration_Test {
       info: Token.Info({ erc: Token.Standard.ERC20, id: 0, quantity: 100 })
     });
 
-    _numOperatorsForVoteExecuted =
-      _param.roninBridgeManager.bridgeOperators.length * _param.roninBridgeManager.num / _param.roninBridgeManager.denom;
+    _numOperatorsForVoteExecuted = (_roninBridgeManager.minimumVoteWeight() - 1) / 100 + 1;
   }
 
   function test_depositFor_wrapUp_checkRewardAndSlash() public {
@@ -77,18 +76,6 @@ contract DepositAndRecord_Gateway_Test is BaseIntegration_Test {
     for (uint256 i = _numOperatorsForVoteExecuted; i < _param.roninBridgeManager.bridgeOperators.length; i++) {
       assertEq(toPeriodSlashArr[i], 7);
     }
-  }
-
-  function _updateBridgeOperator() internal {
-    vm.prank(_param.roninBridgeManager.governors[0]);
-    address previousOperator = _param.roninBridgeManager.bridgeOperators[0];
-    _roninBridgeManager.updateBridgeOperator(_newBridgeOperator);
-    _param.roninBridgeManager.bridgeOperators[0] = _newBridgeOperator;
-
-    console.log(
-      "Update operator: ",
-      string(abi.encodePacked(vm.toString(previousOperator), " => ", vm.toString(_newBridgeOperator)))
-    );
   }
 
   function _depositFor() internal {

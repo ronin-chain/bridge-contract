@@ -1,0 +1,66 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+import { console2 as console } from "forge-std/console2.sol";
+import { ContractType } from "@ronin/contracts/utils/ContractType.sol";
+import { Transfer } from "@ronin/contracts/libraries/Transfer.sol";
+import { Token } from "@ronin/contracts/libraries/Token.sol";
+import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/SignatureConsumer.sol";
+import "../../BaseIntegration.t.sol";
+
+contract SubmitWithdrawal_MainchainGatewayV3_Weth_Benchmark_Test is BaseIntegration_Test {
+  using Transfer for Transfer.Receipt;
+
+  Transfer.Receipt _withdrawalReceipt;
+  bytes32 _domainSeparator;
+
+  SignatureConsumer.Signature[] _signatures;
+
+  function setUp() public virtual override {
+    super.setUp();
+
+    DiscardEther notReceiveEtherRecipient = new DiscardEther();
+
+    _domainSeparator = _mainchainGatewayV3.DOMAIN_SEPARATOR();
+
+    _withdrawalReceipt.id = 0;
+    _withdrawalReceipt.kind = Transfer.Kind.Withdrawal;
+    _withdrawalReceipt.ronin.addr = makeAddr("requester");
+    _withdrawalReceipt.ronin.tokenAddr = address(_roninWeth);
+    _withdrawalReceipt.ronin.chainId = block.chainid;
+    _withdrawalReceipt.mainchain.addr = address(notReceiveEtherRecipient);
+    _withdrawalReceipt.mainchain.tokenAddr = address(_mainchainWeth);
+    _withdrawalReceipt.mainchain.chainId = block.chainid;
+    _withdrawalReceipt.info.erc = Token.Standard.ERC20;
+    _withdrawalReceipt.info.id = 0;
+    _withdrawalReceipt.info.quantity = 0;
+
+    vm.deal(address(_mainchainGatewayV3), 6 ether);
+
+    _withdrawalReceipt.info.quantity = 2 ether;
+
+    SignatureConsumer.Signature[] memory signatures = _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs, _domainSeparator);
+
+    for (uint i; i < signatures.length; i++) {
+      _signatures.push(signatures[i]);
+    }
+  }
+
+  function test_benchmark_submitWithdrawal_Weth() public {
+    _mainchainGatewayV3.submitWithdrawal(_withdrawalReceipt, _signatures);
+  }
+}
+
+contract DiscardEther {
+  fallback() external payable {
+    _fallback();
+  }
+
+  receive() external payable {
+    _fallback();
+  }
+
+  function _fallback() internal pure {
+    revert("Not receive ether");
+  }
+}

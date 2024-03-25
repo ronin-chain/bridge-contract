@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.23;
 
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
@@ -10,13 +10,7 @@ import "../extensions/WithdrawalLimitation.sol";
 import "../libraries/Transfer.sol";
 import "../interfaces/IMainchainGatewayV3.sol";
 
-contract MainchainGatewayV3 is
-  WithdrawalLimitation,
-  Initializable,
-  AccessControlEnumerable,
-  IMainchainGatewayV3,
-  HasContracts
-{
+contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessControlEnumerable, IMainchainGatewayV3, HasContracts, IBridgeManagerCallback {
   using Token for Token.Info;
   using Transfer for Transfer.Request;
   using Transfer for Transfer.Receipt;
@@ -30,7 +24,7 @@ contract MainchainGatewayV3 is
   uint256 public roninChainId;
   /// @dev Total deposit
   uint256 public depositCount;
-  /// @dev Domain seperator
+  /// @dev Domain separator
   bytes32 internal _domainSeparator;
   /// @dev Mapping from mainchain token => token address on Ronin network
   mapping(address => MappedToken) internal _roninToken;
@@ -43,6 +37,9 @@ contract MainchainGatewayV3 is
   uint256 private ______deprecatedBridgeOperatorAddedBlock;
   /// @custom:deprecated Previously `_bridgeOperators` (uint256[])
   uint256 private ______deprecatedBridgeOperators;
+
+  uint96 private _totalOperatorWeight;
+  mapping(address operator => uint96 weight) private _operatorWeight;
 
   fallback() external payable {
     _fallback();
@@ -93,17 +90,25 @@ contract MainchainGatewayV3 is
     }
 
     // Grant role for withdrawal unlocker
-    for (uint256 _i; _i < _addresses[2].length;) {
-      _grantRole(WITHDRAWAL_UNLOCKER_ROLE, _addresses[2][_i]);
-
-      unchecked {
-        ++_i;
-      }
+    for (uint256 i; i < _addresses[2].length; i++) {
+      _grantRole(WITHDRAWAL_UNLOCKER_ROLE, _addresses[2][i]);
     }
   }
 
   function initializeV2(address bridgeManagerContract) external reinitializer(2) {
     _setContract(ContractType.BRIDGE_MANAGER, bridgeManagerContract);
+  }
+
+  function initializeV3() external reinitializer(3) {
+    IBridgeManager mainchainBridgeManager = IBridgeManager(getContract(ContractType.BRIDGE_MANAGER));
+    (, address[] memory operators, uint96[] memory weights) = mainchainBridgeManager.getFullBridgeOperatorInfos();
+
+    uint96 totalWeight;
+    for (uint i; i < operators.length; i++) {
+      _operatorWeight[operators[i]] = weights[i];
+      totalWeight += weights[i];
+    }
+    _totalOperatorWeight = totalWeight;
   }
 
   /**
@@ -135,53 +140,44 @@ contract MainchainGatewayV3 is
   /**
    * @inheritdoc IMainchainGatewayV3
    */
-  function submitWithdrawal(Transfer.Receipt calldata _receipt, Signature[] calldata _signatures)
-    external
-    virtual
-    whenNotPaused
-    returns (bool _locked)
-  {
+  function submitWithdrawal(Transfer.Receipt calldata _receipt, Signature[] calldata _signatures) external virtual whenNotPaused returns (bool _locked) {
     return _submitWithdrawal(_receipt, _signatures);
   }
 
   /**
    * @inheritdoc IMainchainGatewayV3
    */
-  function unlockWithdrawal(Transfer.Receipt calldata _receipt) external onlyRole(WITHDRAWAL_UNLOCKER_ROLE) {
-    bytes32 _receiptHash = _receipt.hash();
-    if (withdrawalHash[_receipt.id] != _receipt.hash()) {
+  function unlockWithdrawal(Transfer.Receipt calldata receipt) external onlyRole(WITHDRAWAL_UNLOCKER_ROLE) {
+    bytes32 _receiptHash = receipt.hash();
+    if (withdrawalHash[receipt.id] != receipt.hash()) {
       revert ErrInvalidReceipt();
     }
-    if (!withdrawalLocked[_receipt.id]) {
+    if (!withdrawalLocked[receipt.id]) {
       revert ErrQueryForApprovedWithdrawal();
     }
-    delete withdrawalLocked[_receipt.id];
-    emit WithdrawalUnlocked(_receiptHash, _receipt);
+    delete withdrawalLocked[receipt.id];
+    emit WithdrawalUnlocked(_receiptHash, receipt);
 
-    address _token = _receipt.mainchain.tokenAddr;
-    if (_receipt.info.erc == Token.Standard.ERC20) {
-      Token.Info memory _feeInfo = _receipt.info;
-      _feeInfo.quantity = _computeFeePercentage(_receipt.info.quantity, unlockFeePercentages[_token]);
-      Token.Info memory _withdrawInfo = _receipt.info;
-      _withdrawInfo.quantity = _receipt.info.quantity - _feeInfo.quantity;
+    address token = receipt.mainchain.tokenAddr;
+    if (receipt.info.erc == Token.Standard.ERC20) {
+      Token.Info memory feeInfo = receipt.info;
+      feeInfo.quantity = _computeFeePercentage(receipt.info.quantity, unlockFeePercentages[token]);
+      Token.Info memory withdrawInfo = receipt.info;
+      withdrawInfo.quantity = receipt.info.quantity - feeInfo.quantity;
 
-      _feeInfo.handleAssetTransfer(payable(msg.sender), _token, wrappedNativeToken);
-      _withdrawInfo.handleAssetTransfer(payable(_receipt.mainchain.addr), _token, wrappedNativeToken);
+      feeInfo.handleAssetTransfer(payable(msg.sender), token, wrappedNativeToken);
+      withdrawInfo.handleAssetTransfer(payable(receipt.mainchain.addr), token, wrappedNativeToken);
     } else {
-      _receipt.info.handleAssetTransfer(payable(_receipt.mainchain.addr), _token, wrappedNativeToken);
+      receipt.info.handleAssetTransfer(payable(receipt.mainchain.addr), token, wrappedNativeToken);
     }
 
-    emit Withdrew(_receiptHash, _receipt);
+    emit Withdrew(_receiptHash, receipt);
   }
 
   /**
    * @inheritdoc IMainchainGatewayV3
    */
-  function mapTokens(
-    address[] calldata _mainchainTokens,
-    address[] calldata _roninTokens,
-    Token.Standard[] calldata _standards
-  ) external virtual onlyAdmin {
+  function mapTokens(address[] calldata _mainchainTokens, address[] calldata _roninTokens, Token.Standard[] calldata _standards) external virtual onlyAdmin {
     if (_mainchainTokens.length == 0) revert ErrEmptyArray();
     _mapTokens(_mainchainTokens, _roninTokens, _standards);
   }
@@ -210,9 +206,9 @@ contract MainchainGatewayV3 is
   /**
    * @inheritdoc IMainchainGatewayV3
    */
-  function getRoninToken(address _mainchainToken) public view returns (MappedToken memory _token) {
-    _token = _roninToken[_mainchainToken];
-    if (_token.tokenAddr == address(0)) revert ErrUnsupportedToken();
+  function getRoninToken(address mainchainToken) public view returns (MappedToken memory token) {
+    token = _roninToken[mainchainToken];
+    if (token.tokenAddr == address(0)) revert ErrUnsupportedToken();
   }
 
   /**
@@ -224,25 +220,15 @@ contract MainchainGatewayV3 is
    * Emits the `TokenMapped` event.
    *
    */
-  function _mapTokens(
-    address[] calldata _mainchainTokens,
-    address[] calldata _roninTokens,
-    Token.Standard[] calldata _standards
-  ) internal virtual {
-    if (!(_mainchainTokens.length == _roninTokens.length && _mainchainTokens.length == _standards.length)) {
-      revert ErrLengthMismatch(msg.sig);
+  function _mapTokens(address[] calldata mainchainTokens, address[] calldata roninTokens, Token.Standard[] calldata standards) internal virtual {
+    if (!(mainchainTokens.length == roninTokens.length && mainchainTokens.length == standards.length)) revert ErrLengthMismatch(msg.sig);
+
+    for (uint256 i; i < mainchainTokens.length; i++) {
+      _roninToken[mainchainTokens[i]].tokenAddr = roninTokens[i];
+      _roninToken[mainchainTokens[i]].erc = standards[i];
     }
 
-    for (uint256 _i; _i < _mainchainTokens.length;) {
-      _roninToken[_mainchainTokens[_i]].tokenAddr = _roninTokens[_i];
-      _roninToken[_mainchainTokens[_i]].erc = _standards[_i];
-
-      unchecked {
-        ++_i;
-      }
-    }
-
-    emit TokenMapped(_mainchainTokens, _roninTokens, _standards);
+    emit TokenMapped(mainchainTokens, roninTokens, standards);
   }
 
   /**
@@ -259,75 +245,69 @@ contract MainchainGatewayV3 is
    * Emits the `Withdrew` once the assets are released.
    *
    */
-  function _submitWithdrawal(Transfer.Receipt calldata _receipt, Signature[] memory _signatures)
-    internal
-    virtual
-    returns (bool _locked)
-  {
-    uint256 _id = _receipt.id;
-    uint256 _quantity = _receipt.info.quantity;
-    address _tokenAddr = _receipt.mainchain.tokenAddr;
+  function _submitWithdrawal(Transfer.Receipt calldata receipt, Signature[] memory signatures) internal virtual returns (bool locked) {
+    uint256 id = receipt.id;
+    uint256 quantity = receipt.info.quantity;
+    address tokenAddr = receipt.mainchain.tokenAddr;
 
-    _receipt.info.validate();
-    if (_receipt.kind != Transfer.Kind.Withdrawal) revert ErrInvalidReceiptKind();
+    receipt.info.validate();
+    if (receipt.kind != Transfer.Kind.Withdrawal) revert ErrInvalidReceiptKind();
 
-    if (_receipt.mainchain.chainId != block.chainid) {
-      revert ErrInvalidChainId(msg.sig, _receipt.mainchain.chainId, block.chainid);
+    if (receipt.mainchain.chainId != block.chainid) {
+      revert ErrInvalidChainId(msg.sig, receipt.mainchain.chainId, block.chainid);
     }
 
-    MappedToken memory _token = getRoninToken(_receipt.mainchain.tokenAddr);
+    MappedToken memory token = getRoninToken(receipt.mainchain.tokenAddr);
 
-    if (!(_token.erc == _receipt.info.erc && _token.tokenAddr == _receipt.ronin.tokenAddr)) revert ErrInvalidReceipt();
+    if (!(token.erc == receipt.info.erc && token.tokenAddr == receipt.ronin.tokenAddr && receipt.ronin.chainId == roninChainId)) {
+      revert ErrInvalidReceipt();
+    }
 
-    if (withdrawalHash[_id] != 0) revert ErrQueryForProcessedWithdrawal();
+    if (withdrawalHash[id] != 0) revert ErrQueryForProcessedWithdrawal();
 
-    if (!(_receipt.info.erc == Token.Standard.ERC721 || !_reachedWithdrawalLimit(_tokenAddr, _quantity))) {
+    if (!(receipt.info.erc == Token.Standard.ERC721 || !_reachedWithdrawalLimit(tokenAddr, quantity))) {
       revert ErrReachedDailyWithdrawalLimit();
     }
 
-    bytes32 _receiptHash = _receipt.hash();
-    bytes32 _receiptDigest = Transfer.receiptDigest(_domainSeparator, _receiptHash);
+    bytes32 receiptHash = receipt.hash();
+    bytes32 receiptDigest = Transfer.receiptDigest(_domainSeparator, receiptHash);
 
-    uint256 _minimumVoteWeight;
-    (_minimumVoteWeight, _locked) = _computeMinVoteWeight(_receipt.info.erc, _tokenAddr, _quantity);
+    uint256 minimumWeight;
+    (minimumWeight, locked) = _computeMinVoteWeight(receipt.info.erc, tokenAddr, quantity);
 
     {
-      bool _passed;
-      address _signer;
-      address _lastSigner;
-      Signature memory _sig;
-      uint256 _weight;
-      for (uint256 _i; _i < _signatures.length;) {
-        _sig = _signatures[_i];
-        _signer = ecrecover(_receiptDigest, _sig.v, _sig.r, _sig.s);
-        if (_lastSigner >= _signer) revert ErrInvalidOrder(msg.sig);
+      bool passed;
+      address signer;
+      address lastSigner;
+      Signature memory sig;
+      uint256 weight;
+      for (uint256 i; i < signatures.length; i++) {
+        sig = signatures[i];
+        signer = ecrecover(receiptDigest, sig.v, sig.r, sig.s);
+        if (lastSigner >= signer) revert ErrInvalidOrder(msg.sig);
 
-        _lastSigner = _signer;
+        lastSigner = signer;
 
-        _weight += _getWeight(_signer);
-        if (_weight >= _minimumVoteWeight) {
-          _passed = true;
+        weight += _getWeight(signer);
+        if (weight >= minimumWeight) {
+          passed = true;
           break;
-        }
-
-        unchecked {
-          ++_i;
         }
       }
 
-      if (!_passed) revert ErrQueryForInsufficientVoteWeight();
-      withdrawalHash[_id] = _receiptHash;
+      if (!passed) revert ErrQueryForInsufficientVoteWeight();
+      withdrawalHash[id] = receiptHash;
     }
 
-    if (_locked) {
-      withdrawalLocked[_id] = true;
-      emit WithdrawalLocked(_receiptHash, _receipt);
-      return _locked;
+    if (locked) {
+      withdrawalLocked[id] = true;
+      emit WithdrawalLocked(receiptHash, receipt);
+      return locked;
     }
 
-    _recordWithdrawal(_tokenAddr, _quantity);
-    _receipt.info.handleAssetTransfer(payable(_receipt.mainchain.addr), _tokenAddr, wrappedNativeToken);
-    emit Withdrew(_receiptHash, _receipt);
+    _recordWithdrawal(tokenAddr, quantity);
+    receipt.info.handleAssetTransfer(payable(receipt.mainchain.addr), tokenAddr, wrappedNativeToken);
+    emit Withdrew(receiptHash, receipt);
   }
 
   /**
@@ -367,8 +347,7 @@ contract MainchainGatewayV3 is
     }
 
     uint256 _depositId = depositCount++;
-    Transfer.Receipt memory _receipt =
-      _request.into_deposit_receipt(_requester, _depositId, _token.tokenAddr, roninChainId);
+    Transfer.Receipt memory _receipt = _request.into_deposit_receipt(_requester, _depositId, _token.tokenAddr, roninChainId);
 
     emit DepositRequested(_receipt.hash(), _receipt);
   }
@@ -376,11 +355,7 @@ contract MainchainGatewayV3 is
   /**
    * @dev Returns the minimum vote weight for the token.
    */
-  function _computeMinVoteWeight(Token.Standard _erc, address _token, uint256 _quantity)
-    internal
-    virtual
-    returns (uint256 _weight, bool _locked)
-  {
+  function _computeMinVoteWeight(Token.Standard _erc, address _token, uint256 _quantity) internal virtual returns (uint256 _weight, bool _locked) {
     uint256 _totalWeight = _getTotalWeight();
     _weight = _minimumVoteWeight(_totalWeight);
     if (_erc == Token.Standard.ERC20) {
@@ -447,13 +422,72 @@ contract MainchainGatewayV3 is
    * @inheritdoc GatewayV3
    */
   function _getTotalWeight() internal view override returns (uint256) {
-    return IBridgeManager(getContract(ContractType.BRIDGE_MANAGER)).getTotalWeight();
+    return _totalOperatorWeight;
   }
 
   /**
    * @dev Returns the weight of an address.
    */
-  function _getWeight(address _addr) internal view returns (uint256) {
-    return IBridgeManager(getContract(ContractType.BRIDGE_MANAGER)).getBridgeOperatorWeight(_addr);
+  function _getWeight(address addr) internal view returns (uint256) {
+    return _operatorWeight[addr];
+  }
+
+  ///////////////////////////////////////////////
+  //                CALLBACKS
+  ///////////////////////////////////////////////
+
+  function supportsInterface(bytes4 interfaceId) public view override(AccessControlEnumerable, IERC165) returns (bool) {
+    return interfaceId == type(IMainchainGatewayV3).interfaceId || super.supportsInterface(interfaceId);
+  }
+
+  /**
+   * @inheritdoc IBridgeManagerCallback
+   */
+  function onBridgeOperatorsAdded(
+    address[] calldata operators,
+    uint96[] calldata weights,
+    bool[] memory addeds
+  ) external onlyContract(ContractType.BRIDGE_MANAGER) returns (bytes4) {
+    uint256 length = operators.length;
+    if (length != addeds.length || length != weights.length) revert ErrLengthMismatch(msg.sig);
+    if (length == 0) {
+      return IBridgeManagerCallback.onBridgeOperatorsAdded.selector;
+    }
+
+    for (uint256 i; i < length; ++i) {
+      unchecked {
+        if (addeds[i]) {
+          _totalOperatorWeight += weights[i];
+          _operatorWeight[operators[i]] = weights[i];
+        }
+      }
+    }
+
+    return IBridgeManagerCallback.onBridgeOperatorsAdded.selector;
+  }
+
+  /**
+   * @inheritdoc IBridgeManagerCallback
+   */
+  function onBridgeOperatorsRemoved(address[] calldata operators, bool[] calldata removeds) external onlyContract(ContractType.BRIDGE_MANAGER) returns (bytes4) {
+    uint length = operators.length;
+    if (length != removeds.length) revert ErrLengthMismatch(msg.sig);
+    if (length == 0) {
+      return IBridgeManagerCallback.onBridgeOperatorsRemoved.selector;
+    }
+
+    uint96 totalRemovingWeight;
+    for (uint i; i < length; ++i) {
+      unchecked {
+        if (removeds[i]) {
+          totalRemovingWeight += _operatorWeight[operators[i]];
+          delete _operatorWeight[operators[i]];
+        }
+      }
+    }
+
+    _totalOperatorWeight -= totalRemovingWeight;
+
+    return IBridgeManagerCallback.onBridgeOperatorsRemoved.selector;
   }
 }

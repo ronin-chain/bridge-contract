@@ -93,6 +93,7 @@ contract BridgeSlash is
    */
   function onBridgeOperatorsAdded(
     address[] calldata bridgeOperators,
+    uint96[] calldata /* weights */,
     bool[] memory addeds
   ) external onlyContract(ContractType.BRIDGE_MANAGER) returns (bytes4) {
     uint256 length = bridgeOperators.length;
@@ -115,21 +116,6 @@ contract BridgeSlash is
     }
 
     return IBridgeManagerCallback.onBridgeOperatorsAdded.selector;
-  }
-
-  /**
-   * @inheritdoc IBridgeManagerCallback
-   */
-  function onBridgeOperatorUpdated(
-    address currentBridgeOperator,
-    address newBridgeOperator
-  ) external onlyContract(ContractType.BRIDGE_MANAGER) returns (bytes4) {
-    mapping(address => BridgeSlashInfo) storage _bridgeSlashInfos = _getBridgeSlashInfos();
-
-    _bridgeSlashInfos[newBridgeOperator] = _bridgeSlashInfos[currentBridgeOperator];
-    delete _bridgeSlashInfos[currentBridgeOperator];
-
-    return IBridgeManagerCallback.onBridgeOperatorUpdated.selector;
   }
 
   /**
@@ -203,7 +189,7 @@ contract BridgeSlash is
     address[] calldata,
     bool[] calldata
   ) external view onlyContract(ContractType.BRIDGE_MANAGER) returns (bytes4) {
-    return IBridgeManagerCallback.onBridgeOperatorsAdded.selector;
+    return IBridgeManagerCallback.onBridgeOperatorsRemoved.selector;
   }
 
   /**

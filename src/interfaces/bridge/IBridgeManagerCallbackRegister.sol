@@ -2,6 +2,8 @@
 pragma solidity ^0.8.0;
 
 interface IBridgeManagerCallbackRegister {
+  error ErrExistOneInternalCallFailed(address sender, bytes4 msgSig, bytes callData);
+
   /**
    * @dev Emitted when the contract notifies multiple registers with statuses and return data.
    */

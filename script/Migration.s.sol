@@ -46,7 +46,7 @@ contract Migration is BaseMigrationV2, Utils {
       param.mockErc721.name = "Mock ERC721";
       param.mockErc721.symbol = "M_ERC721";
 
-      uint256 num = 6;
+      uint256 num = 22;
       address[] memory operatorAddrs = new address[](num);
       address[] memory governorAddrs = new address[](num);
       uint256[] memory operatorPKs = new uint256[](num);
@@ -86,15 +86,14 @@ contract Migration is BaseMigrationV2, Utils {
       param.roninPauseEnforcer.sentries = wrapAddress(makeAddr("pause-enforcer-sentry"));
 
       // Ronin Gateway V3
-      param.roninGatewayV3.numerator = 3;
-      param.roninGatewayV3.denominator = 6;
-      param.roninGatewayV3.trustedNumerator = 2;
-      param.roninGatewayV3.trustedDenominator = 3;
+      param.roninGatewayV3.numerator = 7;
+      param.roninGatewayV3.denominator = 10;
+      param.roninGatewayV3.trustedNumerator = 9;
+      param.roninGatewayV3.trustedDenominator = 10;
 
       // Ronin Bridge Manager
-      param.roninBridgeManager.num = 2;
-      param.roninBridgeManager.denom = 4;
-      param.roninBridgeManager.roninChainId = 0;
+      param.roninBridgeManager.num = 7;
+      param.roninBridgeManager.denom = 10;
       param.roninBridgeManager.roninChainId = block.chainid;
       param.roninBridgeManager.expiryDuration = 60 * 60 * 24 * 14; // 14 days
       param.roninBridgeManager.bridgeOperators = operatorAddrs;
@@ -103,20 +102,15 @@ contract Migration is BaseMigrationV2, Utils {
       param.roninBridgeManager.targetOptions = options;
       param.roninBridgeManager.targets = targets;
 
-      // Mainchain Gateway Pause Enforcer
-      param.mainchainPauseEnforcer.admin = makeAddr("pause-enforcer-admin");
-      param.mainchainPauseEnforcer.sentries = wrapAddress(makeAddr("pause-enforcer-sentry"));
-
       // Mainchain Gateway V3
       param.mainchainGatewayV3.roninChainId = block.chainid;
-      param.mainchainGatewayV3.numerator = 1;
-      param.mainchainGatewayV3.highTierVWNumerator = 10;
+      param.mainchainGatewayV3.numerator = 7;
+      param.mainchainGatewayV3.highTierVWNumerator = 9;
       param.mainchainGatewayV3.denominator = 10;
 
       // Mainchain Bridge Manager
-      param.mainchainBridgeManager.num = 2;
-      param.mainchainBridgeManager.denom = 4;
-      param.mainchainBridgeManager.roninChainId = 0;
+      param.mainchainBridgeManager.num = 7;
+      param.mainchainBridgeManager.denom = 10;
       param.mainchainBridgeManager.roninChainId = block.chainid;
       param.mainchainBridgeManager.bridgeOperators = operatorAddrs;
       param.mainchainBridgeManager.governors = governorAddrs;

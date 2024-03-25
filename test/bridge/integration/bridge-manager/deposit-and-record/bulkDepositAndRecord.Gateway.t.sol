@@ -27,8 +27,7 @@ contract BulkDepositAndRecord_Gateway_Test is BaseIntegration_Test {
       info: Token.Info({ erc: Token.Standard.ERC20, id: 0, quantity: 100 })
     });
 
-    _numOperatorsForVoteExecuted =
-      _param.roninBridgeManager.bridgeOperators.length * _param.roninBridgeManager.num / _param.roninBridgeManager.denom;
+    _numOperatorsForVoteExecuted = (_roninBridgeManager.minimumVoteWeight() - 1) / 100 + 1;
   }
 
   function test_bulkDepositFor_wrapUp_checkRewardAndSlash() public {
