@@ -101,7 +101,7 @@ library LibTokenInfo {
 
   function _hashSingle(TokenInfo memory self) internal pure returns (bytes32 digest) {
     // return keccak256(abi.encode(INFO_TYPE_HASH_SINGLE, self.erc, self.id, self.quantity));
-    assembly {
+    assembly ("memory-safe") {
       let ptr := mload(0x40)
       mstore(ptr, INFO_TYPE_HASH_SINGLE)
       mstore(add(ptr, 0x20), mload(self)) // info.erc
@@ -115,7 +115,7 @@ library LibTokenInfo {
     bytes32 idsHash = keccak256(abi.encode(self.ids));
     bytes32 qtysHash = keccak256(abi.encode(self.quantities));
 
-    assembly {
+    assembly ("memory-safe") {
       let ptr := mload(0x40)
       mstore(ptr, INFO_TYPE_HASH_SINGLE)
       mstore(add(ptr, 0x20), mload(self)) // info.erc
