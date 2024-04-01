@@ -199,6 +199,13 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
   }
 
   /**
+   * @dev See {GlobalCoreGovernance-_executeWithCaller}.
+   */
+  function executeGlobal(GlobalProposal.GlobalProposalDetail calldata globalProposal) external {
+    _executeGlobalWithCaller(globalProposal, msg.sender);
+  }
+
+  /**
    * @dev Deletes the expired proposal by its chainId and nonce, without creating a new proposal.
    *
    * Requirements:

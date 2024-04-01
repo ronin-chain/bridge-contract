@@ -84,6 +84,11 @@ abstract contract GlobalCoreGovernance is CoreGovernance {
     emit GlobalProposalCreated(round_, proposalHash, proposal, globalProposal.hash(), globalProposal, creator);
   }
 
+  function _executeGlobalWithCaller(GlobalProposal.GlobalProposalDetail memory globalProposal, address caller) internal {
+    Proposal.ProposalDetail memory proposal = globalProposal.intoProposalDetail(_resolveTargets({ targetOptions: globalProposal.targetOptions, strict: true }));
+    _executeWithCaller(proposal, caller);
+  }
+
   /**
    * @dev Returns corresponding address of target options. Return address(0) on non-existent target.
    */

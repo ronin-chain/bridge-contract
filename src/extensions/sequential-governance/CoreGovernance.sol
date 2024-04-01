@@ -219,7 +219,7 @@ abstract contract CoreGovernance is Initializable, SignatureConsumer, VoteStatus
   /**
    * @dev The specified executer executes the proposal on an approved proposal.
    */
-  function _executeWithCaller(Proposal.ProposalDetail calldata proposal, address caller) internal {
+  function _executeWithCaller(Proposal.ProposalDetail memory proposal, address caller) internal {
     bytes32 proposalHash = proposal.hash();
     ProposalVote storage _vote = vote[proposal.chainId][proposal.nonce];
 

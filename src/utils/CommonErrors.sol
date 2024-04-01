@@ -243,3 +243,8 @@ error ErrProposalNotApproved();
  * @dev Error of the caller is not the specified executer.
  */
 error ErrInvalidExecuter();
+
+/**
+ * @dev Error of the `caller` to relay is not the specified `executer`.
+ */
+error ErrNonExecuterCannotRelay(address executer, address caller);
