@@ -9,7 +9,7 @@ struct TokenOwner {
 
 library LibTokenOwner {
   // keccak256("TokenOwner(address addr,address tokenAddr,uint256 chainId)");
-  bytes32 public constant OWNER_TYPE_HASH = 0x353bdd8d69b9e3185b3972e08b03845c0c14a21a390215302776a7a34b0e8764;
+  bytes32 internal constant OWNER_TYPE_HASH = 0x353bdd8d69b9e3185b3972e08b03845c0c14a21a390215302776a7a34b0e8764;
 
   /**
    * @dev Returns ownership struct hash.

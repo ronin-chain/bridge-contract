@@ -85,10 +85,10 @@ library LibTokenInfo {
    */
 
   // keccak256("TokenInfo(uint8 erc,uint256 id,uint256 quantity)");
-  bytes32 public constant INFO_TYPE_HASH_SINGLE = 0x1e2b74b2a792d5c0f0b6e59b037fa9d43d84fbb759337f0112fcc15ca414fc8d;
+  bytes32 internal constant INFO_TYPE_HASH_SINGLE = 0x1e2b74b2a792d5c0f0b6e59b037fa9d43d84fbb759337f0112fcc15ca414fc8d;
 
   // keccak256("TokenInfo(uint8 erc,uint256[] ids,uint256[] quantities)");
-  bytes32 public constant INFO_TYPE_HASH_BATCH = 0xe0d9a8bb18cfc29aa6e46b1293275ca79aeaaf28ac63b66dcb6ebce2f127f5a0;
+  bytes32 internal constant INFO_TYPE_HASH_BATCH = 0xe0d9a8bb18cfc29aa6e46b1293275ca79aeaaf28ac63b66dcb6ebce2f127f5a0;
 
   /**
    * @dev Returns token info struct hash.
