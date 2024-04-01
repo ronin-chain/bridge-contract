@@ -16,7 +16,7 @@ library LibTokenOwner {
    */
   function hash(TokenOwner memory owner) internal pure returns (bytes32 digest) {
     // keccak256(abi.encode(OWNER_TYPE_HASH, owner.addr, owner.tokenAddr, owner.chainId))
-    assembly {
+    assembly ("memory-safe") {
       let ptr := mload(0x40)
       mstore(ptr, OWNER_TYPE_HASH)
       mstore(add(ptr, 0x20), mload(owner)) // owner.addr

@@ -12,7 +12,8 @@ struct RequestBatch {
 
 library LibRequestBatch {
   function forwardRequestToGatewayERC721(RequestBatch memory req, IMainchainGatewayV3 mainchainGateway) internal {
-    for (uint256 i; i < req.info.ids.length; i++) {
+    uint256 length = req.info.ids.length;
+    for (uint256 i; i < length; i++) {
       mainchainGateway.requestDepositFor(
         Transfer.Request({
           recipientAddr: req.recipient,
@@ -24,7 +25,8 @@ library LibRequestBatch {
   }
 
   function forwardRequestToGatewayERC1155(RequestBatch memory req, IMainchainGatewayV3 mainchainGateway) internal {
-    for (uint256 i; i < req.info.ids.length; i++) {
+    uint256 length = req.info.ids.length;
+    for (uint256 i; i < length; i++) {
       mainchainGateway.requestDepositFor(
         Transfer.Request({
           recipientAddr: req.recipient,
