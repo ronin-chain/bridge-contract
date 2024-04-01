@@ -140,7 +140,7 @@ library LibTokenInfo {
 
   function _validate(TokenInfo memory self) private pure returns (bool passed) {
     if (_isModeSingle(self.mode)) {
-      return _validateERC20(self) || _validateERC721(self);
+      return _validateERC20(self) || _validateERC721(self) || _validateERC1155(self);
     }
 
     if (_isModeBatch(self.mode)) {
