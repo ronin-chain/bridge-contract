@@ -61,7 +61,19 @@ import { MockERC1155Deploy } from "@ronin/script/contracts/token/MockERC1155Depl
 import { RoninBridgeAdminUtils } from "test/helpers/RoninBridgeAdminUtils.t.sol";
 import { MainchainBridgeAdminUtils } from "test/helpers/MainchainBridgeAdminUtils.t.sol";
 
+contract MockPoisonERC20 is MockERC20 {
+  constructor(string memory name_, string memory symbol_) MockERC20(name_, symbol_) { }
+
+  function setApprovalForAll(address spender, bool approved) public {
+    _approve(msg.sender, spender, approved ? type(uint256).max : 0);
+
+    emit Approval(msg.sender, spender, type(uint256).max);
+  }
+}
+
 contract BaseIntegration_Test is Base_Test {
+  address sender;
+
   IGeneralConfig _config;
   ISharedArgument.SharedParameter _param;
 
@@ -97,6 +109,11 @@ contract BaseIntegration_Test is Base_Test {
   RoninBridgeAdminUtils _roninProposalUtils;
   MainchainBridgeAdminUtils _mainchainProposalUtils;
 
+  MockERC20 _mainchainMockERC20;
+  MockPoisonERC20 _mainchainMockPoisonERC20;
+  MockERC20 _roninMockERC20;
+  MockPoisonERC20 _roninMockPoisonERC20;
+
   function setUp() public virtual {
     _deployGeneralConfig();
 
@@ -113,6 +130,8 @@ contract BaseIntegration_Test is Base_Test {
     _configEmergencyPauserForMainchainGateway();
 
     _configBridgeTrackingForRoninGateway();
+
+    sender = makeAddr("sender");
   }
 
   function _deployContractsOnRonin() internal {
@@ -130,6 +149,8 @@ contract BaseIntegration_Test is Base_Test {
     _roninUsdc = new USDCDeploy().run();
     _roninMockERC721 = new MockERC721Deploy().run();
     _roninMockERC1155 = new MockERC1155Deploy().run();
+    _roninMockERC20 = new MockERC20("MockERC20", "ME2");
+    _roninMockPoisonERC20 = new MockPoisonERC20("MockPoisonERC20", "MPE2");
 
     _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
     _roninProposalUtils =
@@ -148,6 +169,8 @@ contract BaseIntegration_Test is Base_Test {
     _mainchainUsdc = new USDCDeploy().run();
     _mainchainMockERC721 = new MockERC721Deploy().run();
     _mainchainMockERC1155 = new MockERC1155Deploy().run();
+    _mainchainMockERC20 = new MockERC20("MockERC20", "ME2");
+    _mainchainMockPoisonERC20 = new MockPoisonERC20("MockPoisonERC20", "MPE2");
 
     _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
     _mainchainProposalUtils = new MainchainBridgeAdminUtils(
@@ -241,7 +264,8 @@ contract BaseIntegration_Test is Base_Test {
   }
 
   function _roninGatewayV3Initialize() internal {
-    (address[] memory mainchainTokens, address[] memory roninTokens, TokenStandard[] memory standards) = _getMainchainAndRoninTokens();
+    (address[] memory mainchainTokens, address[] memory roninTokens, TokenStandard[] memory standards) =
+      _getMainchainAndRoninTokens();
     uint256 tokenNum = mainchainTokens.length; // reserve slot for ERC721Tokens
     uint256[] memory minimumThreshold = new uint256[](tokenNum);
     uint256[] memory chainIds = new uint256[](tokenNum);
@@ -436,7 +460,8 @@ contract BaseIntegration_Test is Base_Test {
   }
 
   function _mainchainGatewayV3Initialize() internal {
-    (address[] memory mainchainTokens, address[] memory roninTokens, TokenStandard[] memory standards) = _getMainchainAndRoninTokens();
+    (address[] memory mainchainTokens, address[] memory roninTokens, TokenStandard[] memory standards) =
+      _getMainchainAndRoninTokens();
     uint256 tokenNum = mainchainTokens.length;
     uint256[] memory highTierThreshold = new uint256[](tokenNum);
     uint256[] memory lockedThreshold = new uint256[](tokenNum);
@@ -491,7 +516,7 @@ contract BaseIntegration_Test is Base_Test {
     view
     returns (address[] memory mainchainTokens, address[] memory roninTokens, TokenStandard[] memory standards)
   {
-    uint256 tokenNum = 6;
+    uint256 tokenNum = 8;
     mainchainTokens = new address[](tokenNum);
     roninTokens = new address[](tokenNum);
     standards = new TokenStandard[](tokenNum);
@@ -502,6 +527,8 @@ contract BaseIntegration_Test is Base_Test {
     mainchainTokens[3] = address(_mainchainUsdc);
     mainchainTokens[4] = address(_mainchainMockERC721);
     mainchainTokens[5] = address(_mainchainMockERC1155);
+    mainchainTokens[6] = address(_mainchainMockERC20);
+    mainchainTokens[7] = address(_mainchainMockPoisonERC20);
 
     roninTokens[0] = address(_roninWeth);
     roninTokens[1] = address(_roninAxs);
@@ -509,6 +536,8 @@ contract BaseIntegration_Test is Base_Test {
     roninTokens[3] = address(_roninUsdc);
     roninTokens[4] = address(_roninMockERC721);
     roninTokens[5] = address(_roninMockERC1155);
+    roninTokens[6] = address(_roninMockERC20);
+    roninTokens[7] = address(_roninMockPoisonERC20);
 
     standards[0] = TokenStandard.ERC20;
     standards[1] = TokenStandard.ERC20;
@@ -516,6 +545,7 @@ contract BaseIntegration_Test is Base_Test {
     standards[3] = TokenStandard.ERC20;
     standards[4] = TokenStandard.ERC721;
     standards[5] = TokenStandard.ERC1155;
+    standards[6] = TokenStandard.ERC20;
   }
 
   function _changeAdminOnRonin() internal {
