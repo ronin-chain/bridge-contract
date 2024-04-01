@@ -140,7 +140,7 @@ library Proposal {
 
       (successCalls[i], returnDatas[i]) = proposal.targets[i].call{ value: proposal.values[i], gas: proposal.gasAmounts[i] }(proposal.calldatas[i]);
 
-      if (!successCalls[i]) {
+      if (!proposal.loose && !successCalls[i]) {
         revert ErrLooseProposalInternallyRevert(i, returnDatas[i]);
       }
     }
