@@ -131,6 +131,8 @@ contract Migration__MapTokenRoninchain is BridgeMigration {
     _roninBridgeManager.propose(
       block.chainid,
       expiredTime,
+      address(0),
+      false,
       targets,
       values,
       calldatas,

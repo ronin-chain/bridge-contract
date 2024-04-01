@@ -83,6 +83,6 @@ contract Migration__20231215_MapTokenMainchain is BridgeMigration {
     uint256 chainId = _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).chainId();
 
     vm.broadcast(sender());
-    _roninBridgeManager.propose(chainId, expiredTime, targets, values, calldatas, gasAmounts);
+    _roninBridgeManager.propose(chainId, expiredTime, address(0), false, targets, values, calldatas, gasAmounts);
   }
 }

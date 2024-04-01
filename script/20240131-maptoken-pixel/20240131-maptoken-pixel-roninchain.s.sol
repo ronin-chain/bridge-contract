@@ -131,6 +131,8 @@ contract Migration__20240131_MapTokenPixelRoninchain is BridgeMigration, Migrati
     _roninBridgeManager.propose(
       block.chainid,
       expiredTime,
+      address(0),
+      false,
       targets,
       values,
       calldatas,

@@ -175,6 +175,8 @@ contract Migration__MapTokenMainchain is BridgeMigration {
     _roninBridgeManager.propose(
       chainId,
       expiredTime,
+      address(0),
+      false,
       targets,
       values,
       calldatas,
