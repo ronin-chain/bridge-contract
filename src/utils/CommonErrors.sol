@@ -226,3 +226,20 @@ error ErrOncePerBlock();
  * @dev Error of method caller must be coinbase
  */
 error ErrCallerMustBeCoinbase();
+
+/**
+ * @dev Error thrown when an invalid proposal is encountered.
+ * @param actual The actual value of the proposal.
+ * @param expected The expected value of the proposal.
+ */
+error ErrInvalidProposal(bytes32 actual, bytes32 expected);
+
+/**
+ * @dev Error of proposal is not approved for executing.
+ */
+error ErrProposalNotApproved();
+
+/**
+ * @dev Error of the caller is not the specified executer.
+ */
+error ErrInvalidExecuter();

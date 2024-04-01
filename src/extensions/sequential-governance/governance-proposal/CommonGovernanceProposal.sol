@@ -7,13 +7,6 @@ abstract contract CommonGovernanceProposal is CoreGovernance {
   using Proposal for Proposal.ProposalDetail;
 
   /**
-   * @dev Error thrown when an invalid proposal is encountered.
-   * @param actual The actual value of the proposal.
-   * @param expected The expected value of the proposal.
-   */
-  error ErrInvalidProposal(bytes32 actual, bytes32 expected);
-
-  /**
    * @dev Casts votes by signatures.
    *
    * Note: This method does not verify the proposal hash with the vote hash. Please consider checking it before.

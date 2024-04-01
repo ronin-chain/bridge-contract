@@ -42,6 +42,8 @@ abstract contract GlobalCoreGovernance is CoreGovernance {
   function _proposeGlobal(
     uint256 expiryTimestamp,
     GlobalProposal.TargetOption[] calldata targetOptions,
+    address executer,
+    bool loose,
     uint256[] memory values,
     bytes[] memory calldatas,
     uint256[] memory gasAmounts,
@@ -49,7 +51,7 @@ abstract contract GlobalCoreGovernance is CoreGovernance {
   ) internal virtual {
     uint256 round_ = _createVotingRound(0);
     GlobalProposal.GlobalProposalDetail memory globalProposal =
-      GlobalProposal.GlobalProposalDetail(round_, expiryTimestamp, targetOptions, values, calldatas, gasAmounts);
+      GlobalProposal.GlobalProposalDetail(round_, expiryTimestamp, executer, loose, targetOptions, values, calldatas, gasAmounts);
     Proposal.ProposalDetail memory proposal = globalProposal.intoProposalDetail(_resolveTargets({ targetOptions: targetOptions, strict: true }));
     proposal.validate(_proposalExpiryDuration);
 

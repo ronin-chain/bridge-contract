@@ -14,11 +14,16 @@ library Proposal {
    */
   error ErrInvalidExpiryTimestamp();
 
+  /**
+   * @dev Error thrown when the loose proposal reverts when execute the internal call no. `callIndex` with revert message is `revertMsg`.
+   */
+  error ErrLooseProposalInternallyRevert(uint256 callIndex, bytes revertMsg);
+
   struct ProposalDetail {
     // Nonce to make sure proposals are executed in order
     uint256 nonce;
     // Value 0: all chain should run this proposal
-    // Other values: only specifc chain has to execute
+    // Other values: only specific chain has to execute
     uint256 chainId;
     uint256 expiryTimestamp;
     // The address that execute the proposal after the proposal passes.
@@ -71,33 +76,45 @@ library Proposal {
     //   keccak256(
     //     abi.encode(
     //       TYPE_HASH,
-    //       _proposal.nonce,
-    //       _proposal.chainId,
-    //       _targetsHash,
-    //       _valuesHash,
-    //       _calldatasHash,
-    //       _gasAmountsHash
+    //       proposal.nonce,
+    //       proposal.chainId,
+    //       proposal.expiryTimestamp
+    //       proposal.executer
+    //       proposal.loose
+    //       targetsHash,
+    //       valuesHash,
+    //       calldatasHash,
+    //       gasAmountsHash
     //     )
     //   );
     // /
     assembly {
       let ptr := mload(0x40)
       mstore(ptr, TYPE_HASH)
-      mstore(add(ptr, 0x20), mload(proposal)) // _proposal.nonce
-      mstore(add(ptr, 0x40), mload(add(proposal, 0x20))) // _proposal.chainId
-      mstore(add(ptr, 0x60), mload(add(proposal, 0x40))) // expiry timestamp
+      mstore(add(ptr, 0x20), mload(proposal)) // proposal.nonce
+      mstore(add(ptr, 0x40), mload(add(proposal, 0x20))) // proposal.chainId
+      mstore(add(ptr, 0x60), mload(add(proposal, 0x40))) // proposal.expiryTimestamp
+      mstore(add(ptr, 0x80), mload(add(proposal, 0x80))) // proposal.executer
+      mstore(add(ptr, 0xa0), mload(add(proposal, 0x80))) // proposal.loose
 
       let arrayHashed
       arrayHashed := keccak256(add(targets, 32), mul(mload(targets), 32)) // targetsHash
-      mstore(add(ptr, 0x80), arrayHashed)
-      arrayHashed := keccak256(add(values, 32), mul(mload(values), 32)) // _valuesHash
-      mstore(add(ptr, 0xa0), arrayHashed)
-      arrayHashed := keccak256(add(calldataHashList, 32), mul(mload(calldataHashList), 32)) // _calldatasHash
       mstore(add(ptr, 0xc0), arrayHashed)
-      arrayHashed := keccak256(add(gasAmounts, 32), mul(mload(gasAmounts), 32)) // _gasAmountsHash
+      arrayHashed := keccak256(add(values, 32), mul(mload(values), 32)) // valuesHash
       mstore(add(ptr, 0xe0), arrayHashed)
-      digest_ := keccak256(ptr, 0x100)
+      arrayHashed := keccak256(add(calldataHashList, 32), mul(mload(calldataHashList), 32)) // calldatasHash
+      mstore(add(ptr, 0x100), arrayHashed)
+      arrayHashed := keccak256(add(gasAmounts, 32), mul(mload(gasAmounts), 32)) // gasAmountsHash
+      mstore(add(ptr, 0x120), arrayHashed)
+      digest_ := keccak256(ptr, 0x140)
     }
+  }
+
+  /**
+   * @dev Returns whether the proposal is auto-executed on the last valid vote.
+   */
+  function isAutoExecute(ProposalDetail memory proposal) internal pure returns (bool) {
+    return proposal.executer == address(0);
   }
 
   /**
@@ -122,6 +139,10 @@ library Proposal {
       if (gasleft() <= proposal.gasAmounts[i]) revert ErrInsufficientGas(hash(proposal));
 
       (successCalls[i], returnDatas[i]) = proposal.targets[i].call{ value: proposal.values[i], gas: proposal.gasAmounts[i] }(proposal.calldatas[i]);
+
+      if (!successCalls[i]) {
+        revert ErrLooseProposalInternallyRevert(i, returnDatas[i]);
+      }
     }
   }
 }
