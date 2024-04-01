@@ -21,14 +21,20 @@ library Proposal {
     // Other values: only specifc chain has to execute
     uint256 chainId;
     uint256 expiryTimestamp;
+    // The address that execute the proposal after the proposal passes.
+    // Leave this address as address(0) to auto-execute by the last valid vote.
+    address executer;
+    // A `loose` proposal will revert the whole proposal if encounter one internal failed.
+    // A non-`loose` proposal will ignore the failed internal calls.
+    bool loose;
     address[] targets;
     uint256[] values;
     bytes[] calldatas;
     uint256[] gasAmounts;
   }
 
-  // keccak256("ProposalDetail(uint256 nonce,uint256 chainId,uint256 expiryTimestamp,address[] targets,uint256[] values,bytes[] calldatas,uint256[] gasAmounts)");
-  bytes32 public constant TYPE_HASH = 0xd051578048e6ff0bbc9fca3b65a42088dbde10f36ca841de566711087ad9b08a;
+  // keccak256("ProposalDetail(uint256 nonce,uint256 chainId,uint256 expiryTimestamp,address executer,bool loose,address[] targets,uint256[] values,bytes[] calldatas,uint256[] gasAmounts)");
+  bytes32 public constant TYPE_HASH = 0x98e2bc443e89d620038081eb862bc4dd7a26e2eba7a2a87201642f9419340a57;
 
   /**
    * @dev Validates the proposal.
