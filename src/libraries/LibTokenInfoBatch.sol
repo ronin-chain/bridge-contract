@@ -60,8 +60,8 @@ library LibTokenInfoBatch {
     uint256 length = self.ids.length;
 
     if (
-      self.erc != TokenStandard.ERC1155 // Check ERC1155
-        || length != self.quantities.length // Info must have same length for each token id
+      !(self.erc == TokenStandard.ERC1155 // Check ERC1155
+        && length == self.quantities.length) // Info must have same length for each token id
     ) {
       return false;
     }
