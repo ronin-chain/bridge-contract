@@ -28,7 +28,7 @@ library Proposal {
     uint256 expiryTimestamp;
     // The address that execute the proposal after the proposal passes.
     // Leave this address as address(0) to auto-execute by the last valid vote.
-    address executer;
+    address executor;
     // A `loose` proposal will revert the whole proposal if encounter one internal failed.
     // A non-`loose` proposal will ignore the failed internal calls.
     bool loose;
@@ -38,7 +38,7 @@ library Proposal {
     uint256[] gasAmounts;
   }
 
-  // keccak256("ProposalDetail(uint256 nonce,uint256 chainId,uint256 expiryTimestamp,address executer,bool loose,address[] targets,uint256[] values,bytes[] calldatas,uint256[] gasAmounts)");
+  // keccak256("ProposalDetail(uint256 nonce,uint256 chainId,uint256 expiryTimestamp,address executor,bool loose,address[] targets,uint256[] values,bytes[] calldatas,uint256[] gasAmounts)");
   bytes32 public constant TYPE_HASH = 0x98e2bc443e89d620038081eb862bc4dd7a26e2eba7a2a87201642f9419340a57;
 
   /**
@@ -79,7 +79,7 @@ library Proposal {
     //       proposal.nonce,
     //       proposal.chainId,
     //       proposal.expiryTimestamp
-    //       proposal.executer
+    //       proposal.executor
     //       proposal.loose
     //       targetsHash,
     //       valuesHash,
@@ -94,7 +94,7 @@ library Proposal {
       mstore(add(ptr, 0x20), mload(proposal)) // proposal.nonce
       mstore(add(ptr, 0x40), mload(add(proposal, 0x20))) // proposal.chainId
       mstore(add(ptr, 0x60), mload(add(proposal, 0x40))) // proposal.expiryTimestamp
-      mstore(add(ptr, 0x80), mload(add(proposal, 0x80))) // proposal.executer
+      mstore(add(ptr, 0x80), mload(add(proposal, 0x80))) // proposal.executor
       mstore(add(ptr, 0xa0), mload(add(proposal, 0x80))) // proposal.loose
 
       let arrayHashed
@@ -114,7 +114,7 @@ library Proposal {
    * @dev Returns whether the proposal is auto-executed on the last valid vote.
    */
   function isAutoExecute(ProposalDetail memory proposal) internal pure returns (bool) {
-    return proposal.executer == address(0);
+    return proposal.executor == address(0);
   }
 
   /**

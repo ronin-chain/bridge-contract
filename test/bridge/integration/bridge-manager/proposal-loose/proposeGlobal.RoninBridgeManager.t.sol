@@ -56,7 +56,7 @@ contract LooseProposal_GlobalProposal_RoninBridgeManager_Test is BaseIntegration
 
     _globalProposal.nonce = _roninBridgeManager.round(0) + 1;
     _globalProposal.expiryTimestamp = block.timestamp + _proposalExpiryDuration;
-    _globalProposal.executer = address(0);
+    _globalProposal.executor = address(0);
     _globalProposal.loose = false;
 
     _globalProposal.targetOptions.push(GlobalProposal.TargetOption.BridgeManager);

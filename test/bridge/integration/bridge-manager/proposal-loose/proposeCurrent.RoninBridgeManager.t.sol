@@ -58,7 +58,7 @@ contract LooseProposal_CurrentNetworkProposal_RoninBridgeManager_Test is BaseInt
 
     _proposal.nonce = _roninBridgeManager.round(block.chainid) + 1;
     _proposal.chainId = block.chainid;
-    _proposal.executer = address(0);
+    _proposal.executor = address(0);
     _proposal.loose = false;
     _proposal.expiryTimestamp = block.timestamp + _proposalExpiryDuration;
 

@@ -46,14 +46,14 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
   function propose(
     uint256 chainId,
     uint256 expiryTimestamp,
-    address executer,
+    address executor,
     bool loose,
     address[] calldata targets,
     uint256[] calldata values,
     bytes[] calldata calldatas,
     uint256[] calldata gasAmounts
   ) external onlyGovernor {
-    _proposeProposal(chainId, expiryTimestamp, executer, loose, targets, values, calldatas, gasAmounts, msg.sender);
+    _proposeProposal(chainId, expiryTimestamp, executor, loose, targets, values, calldatas, gasAmounts, msg.sender);
   }
 
   /**
@@ -82,7 +82,7 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
    */
   function proposeProposalForCurrentNetwork(
     uint256 expiryTimestamp,
-    address executer,
+    address executor,
     bool loose,
     address[] calldata targets,
     uint256[] calldata values,
@@ -94,7 +94,7 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
     Proposal.ProposalDetail memory _proposal = _proposeProposal({
       chainId: block.chainid,
       expiryTimestamp: expiryTimestamp,
-      executer: executer,
+      executor: executor,
       loose: loose,
       targets: targets,
       values: values,
@@ -136,7 +136,7 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
    */
   function proposeGlobal(
     uint256 expiryTimestamp,
-    address executer,
+    address executor,
     bool loose,
     GlobalProposal.TargetOption[] calldata targetOptions,
     uint256[] calldata values,
@@ -145,7 +145,7 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
   ) external onlyGovernor {
     _proposeGlobal({
       expiryTimestamp: expiryTimestamp,
-      executer: executer,
+      executor: executor,
       loose: loose,
       targetOptions: targetOptions,
       values: values,

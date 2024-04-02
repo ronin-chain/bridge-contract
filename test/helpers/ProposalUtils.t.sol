@@ -28,7 +28,7 @@ contract ProposalUtils is Utils, Test {
 
   function createProposal(
     uint256 expiryTimestamp,
-    address executer,
+    address executor,
     bool loose,
     address target,
     uint256 value,
@@ -39,7 +39,7 @@ contract ProposalUtils is Utils, Test {
     proposal = Proposal.ProposalDetail({
       nonce: nonce,
       chainId: block.chainid,
-      executer: executer,
+      executor: executor,
       loose: loose,
       expiryTimestamp: expiryTimestamp,
       targets: wrapAddress(target),
@@ -51,7 +51,7 @@ contract ProposalUtils is Utils, Test {
 
   function createGlobalProposal(
     uint256 expiryTimestamp,
-    address executer,
+    address executor,
     bool loose,
     GlobalProposal.TargetOption targetOption,
     uint256 value,
@@ -65,7 +65,7 @@ contract ProposalUtils is Utils, Test {
     proposal = GlobalProposal.GlobalProposalDetail({
       nonce: nonce,
       expiryTimestamp: expiryTimestamp,
-      executer: executer,
+      executor: executor,
       loose: loose,
       targetOptions: targetOptions,
       values: wrapUint(value),

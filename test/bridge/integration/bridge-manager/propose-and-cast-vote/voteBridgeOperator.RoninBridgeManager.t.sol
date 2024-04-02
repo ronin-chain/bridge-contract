@@ -58,7 +58,7 @@ contract VoteBridgeOperator_RoninBridgeManager_Test is BaseIntegration_Test {
   function test_voteAddBridgeOperatorsProposal() public {
     _globalProposal = _roninProposalUtils.createGlobalProposal({
       expiryTimestamp: block.timestamp + _proposalExpiryDuration,
-      executer: address(0),
+      executor: address(0),
       loose: false,
       targetOption: GlobalProposal.TargetOption.BridgeManager,
       value: 0,
@@ -121,7 +121,7 @@ contract VoteBridgeOperator_RoninBridgeManager_Test is BaseIntegration_Test {
 
     _globalProposal = _roninProposalUtils.createGlobalProposal({
       expiryTimestamp: block.timestamp + _proposalExpiryDuration,
-      executer: address(0),
+      executor: address(0),
       loose: false,
       targetOption: GlobalProposal.TargetOption.BridgeManager,
       value: 0,

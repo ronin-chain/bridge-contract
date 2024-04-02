@@ -109,7 +109,7 @@ abstract contract CoreGovernance is Initializable, SignatureConsumer, VoteStatus
   function _proposeProposal(
     uint256 chainId,
     uint256 expiryTimestamp,
-    address executer,
+    address executor,
     bool loose,
     address[] memory targets,
     uint256[] memory values,
@@ -120,7 +120,7 @@ abstract contract CoreGovernance is Initializable, SignatureConsumer, VoteStatus
     if (chainId == 0) revert ErrInvalidChainId(msg.sig, 0, block.chainid);
     uint256 round_ = _createVotingRound(chainId);
 
-    proposal = Proposal.ProposalDetail(round_, chainId, expiryTimestamp, executer, loose, targets, values, calldatas, gasAmounts);
+    proposal = Proposal.ProposalDetail(round_, chainId, expiryTimestamp, executor, loose, targets, values, calldatas, gasAmounts);
     proposal.validate(_proposalExpiryDuration);
 
     bytes32 proposalHash = proposal.hash();
@@ -217,7 +217,7 @@ abstract contract CoreGovernance is Initializable, SignatureConsumer, VoteStatus
   }
 
   /**
-   * @dev The specified executer executes the proposal on an approved proposal.
+   * @dev The specified executor executes the proposal on an approved proposal.
    */
   function _executeWithCaller(Proposal.ProposalDetail memory proposal, address caller) internal {
     bytes32 proposalHash = proposal.hash();
@@ -228,7 +228,7 @@ abstract contract CoreGovernance is Initializable, SignatureConsumer, VoteStatus
     }
 
     if (_vote.status != VoteStatus.Approved) revert ErrProposalNotApproved();
-    if (caller != proposal.executer) revert ErrInvalidExecuter();
+    if (caller != proposal.executor) revert ErrInvalidExecutor();
 
     _tryExecute(_vote, proposal);
   }

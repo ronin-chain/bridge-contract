@@ -11,12 +11,15 @@ import { LibSort } from "solady/utils/LibSort.sol";
 
 import "../../BaseIntegration.t.sol";
 
-contract LooseProposal_GlobalProposal_MainchainBridgeManager_Test is BaseIntegration_Test {
+contract ProposalWithExecutor_GlobalProposal_MainchainBridgeManager_Test is BaseIntegration_Test {
   event ProposalVoted(bytes32 indexed proposalHash, address indexed voter, Ballot.VoteType support, uint256 weight);
   event ProposalApproved(bytes32 indexed proposalHash);
   event ProposalExecuted(bytes32 indexed proposalHash, bool[] successCalls, bytes[] returnDatas);
 
+  error ErrInvalidExecutor();
+  error ErrProposalNotApproved();
   error ErrInvalidProposalNonce(bytes4 sig);
+  error ErrNonExecutorCannotRelay(address executor, address caller);
   error ErrLooseProposalInternallyRevert(uint, bytes);
 
   using LibSort for address[];
@@ -57,9 +60,9 @@ contract LooseProposal_GlobalProposal_MainchainBridgeManager_Test is BaseIntegra
     _generateAddingOperators(_addingOperatorNum);
 
     _globalProposal.nonce = _mainchainBridgeManager.round(0) + 1;
-    _globalProposal.expiryTimestamp = block.timestamp + _proposalExpiryDuration;
     _globalProposal.executor = address(0);
     _globalProposal.loose = false;
+    _globalProposal.expiryTimestamp = block.timestamp + _proposalExpiryDuration;
 
     _globalProposal.targetOptions.push(GlobalProposal.TargetOption.BridgeManager);
     _globalProposal.values.push(0);
@@ -73,27 +76,42 @@ contract LooseProposal_GlobalProposal_MainchainBridgeManager_Test is BaseIntegra
     _globalProposal.gasAmounts.push(1_000_000);
   }
 
-  // Should the strict proposal failed when containing one failed internal call
-  function test_strictProposal_globalProposal_MainchainSide_revertWhen_containingOneFailedInternalCall() external {
+  // Should the auto proposal executes on the last valid vote
+  function test_relayGlobal_autoProposal_strictProposal_WhenAllInternalCallsPass() public {
     _globalProposal.loose = false;
-    _globalProposal.gasAmounts[1] = 1_000; // Set gas for the second call becomes failed
+    _globalProposal.executor = address(0);
 
-    vm.expectEmit(false, true, true, true);
+    vm.expectEmit(false, false, false, false);
     emit ProposalApproved(_anyValue);
+    vm.expectEmit(false, false, false, false);
+    emit ProposalExecuted(_anyValue, new bool[](2), new bytes[](2));
 
     SignatureConsumer.Signature[] memory signatures = _roninProposalUtils.generateSignaturesGlobal(_globalProposal, _param.test.governorPKs);
     for (uint256 i; i < signatures.length; i++) {
       _signatures.push(signatures[i]);
     }
 
-    vm.expectRevert(abi.encodeWithSelector(ErrLooseProposalInternallyRevert.selector, 1, ""));
+    vm.prank(_param.roninBridgeManager.governors[0]);
+    _mainchainBridgeManager.relayGlobalProposal(_globalProposal, _supports, _signatures);
+
+    assertEq(_mainchainBridgeManager.globalProposalRelayed(_globalProposal.nonce), true);
+    assertEq(_mainchainBridgeManager.getBridgeOperators(), _afterRelayedOperators);
+  }
+
+  // Should revert when the non-auto proposal get executed again
+  function test_relayGlobal_autoProposal_revertWhen_proposalIsAlreadyExecuted() external {
+    test_relayGlobal_autoProposal_strictProposal_WhenAllInternalCallsPass();
+
+    vm.expectRevert(abi.encodeWithSelector(ErrInvalidProposalNonce.selector, MainchainBridgeManager.relayGlobalProposal.selector));
+
     vm.prank(_param.roninBridgeManager.governors[0]);
     _mainchainBridgeManager.relayGlobalProposal(_globalProposal, _supports, _signatures);
   }
 
-  // Should the strict proposal passes when all internal calls are valid
-  function test_strictProposal_globalProposal_MainchainSide_WhenAllInternalCallsPass() external {
+  // Should the non-auto proposal be execute by the specified executor
+  function test_relayGlobal_executorProposal_strictProposal_WhenAllInternalCallsPass() public {
     _globalProposal.loose = false;
+    _globalProposal.executor = _param.roninBridgeManager.governors[0];
     _globalProposal.gasAmounts[1] = 1_000_000; // Set gas for the second call becomes success
 
     vm.expectEmit(false, false, false, false);
@@ -108,53 +126,34 @@ contract LooseProposal_GlobalProposal_MainchainBridgeManager_Test is BaseIntegra
 
     vm.prank(_param.roninBridgeManager.governors[0]);
     _mainchainBridgeManager.relayGlobalProposal(_globalProposal, _supports, _signatures);
-
     assertEq(_mainchainBridgeManager.globalProposalRelayed(_globalProposal.nonce), true);
     assertEq(_mainchainBridgeManager.getBridgeOperators(), _afterRelayedOperators);
   }
 
-  // Should the loose proposal passes when containing one failed internal call
-  function test_looseProposal_globalProposal_MainchainSide_WhenContainsOneInternalCallFailed() external {
-    _globalProposal.loose = true;
-    _globalProposal.gasAmounts[1] = 1_000; // Set gas for the second call becomes failed
+  // Should revert when the auto proposal get executed again
+  function test_relayGlobal_executorProposal_revertWhen_proposalIsAlreadyExecuted() external {
+    test_relayGlobal_executorProposal_strictProposal_WhenAllInternalCallsPass();
 
-    vm.expectEmit(false, false, false, false);
-    emit ProposalApproved(_anyValue);
-    vm.expectEmit(false, false, false, false);
-    emit ProposalExecuted(_anyValue, new bool[](2), new bytes[](2));
-
-    SignatureConsumer.Signature[] memory signatures = _roninProposalUtils.generateSignaturesGlobal(_globalProposal, _param.test.governorPKs);
-    for (uint256 i; i < signatures.length; i++) {
-      _signatures.push(signatures[i]);
-    }
+    vm.expectRevert(abi.encodeWithSelector(ErrInvalidProposalNonce.selector, MainchainBridgeManager.relayGlobalProposal.selector));
 
     vm.prank(_param.roninBridgeManager.governors[0]);
     _mainchainBridgeManager.relayGlobalProposal(_globalProposal, _supports, _signatures);
-
-    assertEq(_mainchainBridgeManager.globalProposalRelayed(_globalProposal.nonce), true);
-    assertEq(_mainchainBridgeManager.getBridgeOperators(), _afterRelayedOperators);
   }
 
-  // Should the loose proposal passes when all internal calls are valid
-  function test_looseProposal_globalProposal_MainchainSide_WhenAllInternalCallsPass() external {
-    _globalProposal.loose = true;
+  // Should the non-auto proposal can not be execute by other governor
+  function test_relayGlobal_executorProposal_revertWhen_proposalIsExecutedByAnotherGovernor() external {
+    _globalProposal.loose = false;
+    _globalProposal.executor = _param.roninBridgeManager.governors[0];
     _globalProposal.gasAmounts[1] = 1_000_000; // Set gas for the second call becomes success
 
-    vm.expectEmit(false, false, false, false);
-    emit ProposalApproved(_anyValue);
-    vm.expectEmit(false, false, false, false);
-    emit ProposalExecuted(_anyValue, new bool[](2), new bytes[](2));
-
     SignatureConsumer.Signature[] memory signatures = _roninProposalUtils.generateSignaturesGlobal(_globalProposal, _param.test.governorPKs);
     for (uint256 i; i < signatures.length; i++) {
       _signatures.push(signatures[i]);
     }
+    vm.expectRevert(abi.encodeWithSelector(ErrNonExecutorCannotRelay.selector, _param.roninBridgeManager.governors[0], _param.roninBridgeManager.governors[1]));
 
-    vm.prank(_param.roninBridgeManager.governors[0]);
+    vm.prank(_param.roninBridgeManager.governors[1]);
     _mainchainBridgeManager.relayGlobalProposal(_globalProposal, _supports, _signatures);
-
-    assertEq(_mainchainBridgeManager.globalProposalRelayed(_globalProposal.nonce), true);
-    assertEq(_mainchainBridgeManager.getBridgeOperators(), _afterRelayedOperators);
   }
 
   function _generateAddingOperators(uint256 num) internal {

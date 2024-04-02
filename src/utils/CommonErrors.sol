@@ -240,11 +240,11 @@ error ErrInvalidProposal(bytes32 actual, bytes32 expected);
 error ErrProposalNotApproved();
 
 /**
- * @dev Error of the caller is not the specified executer.
+ * @dev Error of the caller is not the specified executor.
  */
-error ErrInvalidExecuter();
+error ErrInvalidExecutor();
 
 /**
- * @dev Error of the `caller` to relay is not the specified `executer`.
+ * @dev Error of the `caller` to relay is not the specified `executor`.
  */
-error ErrNonExecuterCannotRelay(address executer, address caller);
+error ErrNonExecutorCannotRelay(address executor, address caller);

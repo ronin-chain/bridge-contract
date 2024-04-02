@@ -11,15 +11,14 @@ import { LibSort } from "solady/utils/LibSort.sol";
 
 import "../../BaseIntegration.t.sol";
 
-contract ProposalWithExecuter_GlobalProposal_MainchainBridgeManager_Test is BaseIntegration_Test {
+contract ProposalWithExecutor_GlobalProposal_RoninBridgeManager_Test is BaseIntegration_Test {
   event ProposalVoted(bytes32 indexed proposalHash, address indexed voter, Ballot.VoteType support, uint256 weight);
   event ProposalApproved(bytes32 indexed proposalHash);
   event ProposalExecuted(bytes32 indexed proposalHash, bool[] successCalls, bytes[] returnDatas);
 
-  error ErrInvalidExecuter();
+  error ErrInvalidExecutor();
   error ErrProposalNotApproved();
   error ErrInvalidProposalNonce(bytes4 sig);
-  error ErrNonExecuterCannotRelay(address executer, address caller);
   error ErrLooseProposalInternallyRevert(uint, bytes);
 
   using LibSort for address[];
@@ -59,8 +58,8 @@ contract ProposalWithExecuter_GlobalProposal_MainchainBridgeManager_Test is Base
 
     _generateAddingOperators(_addingOperatorNum);
 
-    _globalProposal.nonce = _mainchainBridgeManager.round(0) + 1;
-    _globalProposal.executer = address(0);
+    _globalProposal.nonce = _roninBridgeManager.round(0) + 1;
+    _globalProposal.executor = address(0);
     _globalProposal.loose = false;
     _globalProposal.expiryTimestamp = block.timestamp + _proposalExpiryDuration;
 
@@ -77,10 +76,12 @@ contract ProposalWithExecuter_GlobalProposal_MainchainBridgeManager_Test is Base
   }
 
   // Should the auto proposal executes on the last valid vote
-  function test_relayGlobal_autoProposal_strictProposal_WhenAllInternalCallsPass() public {
+  function test_autoProposal_strictProposal_WhenAllInternalCallsPass() public {
     _globalProposal.loose = false;
-    _globalProposal.executer = address(0);
+    _globalProposal.executor = address(0);
 
+    vm.expectEmit(false, true, true, true);
+    emit ProposalVoted(_anyValue, _param.roninBridgeManager.governors[0], Ballot.VoteType.For, 100);
     vm.expectEmit(false, false, false, false);
     emit ProposalApproved(_anyValue);
     vm.expectEmit(false, false, false, false);
@@ -92,68 +93,85 @@ contract ProposalWithExecuter_GlobalProposal_MainchainBridgeManager_Test is Base
     }
 
     vm.prank(_param.roninBridgeManager.governors[0]);
-    _mainchainBridgeManager.relayGlobalProposal(_globalProposal, _supports, _signatures);
+    _roninBridgeManager.proposeGlobalProposalStructAndCastVotes(_globalProposal, _supports, _signatures);
 
-    assertEq(_mainchainBridgeManager.globalProposalRelayed(_globalProposal.nonce), true);
-    assertEq(_mainchainBridgeManager.getBridgeOperators(), _afterRelayedOperators);
+    assertEq(_roninBridgeManager.globalProposalVoted(_globalProposal.nonce, _param.roninBridgeManager.governors[0]), true);
+    assertEq(_roninBridgeManager.getBridgeOperators(), _afterRelayedOperators);
   }
 
   // Should revert when the non-auto proposal get executed again
-  function test_relayGlobal_autoProposal_revertWhen_proposalIsAlreadyExecuted() external {
-    test_relayGlobal_autoProposal_strictProposal_WhenAllInternalCallsPass();
+  function test_autoProposal_revertWhen_proposalIsAlreadyExecuted() external {
+    test_autoProposal_strictProposal_WhenAllInternalCallsPass();
 
-    vm.expectRevert(abi.encodeWithSelector(ErrInvalidProposalNonce.selector, MainchainBridgeManager.relayGlobalProposal.selector));
+    vm.expectRevert(abi.encodeWithSelector(ErrProposalNotApproved.selector));
 
     vm.prank(_param.roninBridgeManager.governors[0]);
-    _mainchainBridgeManager.relayGlobalProposal(_globalProposal, _supports, _signatures);
+    _roninBridgeManager.executeGlobal(_globalProposal);
   }
 
-  // Should the non-auto proposal be execute by the specified executer
-  function test_relayGlobal_executerProposal_strictProposal_WhenAllInternalCallsPass() public {
+  // Should the non-auto proposal be execute by the specified executor
+  function test_executorProposal_strictProposal_WhenAllInternalCallsPass() public {
     _globalProposal.loose = false;
-    _globalProposal.executer = _param.roninBridgeManager.governors[0];
+    _globalProposal.executor = _param.roninBridgeManager.governors[0];
     _globalProposal.gasAmounts[1] = 1_000_000; // Set gas for the second call becomes success
 
+    vm.expectEmit(false, true, true, true);
+    emit ProposalVoted(_anyValue, _param.roninBridgeManager.governors[0], Ballot.VoteType.For, 100);
     vm.expectEmit(false, false, false, false);
     emit ProposalApproved(_anyValue);
+
+    SignatureConsumer.Signature[] memory signatures = _roninProposalUtils.generateSignaturesGlobal(_globalProposal, _param.test.governorPKs);
+    for (uint256 i; i < signatures.length; i++) {
+      _signatures.push(signatures[i]);
+    }
+
+    vm.prank(_param.roninBridgeManager.governors[0]);
+    _roninBridgeManager.proposeGlobalProposalStructAndCastVotes(_globalProposal, _supports, _signatures);
+    assertEq(_roninBridgeManager.globalProposalVoted(_globalProposal.nonce, _param.roninBridgeManager.governors[0]), true);
+    assertEq(_roninBridgeManager.getBridgeOperators(), _beforeRelayedOperators);
+
     vm.expectEmit(false, false, false, false);
     emit ProposalExecuted(_anyValue, new bool[](2), new bytes[](2));
 
-    SignatureConsumer.Signature[] memory signatures = _roninProposalUtils.generateSignaturesGlobal(_globalProposal, _param.test.governorPKs);
-    for (uint256 i; i < signatures.length; i++) {
-      _signatures.push(signatures[i]);
-    }
-
     vm.prank(_param.roninBridgeManager.governors[0]);
-    _mainchainBridgeManager.relayGlobalProposal(_globalProposal, _supports, _signatures);
-    assertEq(_mainchainBridgeManager.globalProposalRelayed(_globalProposal.nonce), true);
-    assertEq(_mainchainBridgeManager.getBridgeOperators(), _afterRelayedOperators);
+    _roninBridgeManager.executeGlobal(_globalProposal);
+    assertEq(_roninBridgeManager.getBridgeOperators(), _afterRelayedOperators);
   }
 
   // Should revert when the auto proposal get executed again
-  function test_relayGlobal_executerProposal_revertWhen_proposalIsAlreadyExecuted() external {
-    test_relayGlobal_executerProposal_strictProposal_WhenAllInternalCallsPass();
+  function test_executorProposal_revertWhen_proposalIsAlreadyExecuted() external {
+    test_executorProposal_strictProposal_WhenAllInternalCallsPass();
 
-    vm.expectRevert(abi.encodeWithSelector(ErrInvalidProposalNonce.selector, MainchainBridgeManager.relayGlobalProposal.selector));
+    vm.expectRevert(abi.encodeWithSelector(ErrProposalNotApproved.selector));
 
     vm.prank(_param.roninBridgeManager.governors[0]);
-    _mainchainBridgeManager.relayGlobalProposal(_globalProposal, _supports, _signatures);
+    _roninBridgeManager.executeGlobal(_globalProposal);
   }
 
   // Should the non-auto proposal can not be execute by other governor
-  function test_relayGlobal_executerProposal_revertWhen_proposalIsExecutedByAnotherGovernor() external {
+  function test_executorProposal_revertWhen_proposalIsExecutedByAnotherGovernor() external {
     _globalProposal.loose = false;
-    _globalProposal.executer = _param.roninBridgeManager.governors[0];
+    _globalProposal.executor = _param.roninBridgeManager.governors[0];
     _globalProposal.gasAmounts[1] = 1_000_000; // Set gas for the second call becomes success
+
+    vm.expectEmit(false, true, true, true);
+    emit ProposalVoted(_anyValue, _param.roninBridgeManager.governors[0], Ballot.VoteType.For, 100);
+    vm.expectEmit(false, false, false, false);
+    emit ProposalApproved(_anyValue);
 
     SignatureConsumer.Signature[] memory signatures = _roninProposalUtils.generateSignaturesGlobal(_globalProposal, _param.test.governorPKs);
     for (uint256 i; i < signatures.length; i++) {
       _signatures.push(signatures[i]);
     }
-    vm.expectRevert(abi.encodeWithSelector(ErrNonExecuterCannotRelay.selector, _param.roninBridgeManager.governors[0], _param.roninBridgeManager.governors[1]));
 
+    vm.prank(_param.roninBridgeManager.governors[0]);
+    _roninBridgeManager.proposeGlobalProposalStructAndCastVotes(_globalProposal, _supports, _signatures);
+    assertEq(_roninBridgeManager.globalProposalVoted(_globalProposal.nonce, _param.roninBridgeManager.governors[0]), true);
+    assertEq(_roninBridgeManager.getBridgeOperators(), _beforeRelayedOperators);
+
+    vm.expectRevert(abi.encodeWithSelector(ErrInvalidExecutor.selector));
     vm.prank(_param.roninBridgeManager.governors[1]);
-    _mainchainBridgeManager.relayGlobalProposal(_globalProposal, _supports, _signatures);
+    _roninBridgeManager.executeGlobal(_globalProposal);
   }
 
   function _generateAddingOperators(uint256 num) internal {

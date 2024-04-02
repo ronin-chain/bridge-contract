@@ -21,7 +21,7 @@ library GlobalProposal {
     // Nonce to make sure proposals are executed in order
     uint256 nonce;
     uint256 expiryTimestamp;
-    address executer;
+    address executor;
     bool loose;
     TargetOption[] targetOptions;
     uint256[] values;
@@ -29,7 +29,7 @@ library GlobalProposal {
     uint256[] gasAmounts;
   }
 
-  // keccak256("GlobalProposalDetail(uint256 nonce,uint256 expiryTimestamp,address executer,bool loose,uint8[] targetOptions,uint256[] values,bytes[] calldatas,uint256[] gasAmounts)");
+  // keccak256("GlobalProposalDetail(uint256 nonce,uint256 expiryTimestamp,address executor,bool loose,uint8[] targetOptions,uint256[] values,bytes[] calldatas,uint256[] gasAmounts)");
   bytes32 public constant TYPE_HASH = 0x8fdb3bc7211cb44f39a2cae84127672c4570a00720dfbf2bb58285070faa28da;
 
   /**
@@ -56,7 +56,7 @@ library GlobalProposal {
      *       TYPE_HASH,
      *       proposal.nonce,
      *       proposal.expiryTimestamp,
-     *       proposal.executer,
+     *       proposal.executor,
      *       proposal.loose,
      *       targetsHash,
      *       valuesHash,
@@ -70,7 +70,7 @@ library GlobalProposal {
       mstore(ptr, TYPE_HASH)
       mstore(add(ptr, 0x20), mload(self)) // proposal.nonce
       mstore(add(ptr, 0x40), mload(add(self, 0x20))) // proposal.expiryTimestamp
-      mstore(add(ptr, 0x60), mload(add(self, 0x40))) // proposal.executer
+      mstore(add(ptr, 0x60), mload(add(self, 0x40))) // proposal.executor
       mstore(add(ptr, 0x80), mload(add(self, 0x60))) // proposal.loose
 
       let arrayHashed
@@ -93,7 +93,7 @@ library GlobalProposal {
     detail_.nonce = self.nonce;
     detail_.chainId = 0;
     detail_.expiryTimestamp = self.expiryTimestamp;
-    detail_.executer = self.executer;
+    detail_.executor = self.executor;
     detail_.loose = self.loose;
 
     detail_.targets = new address[](self.targetOptions.length);

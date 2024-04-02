@@ -20,7 +20,7 @@ contract RoninBridgeAdminUtils is ProposalUtils {
   function functionDelegateCall(address to, bytes memory data) public {
     Proposal.ProposalDetail memory proposal = this.createProposal({
       expiryTimestamp: this.defaultExpiryTimestamp(),
-      executer: address(0),
+      executor: address(0),
       loose: false,
       target: to,
       value: 0,
@@ -42,7 +42,7 @@ contract RoninBridgeAdminUtils is ProposalUtils {
   function functionDelegateCallGlobal(GlobalProposal.TargetOption target, bytes memory data) public {
     GlobalProposal.GlobalProposalDetail memory proposal = this.createGlobalProposal({
       expiryTimestamp: this.defaultExpiryTimestamp(),
-      executer: address(0),
+      executor: address(0),
       loose: false,
       targetOption: target,
       value: 0,
@@ -77,7 +77,7 @@ contract RoninBridgeAdminUtils is ProposalUtils {
     GlobalProposal.GlobalProposalDetail memory proposal = GlobalProposal.GlobalProposalDetail({
       nonce: _contract.round(0) + 1,
       expiryTimestamp: this.defaultExpiryTimestamp(),
-      executer: address(0),
+      executor: address(0),
       loose: false,
       targetOptions: targetOptions,
       values: values,
@@ -98,7 +98,7 @@ contract RoninBridgeAdminUtils is ProposalUtils {
   function upgradeGlobal(GlobalProposal.TargetOption targetOption, uint256 nonce, bytes memory data) public {
     GlobalProposal.GlobalProposalDetail memory proposal = this.createGlobalProposal({
       expiryTimestamp: this.defaultExpiryTimestamp(),
-      executer: address(0),
+      executor: address(0),
       loose: false,
       targetOption: targetOption,
       value: 0,
