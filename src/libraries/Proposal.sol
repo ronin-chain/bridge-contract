@@ -39,7 +39,7 @@ library Proposal {
   }
 
   // keccak256("ProposalDetail(uint256 nonce,uint256 chainId,uint256 expiryTimestamp,address executor,bool loose,address[] targets,uint256[] values,bytes[] calldatas,uint256[] gasAmounts)");
-  bytes32 public constant TYPE_HASH = 0x98e2bc443e89d620038081eb862bc4dd7a26e2eba7a2a87201642f9419340a57;
+  bytes32 internal constant TYPE_HASH = 0x98e2bc443e89d620038081eb862bc4dd7a26e2eba7a2a87201642f9419340a57;
 
   /**
    * @dev Validates the proposal.
