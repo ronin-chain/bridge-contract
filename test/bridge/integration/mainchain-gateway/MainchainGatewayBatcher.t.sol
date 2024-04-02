@@ -110,6 +110,24 @@ contract MainchainGatewayBatcherTest is BaseIntegration_Test {
     vm.stopPrank();
   }
 
+  function testConcrete_RevertIf_LengthMismatch_requestDepositForBatch_ERC1155() external {
+    _mainchainMockERC1155.mint(sender, 1, 1);
+
+    RequestBatch memory req;
+    req.recipient = sender;
+    req.tokenAddr = address(_mainchainMockERC1155);
+    req.info.erc = TokenStandard.ERC1155;
+    req.info.ids = new uint256[](1);
+    req.info.ids[0] = 1;
+    req.info.quantities = new uint256[](2); // Length mismatch
+
+    vm.startPrank(sender);
+    _mainchainMockERC1155.setApprovalForAll(address(_mainchainGatewayBatcher), true);
+    vm.expectRevert();
+    _mainchainGatewayBatcher.requestDepositForBatch(req);
+    vm.stopPrank();
+  }
+
   function testFuzz_requestDepositBatch_ERC1155(uint256[] calldata ids) external {
     uint256[] memory amounts = new uint256[](ids.length);
 
