@@ -94,7 +94,7 @@ library Proposal {
       mstore(add(ptr, 0x20), mload(proposal)) // proposal.nonce
       mstore(add(ptr, 0x40), mload(add(proposal, 0x20))) // proposal.chainId
       mstore(add(ptr, 0x60), mload(add(proposal, 0x40))) // proposal.expiryTimestamp
-      mstore(add(ptr, 0x80), mload(add(proposal, 0x80))) // proposal.executor
+      mstore(add(ptr, 0x80), mload(add(proposal, 0x60))) // proposal.executor
       mstore(add(ptr, 0xa0), mload(add(proposal, 0x80))) // proposal.loose
 
       let arrayHashed
