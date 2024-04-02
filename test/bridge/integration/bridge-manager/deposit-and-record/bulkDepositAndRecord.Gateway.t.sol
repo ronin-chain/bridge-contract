@@ -28,14 +28,16 @@ contract BulkDepositAndRecord_Gateway_Test is BaseIntegration_Test {
     });
 
     _numOperatorsForVoteExecuted = (_roninBridgeManager.minimumVoteWeight() - 1) / 100 + 1;
+    console.log("Num operators for vote executed:", _numOperatorsForVoteExecuted);
+    console.log("Total operators:", _param.roninBridgeManager.bridgeOperators.length);
   }
 
   function test_bulkDepositFor_wrapUp_checkRewardAndSlash() public {
-    _depositFor();
+    _depositFor(_numOperatorsForVoteExecuted);
     _moveToEndPeriodAndWrapUpEpoch();
 
     console.log("=============== First 50 Receipts ===========");
-    _bulkDepositFor();
+    _bulkDepositFor(_numOperatorsForVoteExecuted);
 
     _wrapUpEpoch();
     _wrapUpEpoch();
@@ -59,7 +61,7 @@ contract BulkDepositAndRecord_Gateway_Test is BaseIntegration_Test {
     }
 
     console.log("==== Check total ballot after new deposit  ====");
-    _depositFor();
+    _depositFor(_numOperatorsForVoteExecuted);
 
     logBridgeTracking();
     logBridgeSlash();
@@ -76,23 +78,53 @@ contract BulkDepositAndRecord_Gateway_Test is BaseIntegration_Test {
     }
   }
 
-  function _depositFor() internal {
+  function test_RecordAllVoters_bulkDepositFor() public {
+    uint256 numAllOperators = _param.roninBridgeManager.bridgeOperators.length;
+
+    _depositFor(numAllOperators);
+    _moveToEndPeriodAndWrapUpEpoch();
+
+    // console.log("=============== First 50 Receipts ===========");
+    _bulkDepositFor(numAllOperators);
+
+    _wrapUpEpoch();
+    _wrapUpEpoch();
+
+    _moveToEndPeriodAndWrapUpEpoch();
+
+    console.log("=============== Check slash and reward behavior  ===========");
+    console.log("==== Check total ballot before new deposit  ====");
+
+    logBridgeTracking();
+
+    uint256 lastSyncedPeriod = uint256(vm.load(address(_bridgeTracking), bytes32(uint256(11))));
+    for (uint256 i; i < numAllOperators; i++) {
+      address operator = _param.roninBridgeManager.bridgeOperators[i];
+      assertEq(_bridgeTracking.totalBallotOf(lastSyncedPeriod, operator), _id, "Total ballot should be equal to the number of receipts");
+    }
+  }
+
+  function _depositFor(uint256 numVote) internal {
     console.log(">> depositFor ....");
     _sampleReceipt.id = ++_id;
-    for (uint256 i; i < _numOperatorsForVoteExecuted; i++) {
+    for (uint256 i; i < numVote; i++) {
       console.log(" -> Operator vote:", _param.roninBridgeManager.bridgeOperators[i]);
       vm.prank(_param.roninBridgeManager.bridgeOperators[i]);
       _roninGatewayV3.depositFor(_sampleReceipt);
     }
   }
 
-  function _bulkDepositFor() internal {
+  function _bulkDepositFor(uint256 numVote) internal {
     console.log(">> bulkDepositFor ....");
     _prepareBulkRequest();
-    for (uint256 i; i < _numOperatorsForVoteExecuted; i++) {
+    for (uint256 i; i < numVote; i++) {
       console.log(" -> Operator vote:", _param.roninBridgeManager.bridgeOperators[i]);
       vm.prank(_param.roninBridgeManager.bridgeOperators[i]);
-      _roninGatewayV3.tryBulkDepositFor(_bulkReceipts);
+      bool[] memory _executedReceipts = _roninGatewayV3.tryBulkDepositFor(_bulkReceipts);
+
+      for (uint256 j; j < _executedReceipts.length; j++) {
+        assertTrue(_roninGatewayV3.depositVoted(block.chainid, _bulkReceipts[j].id, _param.roninBridgeManager.bridgeOperators[i]), "Receipt should be voted");
+      }
     }
   }
 
