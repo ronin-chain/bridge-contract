@@ -112,8 +112,8 @@ library LibTokenInfo {
   }
 
   function _hashBatch(TokenInfo memory self) internal pure returns (bytes32 digest) {
-    bytes32 idsHash = keccak256(abi.encode(self.ids));
-    bytes32 qtysHash = keccak256(abi.encode(self.quantities));
+    bytes32 idsHash = keccak256(abi.encodePacked(self.ids));
+    bytes32 qtysHash = keccak256(abi.encodePacked(self.quantities));
 
     assembly ("memory-safe") {
       let ptr := mload(0x40)
