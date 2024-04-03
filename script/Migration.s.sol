@@ -22,7 +22,7 @@ contract Migration is BaseMigrationV2, Utils {
   function _sharedArguments() internal virtual override returns (bytes memory rawArgs) {
     ISharedArgument.SharedParameter memory param;
 
-    if (network() == Network.Goerli.key()) {
+    if (network() == Network.Sepolia.key()) {
       // Undefined
     } else if (network() == DefaultNetwork.RoninTestnet.key()) {
       // Undefined

@@ -13,12 +13,12 @@ contract GeneralConfig is BaseGeneralConfig, Utils {
 
   function _setUpNetworks() internal virtual override {
     setNetworkInfo(
-      Network.Goerli.chainId(),
-      Network.Goerli.key(),
-      Network.Goerli.chainAlias(),
-      Network.Goerli.deploymentDir(),
-      Network.Goerli.envLabel(),
-      Network.Goerli.explorer()
+      Network.Sepolia.chainId(),
+      Network.Sepolia.key(),
+      Network.Sepolia.chainAlias(),
+      Network.Sepolia.deploymentDir(),
+      Network.Sepolia.envLabel(),
+      Network.Sepolia.explorer()
     );
     setNetworkInfo(
       Network.EthMainnet.chainId(),

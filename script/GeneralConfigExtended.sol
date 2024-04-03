@@ -14,12 +14,12 @@ contract GeneralConfigExtended is BaseGeneralConfig {
 
   function _setUpNetworks() internal virtual override {
     setNetworkInfo(
-      Network.Goerli.chainId(),
-      Network.Goerli.key(),
-      Network.Goerli.chainAlias(),
-      Network.Goerli.deploymentDir(),
-      Network.Goerli.envLabel(),
-      Network.Goerli.explorer()
+      Network.Sepolia.chainId(),
+      Network.Sepolia.key(),
+      Network.Sepolia.chainAlias(),
+      Network.Sepolia.deploymentDir(),
+      Network.Sepolia.envLabel(),
+      Network.Sepolia.explorer()
     );
     setNetworkInfo(
       Network.EthMainnet.chainId(),
@@ -46,7 +46,7 @@ contract GeneralConfigExtended is BaseGeneralConfig {
   }
 
   function getCompanionNetwork(TNetwork network) external pure returns (Network) {
-    if (network == DefaultNetwork.RoninTestnet.key()) return Network.Goerli;
+    if (network == DefaultNetwork.RoninTestnet.key()) return Network.Sepolia;
     if (network == DefaultNetwork.RoninMainnet.key()) return Network.EthMainnet;
     revert("Network: Unknown companion network");
   }
