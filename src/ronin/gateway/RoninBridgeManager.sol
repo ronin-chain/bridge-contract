@@ -53,7 +53,20 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
     bytes[] calldata calldatas,
     uint256[] calldata gasAmounts
   ) external onlyGovernor {
-    _proposeProposal(chainId, expiryTimestamp, executor, loose, targets, values, calldatas, gasAmounts, msg.sender);
+    _proposeProposalStruct(
+      Proposal.ProposalDetail({
+        nonce: _createVotingRound(block.chainid),
+        chainId: block.chainid,
+        expiryTimestamp: expiryTimestamp,
+        executor: executor,
+        loose: loose,
+        targets: targets,
+        values: values,
+        calldatas: calldatas,
+        gasAmounts: gasAmounts
+      }),
+      msg.sender
+    );
   }
 
   /**
@@ -90,8 +103,8 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
     uint256[] calldata gasAmounts,
     Ballot.VoteType support
   ) external onlyGovernor {
-    address _voter = msg.sender;
-    Proposal.ProposalDetail memory _proposal = _proposeProposal({
+    Proposal.ProposalDetail memory proposal = Proposal.ProposalDetail({
+      nonce: _createVotingRound(block.chainid),
       chainId: block.chainid,
       expiryTimestamp: expiryTimestamp,
       executor: executor,
@@ -99,10 +112,10 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
       targets: targets,
       values: values,
       calldatas: calldatas,
-      gasAmounts: gasAmounts,
-      creator: _voter
+      gasAmounts: gasAmounts
     });
-    _castProposalVoteForCurrentNetwork(_voter, _proposal, support);
+    _proposeProposalStruct(proposal, msg.sender);
+    _castProposalVoteForCurrentNetwork(msg.sender, proposal, support);
   }
 
   /**
