@@ -124,8 +124,9 @@ contract BaseIntegration_Test is Base_Test {
     _roninMockERC721 = new MockERC721Deploy().run();
 
     _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
-    _roninProposalUtils =
-      new RoninBridgeAdminUtils(_param.test.governorPKs, _roninBridgeManager, _param.roninBridgeManager.governors[0]);
+    _roninProposalUtils = new RoninBridgeAdminUtils(
+      block.chainid, _param.test.governorPKs, _roninBridgeManager, _param.roninBridgeManager.governors[0]
+    );
     _validatorSet = new MockValidatorContract_OnlyTiming_ForHardhatTest(_param.test.numberOfBlocksInEpoch);
   }
 
@@ -142,7 +143,7 @@ contract BaseIntegration_Test is Base_Test {
 
     _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
     _mainchainProposalUtils = new MainchainBridgeAdminUtils(
-      _param.test.governorPKs, _mainchainBridgeManager, _param.mainchainBridgeManager.governors[0]
+      block.chainid, _param.test.governorPKs, _mainchainBridgeManager, _param.mainchainBridgeManager.governors[0]
     );
   }
 
