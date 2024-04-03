@@ -57,19 +57,17 @@ abstract contract BridgeManagerCallbackRegister is Initializable, IdentityGuard,
    * @return registereds An array indicating the success status of each registration.
    */
   function _registerCallbacks(address[] memory registers) internal nonDuplicate(registers) returns (bool[] memory registereds) {
-    uint256 length = registers.length;
-    registereds = new bool[](length);
-    if (length == 0) return registereds;
+    registereds = new bool[](registers.length);
+    if (registers.length == 0) return registereds;
 
     EnumerableSet.AddressSet storage _callbackRegisters = _getCallbackRegisters();
     address register;
-    bytes4 callbackInterface = type(IBridgeManagerCallback).interfaceId;
 
-    for (uint256 i; i < length; i++) {
+    for (uint256 i; i < registers.length; i++) {
       register = registers[i];
 
       _requireHasCode(register);
-      _requireSupportsInterface(register, callbackInterface);
+      _requireSupportsInterface(register, type(IBridgeManagerCallback).interfaceId);
 
       registereds[i] = _callbackRegisters.add(register);
     }
