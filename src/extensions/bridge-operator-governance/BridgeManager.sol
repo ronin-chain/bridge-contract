@@ -152,10 +152,9 @@ abstract contract BridgeManager is IBridgeManager, Initializable, HasContracts, 
    */
   function _getGovernorWeights(address[] memory governors) internal view returns (uint96[] memory weights) {
     BridgeManagerStorage storage $ = _getBridgeManagerStorage();
-    uint256 length = governors.length;
-    weights = new uint96[](length);
+    weights = new uint96[](governors.length);
 
-    for (uint256 i; i < length; i++) {
+    for (uint256 i; i < governors.length; i++) {
       weights[i] = $._governorWeight[governors[i]];
     }
   }
@@ -231,13 +230,6 @@ abstract contract BridgeManager is IBridgeManager, Initializable, HasContracts, 
    */
   function removeBridgeOperators(address[] calldata bridgeOperators) external onlySelfCall returns (bool[] memory removeds) {
     removeds = _removeBridgeOperators(bridgeOperators);
-  }
-
-  /**
-   * @inheritdoc IBridgeManager
-   */
-  function updateBridgeOperator(address, /* currOperator */ address /* newOperator */ ) external view onlyGovernor {
-    revert("Not supported");
   }
 
   /**
@@ -429,28 +421,12 @@ abstract contract BridgeManager is IBridgeManager, Initializable, HasContracts, 
 
   /**
    * @inheritdoc IBridgeManager
-   * @custom:deprecated Deprecated due to high gas consume in new design.
-   */
-  function getBridgeOperatorOf(address[] memory /*governors*/ ) external pure returns (address[] memory /*bridgeOperators*/ ) {
-    revert("Deprecated method");
-  }
-
-  /**
-   * @inheritdoc IBridgeManager
    */
   function getOperatorOf(address governor) external view returns (address operator) {
     (bool found, uint idx) = _findGovernorInArray(governor);
     if (!found) revert ErrGovernorNotFound(governor);
 
     return _getBridgeManagerStorage()._operators[idx];
-  }
-
-  /**
-   * @inheritdoc IBridgeManager
-   * @custom:deprecated Deprecated due to high gas consume in new design.
-   */
-  function getGovernorsOf(address[] calldata /*bridgeOperators*/ ) external pure returns (address[] memory /*governors*/ ) {
-    revert("Deprecated method");
   }
 
   /**
