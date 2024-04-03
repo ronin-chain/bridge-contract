@@ -29,13 +29,11 @@ abstract contract GlobalGovernanceRelay is CommonGovernanceRelay, GlobalCoreGove
     address creator
   ) internal {
     Proposal.ProposalDetail memory _proposal = _proposeGlobalStruct(globalProposal, creator);
-    bytes32 globalProposalHash = globalProposal.hash();
     _relayVotesBySignatures(
       _proposal,
       supports_,
       signatures,
-      ECDSA.toTypedDataHash(domainSeparator, Ballot.hash(globalProposalHash, Ballot.VoteType.For)),
-      ECDSA.toTypedDataHash(domainSeparator, Ballot.hash(globalProposalHash, Ballot.VoteType.Against))
+      globalProposal.hash()
     );
   }
 }

@@ -105,4 +105,8 @@ contract MainchainBridgeManager is BridgeManager, GovernanceRelay, GlobalGoverna
   function _getChainType() internal pure override returns (ChainType) {
     return ChainType.Mainchain;
   }
+
+  function _proposalDomainSeparator() internal view override returns (bytes32) {
+    return DOMAIN_SEPARATOR;
+  }
 }

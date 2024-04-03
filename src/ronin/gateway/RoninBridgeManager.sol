@@ -2,7 +2,13 @@
 pragma solidity ^0.8.0;
 
 import { ContractType, RoleAccess, ErrUnauthorized, BridgeManager } from "../../extensions/bridge-operator-governance/BridgeManager.sol";
-import { Ballot, GlobalProposal, Proposal, GovernanceProposal } from "../../extensions/sequential-governance/governance-proposal/GovernanceProposal.sol";
+import {
+  Ballot,
+  GlobalProposal,
+  Proposal,
+  CommonGovernanceProposal,
+  GovernanceProposal
+} from "../../extensions/sequential-governance/governance-proposal/GovernanceProposal.sol";
 import {
   CoreGovernance,
   GlobalCoreGovernance,
@@ -270,5 +276,9 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
    */
   function _getWeight(address _governor) internal view virtual override returns (uint256) {
     return _getGovernorWeight(_governor);
+  }
+
+  function _proposalDomainSeparator() internal view override returns (bytes32) {
+    return DOMAIN_SEPARATOR;
   }
 }

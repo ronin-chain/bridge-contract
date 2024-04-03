@@ -18,14 +18,7 @@ abstract contract GovernanceProposal is CoreGovernance, CommonGovernanceProposal
     address _creator
   ) internal {
     _proposeProposalStruct(_proposal, _creator);
-    bytes32 _proposalHash = _proposal.hash();
-    _castVotesBySignatures(
-      _proposal,
-      _supports,
-      _signatures,
-      ECDSA.toTypedDataHash(_domainSeparator, Ballot.hash(_proposalHash, Ballot.VoteType.For)),
-      ECDSA.toTypedDataHash(_domainSeparator, Ballot.hash(_proposalHash, Ballot.VoteType.Against))
-    );
+    _castVotesBySignatures(_proposal, _supports, _signatures, _proposal.hash());
   }
 
   /**
@@ -43,41 +36,24 @@ abstract contract GovernanceProposal is CoreGovernance, CommonGovernanceProposal
       revert ErrInvalidProposal(_proposalHash, vote[_proposal.chainId][_proposal.nonce].hash);
     }
 
-    _castVotesBySignatures(
-      _proposal,
-      _supports,
-      _signatures,
-      ECDSA.toTypedDataHash(_domainSeparator, Ballot.hash(_proposalHash, Ballot.VoteType.For)),
-      ECDSA.toTypedDataHash(_domainSeparator, Ballot.hash(_proposalHash, Ballot.VoteType.Against))
-    );
+    _castVotesBySignatures(_proposal, _supports, _signatures, _proposal.hash());
   }
 
   /**
    * @dev See `castProposalVoteForCurrentNetwork`.
    */
-  function _castProposalVoteForCurrentNetwork(
-    address _voter,
-    Proposal.ProposalDetail memory _proposal,
-    Ballot.VoteType _support
-  ) internal {
+  function _castProposalVoteForCurrentNetwork(address _voter, Proposal.ProposalDetail memory _proposal, Ballot.VoteType _support) internal {
     if (_proposal.chainId != block.chainid) revert ErrInvalidChainId(msg.sig, _proposal.chainId, block.chainid);
 
     bytes32 proposalHash = _proposal.hash();
-    if (vote[_proposal.chainId][_proposal.nonce].hash != proposalHash)
+    if (vote[_proposal.chainId][_proposal.nonce].hash != proposalHash) {
       revert ErrInvalidProposal(proposalHash, vote[_proposal.chainId][_proposal.nonce].hash);
+    }
 
     uint256 _minimumForVoteWeight = _getMinimumVoteWeight();
     uint256 _minimumAgainstVoteWeight = _getTotalWeight() - _minimumForVoteWeight + 1;
     Signature memory _emptySignature;
-    _castVote(
-      _proposal,
-      _support,
-      _minimumForVoteWeight,
-      _minimumAgainstVoteWeight,
-      _voter,
-      _emptySignature,
-      _getWeight(_voter)
-    );
+    _castVote(_proposal, _support, _minimumForVoteWeight, _minimumAgainstVoteWeight, _voter, _emptySignature, _getWeight(_voter));
   }
 
   /**
@@ -86,11 +62,7 @@ abstract contract GovernanceProposal is CoreGovernance, CommonGovernanceProposal
   function getProposalSignatures(
     uint256 _chainId,
     uint256 _round
-  )
-    external
-    view
-    returns (address[] memory _voters, Ballot.VoteType[] memory _supports, Signature[] memory _signatures)
-  {
+  ) external view returns (address[] memory _voters, Ballot.VoteType[] memory _supports, Signature[] memory _signatures) {
     return _getProposalSignatures(_chainId, _round);
   }
 

@@ -17,46 +17,53 @@ abstract contract CommonGovernanceRelay is CoreGovernance {
     Proposal.ProposalDetail memory _proposal,
     Ballot.VoteType[] calldata _supports,
     Signature[] calldata _signatures,
-    bytes32 _forDigest,
-    bytes32 _againstDigest
+    bytes32 proposalHash
   ) internal {
     if (!(_supports.length > 0 && _supports.length == _signatures.length)) revert ErrLengthMismatch(msg.sig);
 
-    uint256 _forVoteCount;
-    uint256 _againstVoteCount;
+    bytes32 _forDigest = ECDSA.toTypedDataHash(_proposalDomainSeparator(), Ballot.hash(proposalHash, Ballot.VoteType.For));
+    bytes32 _againstDigest = ECDSA.toTypedDataHash(_proposalDomainSeparator(), Ballot.hash(proposalHash, Ballot.VoteType.Against));
+
     address[] memory _forVoteSigners = new address[](_signatures.length);
     address[] memory _againstVoteSigners = new address[](_signatures.length);
 
     {
-      address _signer;
-      address _lastSigner;
-      Ballot.VoteType _support;
-      Signature calldata _sig;
+      uint256 _forVoteCount;
+      uint256 _againstVoteCount;
 
-      for (uint256 _i; _i < _signatures.length; ) {
-        _sig = _signatures[_i];
-        _support = _supports[_i];
+      {
+        address _signer;
+        address _lastSigner;
+        Ballot.VoteType _support;
+        Signature calldata _sig;
 
-        if (_support == Ballot.VoteType.For) {
-          _signer = ECDSA.recover(_forDigest, _sig.v, _sig.r, _sig.s);
-          _forVoteSigners[_forVoteCount++] = _signer;
-        } else if (_support == Ballot.VoteType.Against) {
-          _signer = ECDSA.recover(_againstDigest, _sig.v, _sig.r, _sig.s);
-          _againstVoteSigners[_againstVoteCount++] = _signer;
-        } else revert ErrUnsupportedVoteType(msg.sig);
+        for (uint256 _i; _i < _signatures.length;) {
+          _sig = _signatures[_i];
+          _support = _supports[_i];
 
-        if (_lastSigner >= _signer) revert ErrInvalidOrder(msg.sig);
-        _lastSigner = _signer;
+          if (_support == Ballot.VoteType.For) {
+            _signer = ECDSA.recover(_forDigest, _sig.v, _sig.r, _sig.s);
+            _forVoteSigners[_forVoteCount++] = _signer;
+          } else if (_support == Ballot.VoteType.Against) {
+            _signer = ECDSA.recover(_againstDigest, _sig.v, _sig.r, _sig.s);
+            _againstVoteSigners[_againstVoteCount++] = _signer;
+          } else {
+            revert ErrUnsupportedVoteType(msg.sig);
+          }
 
-        unchecked {
-          ++_i;
+          if (_lastSigner >= _signer) revert ErrInvalidOrder(msg.sig);
+          _lastSigner = _signer;
+
+          unchecked {
+            ++_i;
+          }
         }
       }
-    }
 
-    assembly {
-      mstore(_forVoteSigners, _forVoteCount)
-      mstore(_againstVoteSigners, _againstVoteCount)
+      assembly {
+        mstore(_forVoteSigners, _forVoteCount)
+        mstore(_againstVoteSigners, _againstVoteCount)
+      }
     }
 
     ProposalVote storage _vote = vote[_proposal.chainId][_proposal.nonce];
@@ -86,4 +93,6 @@ abstract contract CommonGovernanceRelay is CoreGovernance {
    * @dev Returns the weight of the governor list.
    */
   function _sumWeight(address[] memory _governors) internal view virtual returns (uint256);
+
+  function _proposalDomainSeparator() internal view virtual returns (bytes32);
 }
