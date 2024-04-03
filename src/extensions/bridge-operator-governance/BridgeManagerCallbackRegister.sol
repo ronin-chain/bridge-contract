@@ -34,8 +34,14 @@ abstract contract BridgeManagerCallbackRegister is Initializable, IdentityGuard,
   /**
    * @inheritdoc IBridgeManagerCallbackRegister
    */
-  function unregisterCallbacks(address[] calldata registers) external onlySelfCall returns (bool[] memory unregistereds) {
-    unregistereds = _unregisterCallbacks(registers);
+  function unregisterCallbacks(address[] calldata registers) external onlySelfCall nonDuplicate(registers) returns (bool[] memory unregistereds) {
+    uint256 length = registers.length;
+    unregistereds = new bool[](length);
+    EnumerableSet.AddressSet storage _callbackRegisters = _getCallbackRegisters();
+
+    for (uint256 i; i < length; i++) {
+      unregistereds[i] = _callbackRegisters.remove(registers[i]);
+    }
   }
 
   /**
@@ -66,21 +72,6 @@ abstract contract BridgeManagerCallbackRegister is Initializable, IdentityGuard,
       _requireSupportsInterface(register, callbackInterface);
 
       registereds[i] = _callbackRegisters.add(register);
-    }
-  }
-
-  /**
-   * @dev Internal function to unregister multiple callbacks from the bridge.
-   * @param registers The array of callback addresses to unregister.
-   * @return unregistereds An array indicating the success status of each unregistration.
-   */
-  function _unregisterCallbacks(address[] memory registers) internal nonDuplicate(registers) returns (bool[] memory unregistereds) {
-    uint256 length = registers.length;
-    unregistereds = new bool[](length);
-    EnumerableSet.AddressSet storage _callbackRegisters = _getCallbackRegisters();
-
-    for (uint256 i; i < length; i++) {
-      unregistereds[i] = _callbackRegisters.remove(registers[i]);
     }
   }
 
