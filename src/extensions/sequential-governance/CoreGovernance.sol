@@ -262,13 +262,6 @@ abstract contract CoreGovernance is Initializable, SignatureConsumer, VoteStatus
   }
 
   /**
-   * @dev Returns the expiry duration for a new proposal.
-   */
-  function _getProposalExpiryDuration() internal view returns (uint256) {
-    return _proposalExpiryDuration;
-  }
-
-  /**
    * @dev Returns whether the voter casted for the proposal.
    */
   function _voted(ProposalVote storage vote_, address voter) internal view returns (bool) {

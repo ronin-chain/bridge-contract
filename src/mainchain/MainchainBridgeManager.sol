@@ -78,7 +78,7 @@ contract MainchainBridgeManager is BridgeManager, GovernanceRelay, GlobalGoverna
    * @dev Returns the expiry duration for a new proposal.
    */
   function getProposalExpiryDuration() external view returns (uint256) {
-    return _getProposalExpiryDuration();
+    return _proposalExpiryDuration;
   }
 
   /**
