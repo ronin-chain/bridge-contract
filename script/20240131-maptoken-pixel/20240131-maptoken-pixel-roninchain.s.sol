@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import { console2 } from "forge-std/console2.sol";
 import { StdStyle } from "forge-std/StdStyle.sol";
-import { BaseMigration } from "foundry-deployment-kit/BaseMigration.s.sol";
+import { BaseMigration } from "@fdk/BaseMigration.s.sol";
 
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import { IRoninGatewayV3 } from "@ronin/contracts/interfaces/IRoninGatewayV3.sol";
@@ -13,24 +13,25 @@ import { Ballot } from "@ronin/contracts/libraries/Ballot.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
 
 import { Contract } from "../utils/Contract.sol";
-import { BridgeMigration } from "../BridgeMigration.sol";
+import { Migration } from "../Migration.s.sol";
 import { Network } from "../utils/Network.sol";
 import { Contract } from "../utils/Contract.sol";
-import { IGeneralConfigExtended } from "../IGeneralConfigExtended.sol";
-
+import { LibProposal } from "script/shared/libraries/LibProposal.sol";
 import "forge-std/console2.sol";
 
 import "./maptoken-pixel-configs.s.sol";
 import "./update-axiechat-config.s.sol";
 
-contract Migration__20240131_MapTokenPixelRoninchain is BridgeMigration, Migration__MapToken_Pixel_Config, Migration__Update_AxieChat_Config {
+contract Migration__20240131_MapTokenPixelRoninchain is Migration, Migration__MapToken_Pixel_Config, Migration__Update_AxieChat_Config {
+  using LibProposal for *;
+
   RoninBridgeManager internal _roninBridgeManager;
   address internal _roninGatewayV3;
 
   function setUp() public override {
     super.setUp();
-    _roninBridgeManager = RoninBridgeManager(_config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
-    _roninGatewayV3 = _config.getAddressFromCurrentNetwork(Contract.RoninGatewayV3.key());
+    _roninBridgeManager = RoninBridgeManager(loadContract(Contract.RoninBridgeManager.key()));
+    _roninGatewayV3 = loadContract(Contract.RoninGatewayV3.key());
 
     _cheatWeightOperator(_governor);
   }
@@ -60,12 +61,12 @@ contract Migration__20240131_MapTokenPixelRoninchain is BridgeMigration, Migrati
 
     roninTokens[0] = _pixelRoninToken;
     mainchainTokens[0] = _pixelMainchainToken;
-    chainIds[0] = _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).chainId();
+    chainIds[0] = config.getNetworkData(config.getCompanionNetwork(network())).chainId;
     standards[0] = Token.Standard.ERC20;
 
     roninTokens[1] = _farmlandRoninToken;
     mainchainTokens[1] = _farmlandMainchainToken;
-    chainIds[1] = _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).chainId();
+    chainIds[1] = config.getNetworkData(config.getCompanionNetwork(network())).chainId;
     standards[1] = Token.Standard.ERC721;
 
     // function mapTokens(
@@ -116,10 +117,9 @@ contract Migration__20240131_MapTokenPixelRoninchain is BridgeMigration, Migrati
     gasAmounts[3] = 1_000_000;
 
     // ================ VERIFY AND EXECUTE PROPOSAL ===============
-
-    _verifyRoninProposalGasAmount(targets, values, calldatas, gasAmounts);
+    LibProposal.verifyProposalGasAmount(address(_roninBridgeManager), targets, values, calldatas, gasAmounts);
 
     vm.broadcast(_governor);
-    _roninBridgeManager.propose(block.chainid, expiredTime, address(0), targets, values, calldatas, gasAmounts);
+    _roninBridgeManager.propose(block.chainid, expiredTime, targets, values, calldatas, gasAmounts);
   }
 }

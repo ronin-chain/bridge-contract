@@ -69,8 +69,7 @@ contract EmergencyAction_PauseEnforcer_Test is BaseIntegration_Test {
       info: Token.Info({ erc: Token.Standard.ERC20, id: 0, quantity: 100 })
     });
 
-    uint256 numOperatorsForVoteExecuted =
-      _param.roninBridgeManager.bridgeOperators.length * _param.roninBridgeManager.num / _param.roninBridgeManager.denom;
+    uint256 numOperatorsForVoteExecuted = _param.roninBridgeManager.bridgeOperators.length * _param.roninBridgeManager.num / _param.roninBridgeManager.denom;
     for (uint256 i; i < numOperatorsForVoteExecuted; i++) {
       vm.prank(_param.roninBridgeManager.bridgeOperators[i]);
       _roninGatewayV3.depositFor(receipt);

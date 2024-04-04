@@ -14,11 +14,7 @@ abstract contract BridgeTrackingHelper {
    * @notice The function checks if each individual ballot count is not greater than the total votes recorded.
    * @notice It also verifies that the sum of all individual ballot counts does not exceed the total available ballots.
    */
-  function _isValidBridgeTrackingResponse(
-    uint256 totalBallot,
-    uint256 totalVote,
-    uint256[] memory ballots
-  ) internal pure returns (bool valid) {
+  function _isValidBridgeTrackingResponse(uint256 totalBallot, uint256 totalVote, uint256[] memory ballots) internal pure returns (bool valid) {
     valid = true;
     uint256 sumBallot;
     uint256 length = ballots.length;

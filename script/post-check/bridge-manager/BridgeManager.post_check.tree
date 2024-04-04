@@ -1,0 +1,66 @@
+BridgeManager
+    CRUD
+        add
+            when not self-called
+                it should revert
+            when self-called
+                when the list has duplicate
+                    it should revert
+                when the list has null value
+                    it should revert
+                when three input array mismatch
+                    it should revert
+                when vote weight is zero
+                    it should revert
+                when the valid input
+                    governor should be in governor list
+                    it should increase the total weight
+                    governor should have expected weight
+                    operator should have expected weight
+                    it should map governor => bridge operator
+                    it should map bridge operator => governor
+                    bridge operator should be in operator list
+                    it should notify proxy contract with valid data
+                    it should notify immutable contract with valid data
+        remove
+            when not self-called
+                it should revert
+            when self-called
+                when the list has duplicate
+                    it should revert
+                when the list has null value
+                    it should revert
+                when operator is not in the operator list
+                    it should not remove
+                when operator is in the list
+                    governor should have 0 weight
+                    it should decrease the total weight
+                    bridge operator should have 0 weight
+                    orders of other governors must unchanged
+                    orders of other bridge operators must unchanged
+                    it should notify proxy contract with valid data
+                    it should notify immutable contract with valid data
+                    it should remove the operator from the operator list
+                    it should remove corresponding governor from the list
+                    it should remove the mapping governor => bridge operator
+                    it should remove the mapping bridge operator => governor
+                    
+    Proposal
+        GlobalProposal
+            when the nonce is invalid
+                it should revert
+            when the caller is not the governor
+                it should verify signature with correct governor
+            when the target is BridgeManager
+                it should self call
+        ProposalForCurrentNetwork
+            when the nonce is invalid
+                it should revert
+            when the caller is not the governor
+                when the calldata includes signature
+                    it should verify correct signature
+                when the calldata not includes signature
+                    it should revert
+            when the target is BridgeManager
+                it should self call
+        

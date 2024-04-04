@@ -5,8 +5,7 @@ import { IBridgeTracking } from "@ronin/contracts/interfaces/bridge/IBridgeTrack
 import { MockGatewayForTracking } from "@ronin/contracts/mocks/MockGatewayForTracking.sol";
 import "../BaseIntegration.t.sol";
 
-import { EpochE2_VoteIsNotApprovedInLastEpoch_BridgeTracking_Test } from
-  "./EpochE2_VoteIsNotApprovedInLastEpoch.BridgeTracking.t.sol";
+import { EpochE2_VoteIsNotApprovedInLastEpoch_BridgeTracking_Test } from "./EpochE2_VoteIsNotApprovedInLastEpoch.BridgeTracking.t.sol";
 
 // Epoch e-1 test: Vote is approved in the last epoch of period
 contract EpochE1_VoteIsApprovedInLastEpoch_BridgeTracking_Test is BaseIntegration_Test {
@@ -30,8 +29,7 @@ contract EpochE1_VoteIsApprovedInLastEpoch_BridgeTracking_Test is BaseIntegratio
     // upgrade ronin gateway v3
     _mockRoninGatewayV3 = new MockGatewayForTracking(address(_bridgeTracking));
 
-    bytes memory calldata_ =
-      abi.encodeCall(IHasContracts.setContract, (ContractType.BRIDGE, address(_mockRoninGatewayV3)));
+    bytes memory calldata_ = abi.encodeCall(IHasContracts.setContract, (ContractType.BRIDGE, address(_mockRoninGatewayV3)));
     _roninProposalUtils.functionDelegateCall(address(_bridgeTracking), calldata_);
 
     vm.deal(address(_bridgeReward), 10 ether);

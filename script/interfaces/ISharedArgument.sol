@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { IGeneralConfig } from "foundry-deployment-kit/interfaces/IGeneralConfig.sol";
+import { IGeneralConfigExtended } from "./IGeneralConfigExtended.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
 import { Token } from "@ronin/contracts/libraries/Token.sol";
 
-interface ISharedArgument is IGeneralConfig {
+interface ISharedArgument is IGeneralConfigExtended {
   struct BridgeManagerParam {
     uint256 num;
     uint256 denom;

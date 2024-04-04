@@ -7,7 +7,7 @@ contract Migration__Update_AxieChat_Config {
   address constant _axieChatBridgeOperator = address(0x772112C7e5dD4ed663e844e79d77c1569a2E88ce);
   address constant _axieChatGovernor = address(0x5832C3219c1dA998e828E1a2406B73dbFC02a70C);
 
-  function _removeAxieChatGovernorAddress() pure internal returns (bytes memory) {
+  function _removeAxieChatGovernorAddress() internal pure returns (bytes memory) {
     address[] memory bridgeOperator = new address[](1);
     bridgeOperator[0] = _axieChatBridgeOperator;
 
@@ -15,12 +15,10 @@ contract Migration__Update_AxieChat_Config {
     //   address[] calldata bridgeOperators
     // )
 
-    return abi.encodeCall(IBridgeManager.removeBridgeOperators, (
-      bridgeOperator
-    ));
+    return abi.encodeCall(IBridgeManager.removeBridgeOperators, (bridgeOperator));
   }
 
-  function _addAxieChatGovernorAddress() pure internal returns (bytes memory) {
+  function _addAxieChatGovernorAddress() internal pure returns (bytes memory) {
     uint96[] memory voteWeight = new uint96[](1);
     address[] memory governor = new address[](1);
     address[] memory bridgeOperator = new address[](1);
@@ -35,10 +33,6 @@ contract Migration__Update_AxieChat_Config {
     //   address[] calldata bridgeOperators
     // )
 
-    return abi.encodeCall(IBridgeManager.addBridgeOperators, (
-      voteWeight,
-      governor,
-      bridgeOperator
-    ));
+    return abi.encodeCall(IBridgeManager.addBridgeOperators, (voteWeight, governor, bridgeOperator));
   }
 }

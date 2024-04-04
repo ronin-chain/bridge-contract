@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { LibString, TNetwork } from "foundry-deployment-kit/types/Types.sol";
+import { LibString, TNetwork } from "@fdk/types/Types.sol";
 
 enum Network {
   Goerli,
+  Sepolia,
   EthMainnet,
   RoninDevnet
 }
@@ -14,6 +15,7 @@ using { key, name, chainId, chainAlias, envLabel, deploymentDir, explorer } for 
 function chainId(Network network) pure returns (uint256) {
   if (network == Network.Goerli) return 5;
   if (network == Network.EthMainnet) return 1;
+  if (network == Network.Sepolia) return 11155111;
   if (network == Network.RoninDevnet) return 2022;
 
   revert("Network: Unknown chain id");
@@ -24,12 +26,14 @@ function key(Network network) pure returns (TNetwork) {
 }
 
 function explorer(Network network) pure returns (string memory link) {
-  if (network == Network.Goerli) return "https://goerli.etherscan.io/";
   if (network == Network.EthMainnet) return "https://etherscan.io/";
+  if (network == Network.Goerli) return "https://goerli.etherscan.io/";
+  if (network == Network.Sepolia) return "hhttps://sepolia.etherscan.io/";
 }
 
 function name(Network network) pure returns (string memory) {
   if (network == Network.Goerli) return "Goerli";
+  if (network == Network.Sepolia) return "Sepolia";
   if (network == Network.RoninDevnet) return "RoninDevnet";
   if (network == Network.EthMainnet) return "EthMainnet";
 
@@ -38,6 +42,7 @@ function name(Network network) pure returns (string memory) {
 
 function deploymentDir(Network network) pure returns (string memory) {
   if (network == Network.Goerli) return "goerli/";
+  if (network == Network.Sepolia) return "sepolia/";
   if (network == Network.EthMainnet) return "ethereum/";
   if (network == Network.RoninDevnet) return "ronin-devnet/";
 
@@ -46,6 +51,7 @@ function deploymentDir(Network network) pure returns (string memory) {
 
 function envLabel(Network network) pure returns (string memory) {
   if (network == Network.Goerli) return "TESTNET_PK";
+  if (network == Network.Sepolia) return "TESTNET_PK";
   if (network == Network.RoninDevnet) return "DEVNET_PK";
   if (network == Network.EthMainnet) return "MAINNET_PK";
 
@@ -53,6 +59,7 @@ function envLabel(Network network) pure returns (string memory) {
 }
 
 function chainAlias(Network network) pure returns (string memory) {
+  if (network == Network.Sepolia) return "sepolia";
   if (network == Network.Goerli) return "goerli";
   if (network == Network.EthMainnet) return "ethereum";
   if (network == Network.RoninDevnet) return "ronin-devnet";

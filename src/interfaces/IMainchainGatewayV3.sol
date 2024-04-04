@@ -83,10 +83,7 @@ interface IMainchainGatewayV3 is SignatureConsumer, MappedTokenConsumer {
    * Emits the `Withdrew` once the assets are released.
    *
    */
-  function submitWithdrawal(
-    Transfer.Receipt memory _receipt,
-    Signature[] memory _signatures
-  ) external returns (bool _locked);
+  function submitWithdrawal(Transfer.Receipt memory _receipt, Signature[] memory _signatures) external returns (bool _locked);
 
   /**
    * @dev Approves a specific withdrawal.
@@ -109,11 +106,7 @@ interface IMainchainGatewayV3 is SignatureConsumer, MappedTokenConsumer {
    * Emits the `TokenMapped` event.
    *
    */
-  function mapTokens(
-    address[] calldata _mainchainTokens,
-    address[] calldata _roninTokens,
-    Token.Standard[] calldata _standards
-  ) external;
+  function mapTokens(address[] calldata _mainchainTokens, address[] calldata _roninTokens, Token.Standard[] calldata _standards) external;
 
   /**
    * @dev Maps mainchain tokens to Ronin network and sets thresholds.

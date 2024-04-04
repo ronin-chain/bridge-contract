@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 library LibArrayUtils {
   function sum(bool[] memory arr) internal pure returns (uint256 total) {
     uint256 length = arr.length;
-    for (uint256 i; i < length; ) {
+    for (uint256 i; i < length;) {
       if (arr[i]) total++;
       unchecked {
         ++i;
@@ -14,7 +14,7 @@ library LibArrayUtils {
 
   function sum(uint256[] memory arr) internal pure returns (uint256 total) {
     uint256 length = arr.length;
-    for (uint256 i; i < length; ) {
+    for (uint256 i; i < length;) {
       total += arr[i];
       unchecked {
         ++i;
@@ -39,7 +39,7 @@ library LibArrayUtils {
       c[i] = a[i];
     }
 
-    for (uint j; j < b.length; ) {
+    for (uint j; j < b.length;) {
       c[i] = b[j];
       ++i;
       ++j;
@@ -54,7 +54,7 @@ library LibArrayUtils {
       c[i] = a[i];
     }
 
-    for (uint j; j < b.length; ) {
+    for (uint j; j < b.length;) {
       c[i] = b[j];
       ++i;
       ++j;

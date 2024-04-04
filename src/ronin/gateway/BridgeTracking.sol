@@ -220,9 +220,8 @@ contract BridgeTracking is HasBridgeDeprecated, HasValidatorDeprecated, HasContr
       uint256 totalBallot_ = totalBallot(lastSyncPeriod);
 
       address bridgeSlashContract = getContract(ContractType.BRIDGE_SLASH);
-      (bool success, bytes memory returnOrRevertData) = bridgeSlashContract.call(
-        abi.encodeCall(IBridgeSlash.execSlashBridgeOperators, (allOperators, ballots, totalBallot_, totalVote_, lastSyncPeriod))
-      );
+      (bool success, bytes memory returnOrRevertData) =
+        bridgeSlashContract.call(abi.encodeCall(IBridgeSlash.execSlashBridgeOperators, (allOperators, ballots, totalBallot_, totalVote_, lastSyncPeriod)));
       if (!success) {
         emit ExternalCallFailed(bridgeSlashContract, IBridgeSlash.execSlashBridgeOperators.selector, returnOrRevertData);
       }

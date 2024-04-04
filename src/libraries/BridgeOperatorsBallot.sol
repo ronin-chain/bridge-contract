@@ -17,8 +17,7 @@ library BridgeOperatorsBallot {
   }
 
   // keccak256("BridgeOperatorsBallot(uint256 period,uint256 epoch,address[] operators)");
-  bytes32 public constant BRIDGE_OPERATORS_BALLOT_TYPEHASH =
-    0xd679a49e9e099fa9ed83a5446aaec83e746b03ec6723d6f5efb29d37d7f0b78a;
+  bytes32 public constant BRIDGE_OPERATORS_BALLOT_TYPEHASH = 0xd679a49e9e099fa9ed83a5446aaec83e746b03ec6723d6f5efb29d37d7f0b78a;
 
   /**
    * @dev Verifies whether the ballot is valid or not.
@@ -32,7 +31,7 @@ library BridgeOperatorsBallot {
     if (_ballot.operators.length == 0) revert ErrEmptyArray();
 
     address _addr = _ballot.operators[0];
-    for (uint _i = 1; _i < _ballot.operators.length; ) {
+    for (uint _i = 1; _i < _ballot.operators.length;) {
       if (_addr >= _ballot.operators[_i]) revert ErrInvalidOrderOfBridgeOperator();
       _addr = _ballot.operators[_i];
       unchecked {

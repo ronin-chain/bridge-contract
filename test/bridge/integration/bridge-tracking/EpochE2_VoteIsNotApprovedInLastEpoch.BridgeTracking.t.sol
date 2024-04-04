@@ -22,8 +22,7 @@ contract EpochE2_VoteIsNotApprovedInLastEpoch_BridgeTracking_Test is BaseIntegra
     // upgrade ronin gateway v3
     _mockRoninGatewayV3 = new MockGatewayForTracking(address(_bridgeTracking));
 
-    bytes memory calldata_ =
-      abi.encodeCall(IHasContracts.setContract, (ContractType.BRIDGE, address(_mockRoninGatewayV3)));
+    bytes memory calldata_ = abi.encodeCall(IHasContracts.setContract, (ContractType.BRIDGE, address(_mockRoninGatewayV3)));
     _roninProposalUtils.functionDelegateCall(address(_bridgeTracking), calldata_);
 
     vm.deal(address(_bridgeReward), 10 ether);
@@ -102,15 +101,9 @@ contract EpochE2_VoteIsNotApprovedInLastEpoch_BridgeTracking_Test is BaseIntegra
     uint256 expectedTotalVotes = 1;
     assertEq(_bridgeTracking.totalVote(lastPeriod), expectedTotalVotes);
     assertEq(_bridgeTracking.totalBallot(lastPeriod), expectedTotalVotes * 3);
-    assertEq(
-      _bridgeTracking.totalBallotOf(lastPeriod, _param.roninBridgeManager.bridgeOperators[0]), expectedTotalVotes
-    );
-    assertEq(
-      _bridgeTracking.totalBallotOf(lastPeriod, _param.roninBridgeManager.bridgeOperators[1]), expectedTotalVotes
-    );
-    assertEq(
-      _bridgeTracking.totalBallotOf(lastPeriod, _param.roninBridgeManager.bridgeOperators[2]), expectedTotalVotes
-    );
+    assertEq(_bridgeTracking.totalBallotOf(lastPeriod, _param.roninBridgeManager.bridgeOperators[0]), expectedTotalVotes);
+    assertEq(_bridgeTracking.totalBallotOf(lastPeriod, _param.roninBridgeManager.bridgeOperators[1]), expectedTotalVotes);
+    assertEq(_bridgeTracking.totalBallotOf(lastPeriod, _param.roninBridgeManager.bridgeOperators[2]), expectedTotalVotes);
     assertEq(_bridgeTracking.totalBallotOf(lastPeriod, _param.roninBridgeManager.bridgeOperators[3]), 0);
 
     _period = newPeriod;

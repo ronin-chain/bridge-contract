@@ -8,7 +8,7 @@ import { Token } from "@ronin/contracts/libraries/Token.sol";
 import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/SignatureConsumer.sol";
 import "../../BaseIntegration.t.sol";
 
-contract SubmitWithdrawal_MainchainGatewayV3_Native_Benchmark_Test is BaseIntegration_Test{
+contract SubmitWithdrawal_MainchainGatewayV3_Native_Benchmark_Test is BaseIntegration_Test {
   using Transfer for Transfer.Receipt;
 
   Transfer.Receipt _withdrawalReceipt;

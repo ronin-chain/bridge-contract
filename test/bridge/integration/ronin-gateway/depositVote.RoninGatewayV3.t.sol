@@ -33,7 +33,6 @@ contract DepositVote_RoninGatewayV3_Test is BaseIntegration_Test {
     receipt.id = 1;
     _depositReceipts.push(receipt);
 
-
     _numOperatorsForVoteExecuted = (_roninBridgeManager.minimumVoteWeight() - 1) / 100 + 1;
   }
 

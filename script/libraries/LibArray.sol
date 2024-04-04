@@ -59,9 +59,9 @@ library LibArray {
       let dataElementLocation := add(data, 0x20)
 
       // Iterate until the bound is not met.
-      for { let end := add(dataElementLocation, mul(len, 0x20)) } lt(dataElementLocation, end) {
-        dataElementLocation := add(dataElementLocation, 0x20)
-      } { result := add(result, mload(dataElementLocation)) }
+      for { let end := add(dataElementLocation, mul(len, 0x20)) } lt(dataElementLocation, end) { dataElementLocation := add(dataElementLocation, 0x20) } {
+        result := add(result, mload(dataElementLocation))
+      }
     }
   }
 
@@ -105,11 +105,7 @@ library LibArray {
    * @notice This function modify `self` and `values`
    * @return sorted The sorted array.
    */
-  function inlineSortByValue(uint256[] memory self, uint256[] memory values)
-    internal
-    pure
-    returns (uint256[] memory sorted)
-  {
+  function inlineSortByValue(uint256[] memory self, uint256[] memory values) internal pure returns (uint256[] memory sorted) {
     return inlineQuickSortByValue(self, values);
   }
 
@@ -120,11 +116,7 @@ library LibArray {
    * @notice This function modify `self` and `values`
    * @return sorted The sorted array.
    */
-  function inlineQuickSortByValue(uint256[] memory self, uint256[] memory values)
-    internal
-    pure
-    returns (uint256[] memory sorted)
-  {
+  function inlineQuickSortByValue(uint256[] memory self, uint256[] memory values) internal pure returns (uint256[] memory sorted) {
     uint256 length = self.length;
     if (length != values.length) revert LengthMismatch();
     unchecked {
@@ -144,10 +136,7 @@ library LibArray {
    * @param right The right index of the subarray to be sorted.
    * @notice This function modify `arr` and `values`
    */
-  function inlineQuickSortByValue(uint256[] memory arr, uint256[] memory values, int256 left, int256 right)
-    private
-    pure
-  {
+  function inlineQuickSortByValue(uint256[] memory arr, uint256[] memory values, int256 left, int256 right) private pure {
     unchecked {
       if (left == right) return;
       int256 i = left;

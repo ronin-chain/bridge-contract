@@ -1,26 +1,24 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {console2} from "forge-std/console2.sol";
-import {StdStyle} from "forge-std/StdStyle.sol";
-import {BaseMigration} from "foundry-deployment-kit/BaseMigration.s.sol";
-import {DefaultNetwork} from "foundry-deployment-kit/utils/DefaultNetwork.sol";
+import { console2 } from "forge-std/console2.sol";
+import { StdStyle } from "forge-std/StdStyle.sol";
+import { DefaultNetwork } from "@fdk/utils/DefaultNetwork.sol";
 
-import {RoninBridgeManager} from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
-import {IRoninGatewayV3} from "@ronin/contracts/interfaces/IRoninGatewayV3.sol";
-import {MinimumWithdrawal} from "@ronin/contracts/extensions/MinimumWithdrawal.sol";
-import {Token} from "@ronin/contracts/libraries/Token.sol";
-import {Ballot} from "@ronin/contracts/libraries/Ballot.sol";
-import {GlobalProposal} from "@ronin/contracts/libraries/GlobalProposal.sol";
-import {Proposal} from "@ronin/contracts/libraries/Proposal.sol";
+import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
+import { IRoninGatewayV3 } from "@ronin/contracts/interfaces/IRoninGatewayV3.sol";
+import { MinimumWithdrawal } from "@ronin/contracts/extensions/MinimumWithdrawal.sol";
+import { Token } from "@ronin/contracts/libraries/Token.sol";
+import { Ballot } from "@ronin/contracts/libraries/Ballot.sol";
+import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
+import { Proposal } from "@ronin/contracts/libraries/Proposal.sol";
 
-import {Contract} from "../utils/Contract.sol";
-import {BridgeMigration} from "../BridgeMigration.sol";
-import {Network} from "../utils/Network.sol";
-import {Contract} from "../utils/Contract.sol";
-import {IGeneralConfigExtended} from "../IGeneralConfigExtended.sol";
-
-import "forge-std/console2.sol";
+import { Contract } from "../utils/Contract.sol";
+import { Migration } from "../Migration.s.sol";
+import { TNetwork, Network } from "../utils/Network.sol";
+import { LibProposal } from "script/shared/libraries/LibProposal.sol";
+import { LibCompanionNetwork } from "script/shared/libraries/LibCompanionNetwork.sol";
+import { Contract } from "../utils/Contract.sol";
 
 import "./maptoken-banana-configs.s.sol";
 import "./maptoken-genkai-configs.s.sol";
@@ -28,12 +26,15 @@ import "./maptoken-vx-configs.s.sol";
 import "./changeGV-stablenode-config.s.sol";
 
 contract Migration__20240206_MapTokenBananaRoninChain is
-  BridgeMigration,
+  Migration,
   Migration__MapToken_Banana_Config,
   Migration__MapToken_Vx_Config,
   Migration__MapToken_Genkai_Config,
   Migration__ChangeGV_StableNode_Config
 {
+  using LibProposal for *;
+  using LibCompanionNetwork for *;
+
   RoninBridgeManager internal _roninBridgeManager;
   address internal _roninGatewayV3;
 
@@ -45,10 +46,10 @@ contract Migration__20240206_MapTokenBananaRoninChain is
   address aggMainchainToken = 0xFB0489e9753B045DdB35e39c6B0Cc02EC6b99AC5;
   uint256 aggMinThreshold = 1000 ether;
 
-  function setUp() public override {
+  function setUp() public virtual override {
     super.setUp();
-    _roninBridgeManager = RoninBridgeManager(_config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
-    _roninGatewayV3 = _config.getAddressFromCurrentNetwork(Contract.RoninGatewayV3.key());
+    _roninBridgeManager = RoninBridgeManager(config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
+    _roninGatewayV3 = config.getAddressFromCurrentNetwork(Contract.RoninGatewayV3.key());
   }
 
   function _cheatWeightOperator(address gov) internal {
@@ -74,19 +75,20 @@ contract Migration__20240206_MapTokenBananaRoninChain is
 
     // ============= MAP NEW BANANA, VX, GENKAI TOKEN  ===========
 
+    uint256 companionChainId = network().companionChainId();
     roninTokens[0] = _bananaRoninToken;
     mainchainTokens[0] = _bananaMainchainToken;
-    chainIds[0] = _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).chainId();
+    chainIds[0] = companionChainId;
     standards[0] = Token.Standard.ERC20;
 
     roninTokens[1] = _VxRoninToken;
     mainchainTokens[1] = _VxMainchainToken;
-    chainIds[1] = _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).chainId();
+    chainIds[1] = companionChainId;
     standards[1] = Token.Standard.ERC721;
 
     roninTokens[2] = _genkaiRoninToken;
     mainchainTokens[2] = _genkaiMainchainToken;
-    chainIds[2] = _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).chainId();
+    chainIds[2] = companionChainId;
     standards[2] = Token.Standard.ERC721;
 
     // function mapTokens(
@@ -95,8 +97,7 @@ contract Migration__20240206_MapTokenBananaRoninChain is
     //   uint256[] calldata chainIds,
     //   Token.Standard[] calldata _standards
     // )
-    bytes memory innerData =
-      abi.encodeCall(IRoninGatewayV3.mapTokens, (roninTokens, mainchainTokens, chainIds, standards));
+    bytes memory innerData = abi.encodeCall(IRoninGatewayV3.mapTokens, (roninTokens, mainchainTokens, chainIds, standards));
     bytes memory proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
 
     targets[0] = _roninGatewayV3;
@@ -148,7 +149,13 @@ contract Migration__20240206_MapTokenBananaRoninChain is
 
     // ================ VERIFY AND EXECUTE PROPOSAL ===============
 
-    _verifyRoninProposalGasAmount(targets, values, calldatas, gasAmounts);
+    TNetwork currentNetwork = network();
+    TNetwork companionNetwork = config.getCompanionNetwork(currentNetwork);
+    address companionManager = config.getAddress(companionNetwork, Contract.MainchainBridgeManager.key());
+    config.createFork(companionNetwork);
+    config.switchTo(companionNetwork);
+    LibProposal.verifyProposalGasAmount(companionManager, targets, values, calldatas, gasAmounts);
+    config.switchTo(currentNetwork);
 
     console2.log("Nonce:", vm.getNonce(_governor));
     vm.broadcast(_governor);

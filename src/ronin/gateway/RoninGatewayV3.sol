@@ -15,15 +15,7 @@ import "../../interfaces/validator/IRoninValidatorSet.sol";
 import "../../libraries/IsolatedGovernance.sol";
 import "../../interfaces/bridge/IBridgeManager.sol";
 
-contract RoninGatewayV3 is
-  GatewayV3,
-  Initializable,
-  MinimumWithdrawal,
-  AccessControlEnumerable,
-  VoteStatusConsumer,
-  IRoninGatewayV3,
-  HasContracts
-{
+contract RoninGatewayV3 is GatewayV3, Initializable, MinimumWithdrawal, AccessControlEnumerable, VoteStatusConsumer, IRoninGatewayV3, HasContracts {
   using Token for Token.Info;
   using Transfer for Transfer.Request;
   using Transfer for Transfer.Receipt;
@@ -123,10 +115,7 @@ contract RoninGatewayV3 is
   /**
    * @inheritdoc IRoninGatewayV3
    */
-  function getWithdrawalSignatures(
-    uint256 withdrawalId,
-    address[] calldata operators
-  ) external view returns (bytes[] memory _signatures) {
+  function getWithdrawalSignatures(uint256 withdrawalId, address[] calldata operators) external view returns (bytes[] memory _signatures) {
     _signatures = new bytes[](operators.length);
     for (uint256 _i = 0; _i < operators.length;) {
       _signatures[_i] = _withdrawalSig[withdrawalId][operators[_i]];
@@ -147,11 +136,7 @@ contract RoninGatewayV3 is
   /**
    * @inheritdoc IRoninGatewayV3
    */
-  function tryBulkAcknowledgeMainchainWithdrew(uint256[] calldata _withdrawalIds)
-    external
-    onlyBridgeOperator
-    returns (bool[] memory _executedReceipts)
-  {
+  function tryBulkAcknowledgeMainchainWithdrew(uint256[] calldata _withdrawalIds) external onlyBridgeOperator returns (bool[] memory _executedReceipts) {
     address governor = msg.sender;
     uint256 minVoteWeight = minimumVoteWeight();
 
@@ -183,12 +168,7 @@ contract RoninGatewayV3 is
   /**
    * @inheritdoc IRoninGatewayV3
    */
-  function tryBulkDepositFor(Transfer.Receipt[] calldata receipts)
-    external
-    whenNotPaused
-    onlyBridgeOperator
-    returns (bool[] memory _executedReceipts)
-  {
+  function tryBulkDepositFor(Transfer.Receipt[] calldata receipts) external whenNotPaused onlyBridgeOperator returns (bool[] memory _executedReceipts) {
     uint length = receipts.length;
     _executedReceipts = new bool[](length);
     uint256 minVoteWeight = minimumVoteWeight();
@@ -240,10 +220,7 @@ contract RoninGatewayV3 is
   /**
    * @inheritdoc IRoninGatewayV3
    */
-  function bulkSubmitWithdrawalSignatures(
-    uint256[] calldata withdrawals,
-    bytes[] calldata signatures
-  ) external whenNotPaused onlyBridgeOperator {
+  function bulkSubmitWithdrawalSignatures(uint256[] calldata withdrawals, bytes[] calldata signatures) external whenNotPaused onlyBridgeOperator {
     address operator = msg.sender;
 
     uint length = withdrawals.length;
@@ -410,8 +387,7 @@ contract RoninGatewayV3 is
     address _mainchainTokenAddr
   ) internal returns (uint256 _withdrawalId) {
     _withdrawalId = withdrawalCount++;
-    Transfer.Receipt memory _receipt =
-      _request.into_withdrawal_receipt(_requester, _withdrawalId, _mainchainTokenAddr, _chainId);
+    Transfer.Receipt memory _receipt = _request.into_withdrawal_receipt(_requester, _withdrawalId, _mainchainTokenAddr, _chainId);
     withdrawal[_withdrawalId] = _receipt;
     emit WithdrawalRequested(_receipt.hash(), _receipt);
   }
@@ -452,12 +428,8 @@ contract RoninGatewayV3 is
   /**
    * @dev Returns the vote weight for a specified hash.
    */
-  function _getVoteWeight(
-    IsolatedGovernance.Vote storage _v,
-    bytes32 _hash
-  ) internal view returns (uint256 _totalWeight) {
-    (, address[] memory bridgeOperators, uint96[] memory weights) =
-      IBridgeManager(getContract(ContractType.BRIDGE_MANAGER)).getFullBridgeOperatorInfos();
+  function _getVoteWeight(IsolatedGovernance.Vote storage _v, bytes32 _hash) internal view returns (uint256 _totalWeight) {
+    (, address[] memory bridgeOperators, uint96[] memory weights) = IBridgeManager(getContract(ContractType.BRIDGE_MANAGER)).getFullBridgeOperatorInfos();
     uint256 length = bridgeOperators.length;
     unchecked {
       for (uint _i; _i < length; ++_i) {
@@ -468,10 +440,7 @@ contract RoninGatewayV3 is
     }
   }
 
-  function setTrustedThreshold(
-    uint256 _trustedNumerator,
-    uint256 _trustedDenominator
-  ) external virtual onlyAdmin returns (uint256, uint256) {
+  function setTrustedThreshold(uint256 _trustedNumerator, uint256 _trustedDenominator) external virtual onlyAdmin returns (uint256, uint256) {
     return _setTrustedThreshold(_trustedNumerator, _trustedDenominator);
   }
 
@@ -499,9 +468,7 @@ contract RoninGatewayV3 is
     _trustedNum = _trustedNumerator;
     _trustedDenom = _trustedDenominator;
     unchecked {
-      emit TrustedThresholdUpdated(
-        nonce++, _trustedNumerator, _trustedDenominator, _previousTrustedNum, _previousTrustedDenom
-      );
+      emit TrustedThresholdUpdated(nonce++, _trustedNumerator, _trustedDenominator, _previousTrustedNum, _previousTrustedDenom);
     }
   }
 

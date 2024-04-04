@@ -110,12 +110,7 @@ interface ICandidateManager {
    * Emits the event `CandidateGranted`.
    *
    */
-  function execApplyValidatorCandidate(
-    address _admin,
-    address _consensusAddr,
-    address payable _treasuryAddr,
-    uint256 _commissionRate
-  ) external;
+  function execApplyValidatorCandidate(address _admin, address _consensusAddr, address payable _treasuryAddr, uint256 _commissionRate) external;
 
   /**
    * @dev Requests to revoke a validator candidate in next `_secsLeft` seconds.

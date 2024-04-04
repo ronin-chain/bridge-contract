@@ -15,8 +15,5 @@ interface IBridgeAdminProposal {
   /**
    * @dev Returns the synced bridge operator set info.
    */
-  function lastSyncedBridgeOperatorSetInfo()
-    external
-    view
-    returns (BridgeOperatorsBallot.BridgeOperatorSet memory bridgeOperatorSetInfo);
+  function lastSyncedBridgeOperatorSetInfo() external view returns (BridgeOperatorsBallot.BridgeOperatorSet memory bridgeOperatorSetInfo);
 }
