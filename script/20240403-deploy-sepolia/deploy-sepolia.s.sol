@@ -42,6 +42,7 @@ contract DeploySepolia is BridgeMigration, DeploySepolia__ChangeGV_Config {
   MockWrappedToken _mainchainWeth;
   MockERC20 _mainchainAxs;
   MockUSDC _mainchainUsdc;
+  MockERC20 _mainchainSlp;
   MockERC721 _mainchainMockERC721;
 
   MainchainBridgeAdminUtils _mainchainProposalUtils;
@@ -59,9 +60,14 @@ contract DeploySepolia is BridgeMigration, DeploySepolia__ChangeGV_Config {
   }
 
   function run() public onlyOn(Network.Sepolia.key()) {
+    vm.startBroadcast(0x55ba00EeB8D8d33Df1b1985459D310b9CAfB19f2);
+    payable(sender()).transfer(5 ether);
+    vm.stopBroadcast();
+
     _deployContractsOnMainchain();
     _mainchainGatewayV3Initialize();
     _correctGVs();
+    _grantFundForGateway();
   }
 
   function _deployContractsOnMainchain() internal {
@@ -72,6 +78,7 @@ contract DeploySepolia is BridgeMigration, DeploySepolia__ChangeGV_Config {
     _mainchainWeth = new WETHDeploy().run();
     _mainchainAxs = new AXSDeploy().run();
     _mainchainUsdc = new USDCDeploy().run();
+    _mainchainSlp = new SLPDeploy().run();
     _mainchainMockERC721 = new MockERC721Deploy().run();
 
     _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
@@ -81,23 +88,15 @@ contract DeploySepolia is BridgeMigration, DeploySepolia__ChangeGV_Config {
   }
 
   function _mainchainGatewayV3Initialize() internal {
-    (address[] memory mainchainTokens, address[] memory roninTokens) = _getMainchainAndRoninTokens();
-    uint256 tokenNum = mainchainTokens.length;
-    uint256[] memory highTierThreshold = new uint256[](tokenNum);
-    uint256[] memory lockedThreshold = new uint256[](tokenNum);
-    uint256[] memory unlockFeePercentages = new uint256[](tokenNum);
-    uint256[] memory dailyWithdrawalLimits = new uint256[](tokenNum);
-    Token.Standard[] memory standards = new Token.Standard[](tokenNum);
-
-    for (uint256 i; i < tokenNum; i++) {
-      bool isERC721 = i == mainchainTokens.length - 1; // last item is ERC721
-
-      highTierThreshold[i] = 10;
-      lockedThreshold[i] = 20;
-      unlockFeePercentages[i] = 100_000;
-      dailyWithdrawalLimits[i] = 12;
-      standards[i] = isERC721 ? Token.Standard.ERC721 : Token.Standard.ERC20;
-    }
+    (
+      address[] memory mainchainTokens,
+      address[] memory roninTokens,
+      uint256[] memory highTierThreshold,
+      uint256[] memory lockedThreshold,
+      uint256[] memory unlockFeePercentages,
+      uint256[] memory dailyWithdrawalLimits,
+      Token.Standard[] memory standards
+    ) = _getMainchainAndRoninTokens();
 
     // Mainchain Gateway V3
     _param.mainchainGatewayV3.wrappedToken = address(_mainchainWeth);
@@ -173,20 +172,73 @@ contract DeploySepolia is BridgeMigration, DeploySepolia__ChangeGV_Config {
   function _getMainchainAndRoninTokens()
     internal
     view
-    returns (address[] memory mainchainTokens, address[] memory roninTokens)
+    returns (
+      address[] memory mainchainTokens,
+      address[] memory roninTokens,
+      uint256[] memory highTierThreshold,
+      uint256[] memory lockedThreshold,
+      uint256[] memory unlockFeePercentages,
+      uint256[] memory dailyWithdrawalLimits,
+      Token.Standard[] memory standards
+    )
   {
     uint256 tokenNum = 5;
     mainchainTokens = new address[](tokenNum);
     roninTokens = new address[](tokenNum);
+    highTierThreshold = new uint256[](tokenNum);
+    lockedThreshold = new uint256[](tokenNum);
+    unlockFeePercentages = new uint256[](tokenNum);
+    dailyWithdrawalLimits = new uint256[](tokenNum);
+    standards = new Token.Standard[](tokenNum);
 
     mainchainTokens[0] = address(_mainchainWeth);
-    mainchainTokens[1] = address(_mainchainAxs);
-    mainchainTokens[2] = address(_mainchainUsdc);
-    mainchainTokens[3] = address(_mainchainMockERC721);
+    roninTokens[0] = address(0x29C6F8349A028E1bdfC68BFa08BDee7bC5D47E16);
+    highTierThreshold[0] = 0.0007 * 1e18;
+    lockedThreshold[0] = 0.0001 * 1e18;
+    dailyWithdrawalLimits[0] = 0.0003 * 1e18;
+    unlockFeePercentages[0] = 100_000;
+    standards[0] = Token.Standard.ERC20;
 
-    roninTokens[0] = address(0x00);
-    roninTokens[1] = address(0x00);
+    mainchainTokens[1] = address(_mainchainAxs);
+    roninTokens[1] = address(0x3C4e17b9056272Ce1b49F6900d8cFD6171a1869d);
+    highTierThreshold[1] = 90 * 1e18;
+    lockedThreshold[1] = 40 * 1e18;
+    dailyWithdrawalLimits[1] = 100 * 1e18;
+    unlockFeePercentages[1] = 100_000;
+    standards[1] = Token.Standard.ERC20;
+
+    mainchainTokens[2] = address(_mainchainUsdc);
     roninTokens[2] = address(0x067FBFf8990c58Ab90BaE3c97241C5d736053F77);
-    roninTokens[3] = address(0x00);
+    highTierThreshold[2] = 900 * 1e6;
+    lockedThreshold[2] = 400 * 1e6;
+    dailyWithdrawalLimits[2] = 1000 * 1e6;
+    unlockFeePercentages[2] = 100_000;
+    standards[2] = Token.Standard.ERC20;
+
+    mainchainTokens[3] = address(_mainchainSlp);
+    roninTokens[3] = address(0x82f5483623D636BC3deBA8Ae67E1751b6CF2Bad2);
+    highTierThreshold[3] = 90 * 1e18;
+    lockedThreshold[3] = 40 * 1e18;
+    dailyWithdrawalLimits[3] = 100 * 1e18;
+    unlockFeePercentages[3] = 100_000;
+    standards[3] = Token.Standard.ERC20;
+
+    mainchainTokens[4] = address(_mainchainMockERC721);
+    roninTokens[4] = address(0x00);
+    standards[4] = Token.Standard.ERC721;
+  }
+
+  function _grantFundForGateway() internal {
+    vm.broadcast(sender());
+    _mainchainGatewayV3.receiveEther{value: 0.1 ether}();
+
+    vm.broadcast(sender());
+    _mainchainAxs.mint(address(_mainchainGatewayV3), 1_000_000 * 1e18);
+
+    vm.broadcast(sender());
+    _mainchainUsdc.mint(address(_mainchainGatewayV3), 500_000 * 1e6);
+
+    vm.broadcast(sender());
+    _mainchainSlp.mint(address(_mainchainGatewayV3), 50_000_000 * 1e6);
   }
 }

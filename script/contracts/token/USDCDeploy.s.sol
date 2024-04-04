@@ -17,7 +17,7 @@ contract USDCDeploy is Migration {
     return config.sharedArguments().usdc;
   }
 
-  function _getContract() internal returns (Contract) {
+  function _getContract() internal pure returns (Contract) {
     return Contract.USDC;
   }
 
