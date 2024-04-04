@@ -2,7 +2,6 @@
 pragma solidity ^0.8.23;
 
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { IBridgeManagerCallback, BridgeManagerCallbackRegister } from "./BridgeManagerCallbackRegister.sol";
 import { IHasContracts, HasContracts } from "../../extensions/collections/HasContracts.sol";
 
@@ -16,7 +15,6 @@ import "./BridgeManagerQuorum.sol";
 
 abstract contract BridgeManager is IBridgeManager, Initializable, HasContracts, BridgeManagerQuorum, BridgeManagerCallbackRegister {
   using AddressArrayUtils for address[];
-  using EnumerableSet for EnumerableSet.AddressSet;
 
   struct BridgeManagerStorage {
     /// @notice List of the governors.
@@ -361,23 +359,9 @@ abstract contract BridgeManager is IBridgeManager, Initializable, HasContracts, 
     emit BridgeOperatorsRemoved(removeds, removingOperators);
   }
 
-  function _findOperatorInArray(address addr) internal view returns (bool found, uint idx) {
-    BridgeManagerStorage storage $ = _getBridgeManagerStorage();
-
-    for (uint i; i < $._operators.length; i++) {
-      if (addr == $._operators[i]) {
-        return (true, i);
-      }
-    }
-
-    return (false, type(uint256).max);
-  }
-
-  function _findGovernorInArray(address addr) internal view returns (bool found, uint idx) {
-    BridgeManagerStorage storage $ = _getBridgeManagerStorage();
-
-    for (uint i; i < $._governors.length; i++) {
-      if (addr == $._governors[i]) {
+  function _findInArray(address[] storage $_array, address addr) internal view returns (bool found, uint idx) {
+    for (uint i; i < $_array.length; i++) {
+      if (addr == $_array[i]) {
         return (true, i);
       }
     }
@@ -391,8 +375,7 @@ abstract contract BridgeManager is IBridgeManager, Initializable, HasContracts, 
    * @inheritdoc IBridgeManager
    */
   function totalBridgeOperator() external view returns (uint256) {
-    BridgeManagerStorage storage $ = _getBridgeManagerStorage();
-    return $._operators.length;
+    return _getBridgeManagerStorage()._operators.length;
   }
 
   /**
@@ -407,23 +390,21 @@ abstract contract BridgeManager is IBridgeManager, Initializable, HasContracts, 
    * @inheritdoc IBridgeManager
    */
   function getBridgeOperators() external view returns (address[] memory) {
-    BridgeManagerStorage storage $ = _getBridgeManagerStorage();
-    return $._operators;
+    return _getBridgeManagerStorage()._operators;
   }
 
   /**
    * @inheritdoc IBridgeManager
    */
   function getGovernors() external view returns (address[] memory) {
-    BridgeManagerStorage storage $ = _getBridgeManagerStorage();
-    return $._governors;
+    return _getBridgeManagerStorage()._governors;
   }
 
   /**
    * @inheritdoc IBridgeManager
    */
   function getOperatorOf(address governor) external view returns (address operator) {
-    (bool found, uint idx) = _findGovernorInArray(governor);
+    (bool found, uint idx) = _findInArray(_getBridgeManagerStorage()._governors, governor);
     if (!found) revert ErrGovernorNotFound(governor);
 
     return _getBridgeManagerStorage()._operators[idx];
@@ -437,7 +418,7 @@ abstract contract BridgeManager is IBridgeManager, Initializable, HasContracts, 
   }
 
   function _getGovernorOf(address operator) internal view returns (address governor, uint idx) {
-    (bool found, uint foundId) = _findOperatorInArray(operator);
+    (bool found, uint foundId) = _findInArray(_getBridgeManagerStorage()._operators, operator);
     if (!found) revert ErrOperatorNotFound(operator);
 
     return (_getBridgeManagerStorage()._governors[foundId], foundId);
