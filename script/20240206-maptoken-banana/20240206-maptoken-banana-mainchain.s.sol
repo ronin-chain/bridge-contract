@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {console2} from "forge-std/console2.sol";
-import {StdStyle} from "forge-std/StdStyle.sol";
-import {BaseMigration} from "foundry-deployment-kit/BaseMigration.s.sol";
-import {RoninBridgeManager} from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
-import {IMainchainGatewayV3} from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
-import {GlobalProposal} from "@ronin/contracts/libraries/GlobalProposal.sol";
-import {Token} from "@ronin/contracts/libraries/Token.sol";
-import {Contract} from "../utils/Contract.sol";
-import {BridgeMigration} from "../BridgeMigration.sol";
-import {Network} from "../utils/Network.sol";
-import {DefaultNetwork} from "foundry-deployment-kit/utils/DefaultNetwork.sol";
-import {Contract} from "../utils/Contract.sol";
-import {IGeneralConfigExtended} from "../IGeneralConfigExtended.sol";
+import { console2 } from "forge-std/console2.sol";
+import { StdStyle } from "forge-std/StdStyle.sol";
+import { BaseMigration } from "foundry-deployment-kit/BaseMigration.s.sol";
+import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
+import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
+import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
+import { Token } from "@ronin/contracts/libraries/Token.sol";
+import { Contract } from "../utils/Contract.sol";
+import { BridgeMigration } from "../BridgeMigration.sol";
+import { Network } from "../utils/Network.sol";
+import { DefaultNetwork } from "foundry-deployment-kit/utils/DefaultNetwork.sol";
+import { Contract } from "../utils/Contract.sol";
+import { IGeneralConfigExtended } from "../IGeneralConfigExtended.sol";
 
 import "./maptoken-banana-configs.s.sol";
 import "./maptoken-genkai-configs.s.sol";
@@ -146,7 +146,7 @@ contract Migration__20240206_MapTokenBananaMainchain is
 
     console2.log("Nonce:", vm.getNonce(_governor));
     vm.broadcast(_governor);
-    _roninBridgeManager.propose(chainId, expiredTime, address(0), false, targets, values, calldatas, gasAmounts);
+    _roninBridgeManager.propose(chainId, expiredTime, address(0), targets, values, calldatas, gasAmounts);
   }
 }
 

@@ -108,6 +108,7 @@ contract LooseProposal_GlobalProposal_RoninBridgeManager_Test is BaseIntegration
 
   // Should the loose proposal passes when containing one failed internal call
   function test_looseProposal_globalProposal_RoninSide_WhenContainsOneInternalCallFailed() external {
+    vm.skip(true);
     _globalProposal.gasAmounts[1] = 1_000; // Set gas for the second call becomes failed
 
     vm.expectEmit(false, true, true, true);

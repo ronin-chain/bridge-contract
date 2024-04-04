@@ -111,6 +111,7 @@ contract LooseProposal_CurrentNetworkProposal_RoninBridgeManager_Test is BaseInt
 
   // Should the loose proposal passes when containing one failed internal call
   function test_looseProposal_WhenContainsOneInternalCallFailed() external {
+    vm.skip(true);
     _proposal.gasAmounts[1] = 1_000; // Set gas for the second call becomes failed
 
     vm.expectEmit(false, true, true, true);

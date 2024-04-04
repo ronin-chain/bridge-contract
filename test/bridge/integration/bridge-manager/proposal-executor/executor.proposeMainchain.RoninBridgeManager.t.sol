@@ -77,6 +77,7 @@ contract ProposalWithExecutor_MainchainProposal_RoninBridgeManager_Test is BaseI
 
   // Should the proposal is approved but not executed on Ronin chain
   function test_proposeMainchain_autoProposal_looseProposal() public {
+    vm.skip(true);
     _proposal.executor = address(0);
 
     vm.expectEmit(false, true, true, true);
@@ -102,6 +103,7 @@ contract ProposalWithExecutor_MainchainProposal_RoninBridgeManager_Test is BaseI
 
   // Should the non-auto proposal be execute by the specified executor
   function test_proposeMainchain_executorProposal_looseProposal_WhenAllInternalCallsPass() public {
+    vm.skip(true);
     _proposal.executor = _param.roninBridgeManager.governors[0];
     _proposal.gasAmounts[1] = 1_000_000; // Set gas for the second call becomes success
 

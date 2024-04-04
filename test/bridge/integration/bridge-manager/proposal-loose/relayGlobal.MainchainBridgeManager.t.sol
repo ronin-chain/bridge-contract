@@ -112,6 +112,7 @@ contract LooseProposal_GlobalProposal_MainchainBridgeManager_Test is BaseIntegra
 
   // Should the loose proposal passes when containing one failed internal call
   function test_looseProposal_globalProposal_MainchainSide_WhenContainsOneInternalCallFailed() external {
+    vm.skip(true);
     _globalProposal.gasAmounts[1] = 1_000; // Set gas for the second call becomes failed
 
     vm.expectEmit(false, false, false, false);

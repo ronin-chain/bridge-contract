@@ -59,16 +59,11 @@ contract Migration__MapTokenRoninchain is BridgeMigration {
     //   Token.Standard[] calldata _standards
     // )
 
-    bytes memory innerData = abi.encodeCall(IRoninGatewayV3.mapTokens, (
-      roninTokens,
-      mainchainTokens,
-      chainIds,
-      standards
-    ));
+    bytes memory innerData = abi.encodeCall(IRoninGatewayV3.mapTokens, (roninTokens, mainchainTokens, chainIds, standards));
     return abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
   }
 
-  function _removeAxieChatGovernorAddress() pure internal returns (bytes memory) {
+  function _removeAxieChatGovernorAddress() internal pure returns (bytes memory) {
     address[] memory bridgeOperator = new address[](1);
     bridgeOperator[0] = _axieChatBridgeOperator;
 
@@ -76,12 +71,10 @@ contract Migration__MapTokenRoninchain is BridgeMigration {
     //   address[] calldata bridgeOperators
     // )
 
-    return abi.encodeCall(IBridgeManager.removeBridgeOperators, (
-      bridgeOperator
-    ));
+    return abi.encodeCall(IBridgeManager.removeBridgeOperators, (bridgeOperator));
   }
 
-  function _addAxieChatGovernorAddress() pure internal returns (bytes memory) {
+  function _addAxieChatGovernorAddress() internal pure returns (bytes memory) {
     uint96[] memory voteWeight = new uint96[](1);
     address[] memory governor = new address[](1);
     address[] memory bridgeOperator = new address[](1);
@@ -96,11 +89,7 @@ contract Migration__MapTokenRoninchain is BridgeMigration {
     //   address[] calldata bridgeOperators
     // )
 
-    return abi.encodeCall(IBridgeManager.addBridgeOperators, (
-      voteWeight,
-      governor,
-      bridgeOperator
-    ));
+    return abi.encodeCall(IBridgeManager.addBridgeOperators, (voteWeight, governor, bridgeOperator));
   }
 
   function run() public {
@@ -128,15 +117,6 @@ contract Migration__MapTokenRoninchain is BridgeMigration {
     _verifyRoninProposalGasAmount(targets, values, calldatas, gasAmounts);
 
     vm.broadcast(sender());
-    _roninBridgeManager.propose(
-      block.chainid,
-      expiredTime,
-      address(0),
-      false,
-      targets,
-      values,
-      calldatas,
-      gasAmounts
-    );
+    _roninBridgeManager.propose(block.chainid, expiredTime, address(0), targets, values, calldatas, gasAmounts);
   }
 }
