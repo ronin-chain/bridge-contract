@@ -53,8 +53,8 @@ contract Migration is BaseMigrationV2, Utils {
       param.test.governorPKs = governorPKs;
 
       // Mainchain Gateway Pause Enforcer
-      param.mainchainPauseEnforcer.admin = makeAddr("pause-enforcer-admin");
-      param.mainchainPauseEnforcer.sentries = wrapAddress(makeAddr("pause-enforcer-sentry"));
+      param.mainchainPauseEnforcer.admin = 0x968D0Cd7343f711216817E617d3f92a23dC91c07;
+      param.mainchainPauseEnforcer.sentries = wrapAddress(0x8Ed0c5B427688f2Bd945509199CAa4741C81aFFe); // Gnosis Sepolia
 
       // Mainchain Gateway V3
       param.mainchainGatewayV3.roninChainId = 2021;
