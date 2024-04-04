@@ -58,6 +58,6 @@ contract Migration__20231215_MapTokenRoninchain is BridgeMigration {
     _verifyRoninProposalGasAmount(targets, values, calldatas, gasAmounts);
 
     vm.broadcast(sender());
-    _roninBridgeManager.propose(block.chainid, expiredTime, targets, values, calldatas, gasAmounts);
+    _roninBridgeManager.propose(block.chainid, expiredTime, address(0), false, targets, values, calldatas, gasAmounts);
   }
 }

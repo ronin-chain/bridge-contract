@@ -28,6 +28,8 @@ contract ProposalUtils is Utils, Test {
 
   function createProposal(
     uint256 expiryTimestamp,
+    address executor,
+    bool loose,
     address target,
     uint256 value,
     bytes memory calldata_,
@@ -37,6 +39,8 @@ contract ProposalUtils is Utils, Test {
     proposal = Proposal.ProposalDetail({
       nonce: nonce,
       chainId: block.chainid,
+      executor: executor,
+      loose: loose,
       expiryTimestamp: expiryTimestamp,
       targets: wrapAddress(target),
       values: wrapUint(value),
@@ -47,6 +51,8 @@ contract ProposalUtils is Utils, Test {
 
   function createGlobalProposal(
     uint256 expiryTimestamp,
+    address executor,
+    bool loose,
     GlobalProposal.TargetOption targetOption,
     uint256 value,
     bytes memory calldata_,
@@ -59,6 +65,8 @@ contract ProposalUtils is Utils, Test {
     proposal = GlobalProposal.GlobalProposalDetail({
       nonce: nonce,
       expiryTimestamp: expiryTimestamp,
+      executor: executor,
+      loose: loose,
       targetOptions: targetOptions,
       values: wrapUint(value),
       calldatas: wrapBytes(calldata_),
@@ -75,19 +83,14 @@ contract ProposalUtils is Utils, Test {
     return generateSignaturesFor(proposalHash, signerPKs, support);
   }
 
-  function generateSignatures(Proposal.ProposalDetail memory proposal, uint256[] memory signerPKs)
-    public
-    view
-    returns (SignatureConsumer.Signature[] memory sigs)
-  {
+  function generateSignatures(
+    Proposal.ProposalDetail memory proposal,
+    uint256[] memory signerPKs
+  ) public view returns (SignatureConsumer.Signature[] memory sigs) {
     return generateSignatures(proposal, signerPKs, Ballot.VoteType.For);
   }
 
-  function generateSignatures(Proposal.ProposalDetail memory proposal)
-    public
-    view
-    returns (SignatureConsumer.Signature[] memory sigs)
-  {
+  function generateSignatures(Proposal.ProposalDetail memory proposal) public view returns (SignatureConsumer.Signature[] memory sigs) {
     return generateSignatures(proposal, _signerPKs, Ballot.VoteType.For);
   }
 
@@ -100,19 +103,14 @@ contract ProposalUtils is Utils, Test {
     return generateSignaturesFor(proposalHash, signerPKs, support);
   }
 
-  function generateSignaturesGlobal(GlobalProposal.GlobalProposalDetail memory proposal, uint256[] memory signerPKs)
-    public
-    view
-    returns (SignatureConsumer.Signature[] memory sigs)
-  {
+  function generateSignaturesGlobal(
+    GlobalProposal.GlobalProposalDetail memory proposal,
+    uint256[] memory signerPKs
+  ) public view returns (SignatureConsumer.Signature[] memory sigs) {
     return generateSignaturesGlobal(proposal, signerPKs, Ballot.VoteType.For);
   }
 
-  function generateSignaturesGlobal(GlobalProposal.GlobalProposalDetail memory proposal)
-    public
-    view
-    returns (SignatureConsumer.Signature[] memory sigs)
-  {
+  function generateSignaturesGlobal(GlobalProposal.GlobalProposalDetail memory proposal) public view returns (SignatureConsumer.Signature[] memory sigs) {
     return generateSignaturesGlobal(proposal, _signerPKs, Ballot.VoteType.For);
   }
 
@@ -120,18 +118,18 @@ contract ProposalUtils is Utils, Test {
     return keccak256(
       abi.encode(
         keccak256("EIP712Domain(string name,string version,bytes32 salt)"),
-        keccak256("BridgeAdmin"), // name hash
-        keccak256("2"), // version hash
-        keccak256(abi.encode("BRIDGE_ADMIN", block.chainid)) // salt
+        keccak256("BridgeManager"), // name hash
+        keccak256("3"), // version hash
+        keccak256(abi.encode("BRIDGE_MANAGER", block.chainid)) // salt
       )
     );
   }
 
-  function generateSignaturesFor(bytes32 proposalHash, uint256[] memory signerPKs, Ballot.VoteType support)
-    public
-    view
-    returns (SignatureConsumer.Signature[] memory sigs)
-  {
+  function generateSignaturesFor(
+    bytes32 proposalHash,
+    uint256[] memory signerPKs,
+    Ballot.VoteType support
+  ) public view returns (SignatureConsumer.Signature[] memory sigs) {
     sigs = new SignatureConsumer.Signature[](signerPKs.length);
 
     for (uint256 i; i < signerPKs.length; i++) {

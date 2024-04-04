@@ -133,6 +133,8 @@ contract Migration__20240131_MapTokenPixelMainchain is BridgeMigration, Migratio
     _roninBridgeManager.propose(
       chainId,
       expiredTime,
+      address(0),
+      false,
       targets,
       values,
       calldatas,

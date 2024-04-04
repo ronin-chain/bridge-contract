@@ -117,7 +117,7 @@ contract Migration__20240206_MapTokenBananaRoninChain is
 
     roninTokensToSetMinThreshold[1] = pixelRoninToken;
     minThresholds[1] = pixelMinThreshold;
-    
+
     roninTokensToSetMinThreshold[2] = pixelMainchainToken;
     minThresholds[2] = 0;
 
@@ -152,7 +152,7 @@ contract Migration__20240206_MapTokenBananaRoninChain is
 
     console2.log("Nonce:", vm.getNonce(_governor));
     vm.broadcast(_governor);
-    _roninBridgeManager.propose(block.chainid, expiredTime, targets, values, calldatas, gasAmounts);
+    _roninBridgeManager.propose(block.chainid, expiredTime, address(0), false, targets, values, calldatas, gasAmounts);
 
     // ============= LOCAL SIMULATION ==================
     _cheatWeightOperator(_governor);
