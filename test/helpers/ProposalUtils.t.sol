@@ -26,7 +26,7 @@ contract ProposalUtils is Utils, Test {
         keccak256("2"), // version hash
         keccak256(abi.encode("BRIDGE_ADMIN", roninChainId)) // salt
       )
-    );;
+    );
 
     for (uint256 i; i < signerPKs.length; i++) {
       _signerPKs.push(signerPKs[i]);

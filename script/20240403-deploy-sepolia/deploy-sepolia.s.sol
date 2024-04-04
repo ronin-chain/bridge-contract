@@ -7,6 +7,7 @@ import { LibSharedAddress } from "foundry-deployment-kit/libraries/LibSharedAddr
 import "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
 import "@ronin/contracts/ronin/gateway/PauseEnforcer.sol";
 import "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
+import { MockUSDC } from "@ronin/contracts/mocks/token/MockUSDC.sol";
 import { MockERC20 } from "@ronin/contracts/mocks/token/MockERC20.sol";
 import { MockERC721 } from "@ronin/contracts/mocks/token/MockERC721.sol";
 import { MockWrappedToken } from "@ronin/contracts/mocks/token/MockWrappedToken.sol";
@@ -40,7 +41,7 @@ contract DeploySepolia is BridgeMigration, DeploySepolia__ChangeGV_Config {
 
   MockWrappedToken _mainchainWeth;
   MockERC20 _mainchainAxs;
-  MockERC20 _mainchainUsdc;
+  MockUSDC _mainchainUsdc;
   MockERC721 _mainchainMockERC721;
 
   MainchainBridgeAdminUtils _mainchainProposalUtils;
