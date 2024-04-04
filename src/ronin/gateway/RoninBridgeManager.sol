@@ -19,6 +19,7 @@ import "../../utils/CommonErrors.sol";
 
 contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernanceProposal {
   using Proposal for Proposal.ProposalDetail;
+  using GlobalProposal for GlobalProposal.GlobalProposalDetail;
 
   /**
    * CURRENT NETWORK
@@ -197,7 +198,10 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
    * @dev See {GlobalCoreGovernance-_executeWithCaller}.
    */
   function executeGlobal(GlobalProposal.GlobalProposalDetail calldata globalProposal) external {
-    _executeGlobalWithCaller(globalProposal, msg.sender);
+    _executeWithCaller({
+      proposal: globalProposal.intoProposalDetail(_resolveTargets({ targetOptions: globalProposal.targetOptions, strict: true })),
+      caller: msg.sender
+    });
   }
 
   /**
