@@ -10,7 +10,7 @@ abstract contract GlobalGovernanceProposal is GlobalCoreGovernance, CommonGovern
   using GlobalProposal for GlobalProposal.GlobalProposalDetail;
 
   /**
-   * @dev Proposes and votes by signature.
+   * @dev Proposes and casts votes for a global proposal by signatures.
    */
   function _proposeGlobalProposalStructAndCastVotes(
     GlobalProposal.GlobalProposalDetail calldata globalProposal,
@@ -24,7 +24,7 @@ abstract contract GlobalGovernanceProposal is GlobalCoreGovernance, CommonGovern
   }
 
   /**
-   * @dev Proposes a global proposal struct and casts votes by signature.
+   * @dev Casts votes for a global proposal by signatures.
    */
   function _castGlobalProposalBySignatures(
     GlobalProposal.GlobalProposalDetail calldata globalProposal,

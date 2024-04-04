@@ -53,7 +53,6 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
     uint256 chainId,
     uint256 expiryTimestamp,
     address executor,
-    bool loose,
     address[] calldata targets,
     uint256[] calldata values,
     bytes[] calldata calldatas,
@@ -65,7 +64,6 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
         chainId: block.chainid,
         expiryTimestamp: expiryTimestamp,
         executor: executor,
-        loose: loose,
         targets: targets,
         values: values,
         calldatas: calldatas,
@@ -102,7 +100,6 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
   function proposeProposalForCurrentNetwork(
     uint256 expiryTimestamp,
     address executor,
-    bool loose,
     address[] calldata targets,
     uint256[] calldata values,
     bytes[] calldata calldatas,
@@ -114,7 +111,6 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
       chainId: block.chainid,
       expiryTimestamp: expiryTimestamp,
       executor: executor,
-      loose: loose,
       targets: targets,
       values: values,
       calldatas: calldatas,
@@ -156,7 +152,6 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
   function proposeGlobal(
     uint256 expiryTimestamp,
     address executor,
-    bool loose,
     GlobalProposal.TargetOption[] calldata targetOptions,
     uint256[] calldata values,
     bytes[] calldata calldatas,
@@ -165,7 +160,6 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
     _proposeGlobal({
       expiryTimestamp: expiryTimestamp,
       executor: executor,
-      loose: loose,
       targetOptions: targetOptions,
       values: values,
       calldatas: calldatas,
