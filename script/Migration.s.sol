@@ -58,8 +58,8 @@ contract Migration is BaseMigrationV2, Utils {
 
       // Mainchain Gateway V3
       param.mainchainGatewayV3.roninChainId = 2021;
-      param.mainchainGatewayV3.numerator = 1;
-      param.mainchainGatewayV3.highTierVWNumerator = 10;
+      param.mainchainGatewayV3.numerator = 4 ;
+      param.mainchainGatewayV3.highTierVWNumerator = 7;
       param.mainchainGatewayV3.denominator = 10;
 
       // Mainchain Bridge Manager
