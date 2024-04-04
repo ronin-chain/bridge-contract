@@ -20,24 +20,6 @@ import "../../utils/CommonErrors.sol";
 contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernanceProposal {
   using Proposal for Proposal.ProposalDetail;
 
-  function initialize(
-    uint256 num,
-    uint256 denom,
-    uint256 roninChainId,
-    uint256 expiryDuration,
-    address bridgeContract,
-    address[] memory callbackRegisters,
-    address[] memory bridgeOperators,
-    address[] memory governors,
-    uint96[] memory voteWeights,
-    GlobalProposal.TargetOption[] memory targetOptions,
-    address[] memory targets
-  ) external initializer {
-    __CoreGovernance_init(expiryDuration);
-    __GlobalCoreGovernance_init(targetOptions, targets);
-    __BridgeManager_init(num, denom, roninChainId, bridgeContract, callbackRegisters, bridgeOperators, governors, voteWeights);
-  }
-
   /**
    * CURRENT NETWORK
    */
