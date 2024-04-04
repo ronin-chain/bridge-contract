@@ -57,7 +57,6 @@ contract LooseProposal_GlobalProposal_RoninBridgeManager_Test is BaseIntegration
     _globalProposal.nonce = _roninBridgeManager.round(0) + 1;
     _globalProposal.expiryTimestamp = block.timestamp + _proposalExpiryDuration;
     _globalProposal.executor = address(0);
-    _globalProposal.loose = false;
 
     _globalProposal.targetOptions.push(GlobalProposal.TargetOption.BridgeManager);
     _globalProposal.values.push(0);
@@ -73,7 +72,6 @@ contract LooseProposal_GlobalProposal_RoninBridgeManager_Test is BaseIntegration
 
   // Should the strict proposal failed when containing one failed internal call
   function test_strictProposal_globalProposal_RoninSide_revertWhen_containingOneFailedInternalCall() external {
-    _globalProposal.loose = false;
     _globalProposal.gasAmounts[1] = 1_000; // Set gas for the second call becomes failed
 
     vm.expectEmit(false, true, true, true);
@@ -91,7 +89,6 @@ contract LooseProposal_GlobalProposal_RoninBridgeManager_Test is BaseIntegration
 
   // Should the strict proposal passes when all internal calls are valid
   function test_strictProposal_globalProposal_RoninSide_WhenAllInternalCallsPass() external {
-    _globalProposal.loose = false;
     _globalProposal.gasAmounts[1] = 1_000_000; // Set gas for the second call becomes success
 
     vm.expectEmit(false, true, true, true);
@@ -111,7 +108,6 @@ contract LooseProposal_GlobalProposal_RoninBridgeManager_Test is BaseIntegration
 
   // Should the loose proposal passes when containing one failed internal call
   function test_looseProposal_globalProposal_RoninSide_WhenContainsOneInternalCallFailed() external {
-    _globalProposal.loose = true;
     _globalProposal.gasAmounts[1] = 1_000; // Set gas for the second call becomes failed
 
     vm.expectEmit(false, true, true, true);
@@ -131,7 +127,6 @@ contract LooseProposal_GlobalProposal_RoninBridgeManager_Test is BaseIntegration
 
   // Should the loose proposal passes when all internal calls are valid
   function test_looseProposal_globalProposal_RoninSide_WhenAllInternalCallsPass() external {
-    _globalProposal.loose = true;
     _globalProposal.gasAmounts[1] = 1_000_000; // Set gas for the second call becomes success
 
     vm.expectEmit(false, true, true, true);

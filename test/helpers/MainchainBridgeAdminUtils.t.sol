@@ -21,7 +21,6 @@ contract MainchainBridgeAdminUtils is ProposalUtils {
     Proposal.ProposalDetail memory proposal = this.createProposal({
       expiryTimestamp: this.defaultExpiryTimestamp(),
       executor: address(0),
-      loose: false,
       target: to,
       value: 0,
       calldata_: abi.encodeWithSignature("functionDelegateCall(bytes)", data),
@@ -43,7 +42,6 @@ contract MainchainBridgeAdminUtils is ProposalUtils {
     GlobalProposal.GlobalProposalDetail memory proposal = this.createGlobalProposal({
       expiryTimestamp: this.defaultExpiryTimestamp(),
       executor: address(0),
-      loose: false,
       targetOption: target,
       value: 0,
       calldata_: abi.encodeWithSignature("functionDelegateCall(bytes)", data),
@@ -78,7 +76,6 @@ contract MainchainBridgeAdminUtils is ProposalUtils {
       nonce: _contract.round(0) + 1,
       expiryTimestamp: this.defaultExpiryTimestamp(),
       executor: address(0),
-      loose: false,
       targetOptions: targetOptions,
       values: values,
       calldatas: calldatas,
@@ -99,7 +96,6 @@ contract MainchainBridgeAdminUtils is ProposalUtils {
     GlobalProposal.GlobalProposalDetail memory proposal = this.createGlobalProposal({
       expiryTimestamp: this.defaultExpiryTimestamp(),
       executor: address(0),
-      loose: false,
       targetOption: targetOption,
       value: 0,
       calldata_: abi.encodeWithSignature("upgradeTo(bytes)", data),

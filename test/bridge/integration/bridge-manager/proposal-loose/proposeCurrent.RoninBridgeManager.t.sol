@@ -59,7 +59,6 @@ contract LooseProposal_CurrentNetworkProposal_RoninBridgeManager_Test is BaseInt
     _proposal.nonce = _roninBridgeManager.round(block.chainid) + 1;
     _proposal.chainId = block.chainid;
     _proposal.executor = address(0);
-    _proposal.loose = false;
     _proposal.expiryTimestamp = block.timestamp + _proposalExpiryDuration;
 
     _proposal.targets.push(address(_roninBridgeManager));
@@ -76,7 +75,6 @@ contract LooseProposal_CurrentNetworkProposal_RoninBridgeManager_Test is BaseInt
 
   // Should the strict proposal failed when containing one failed internal call
   function test_strictProposal_revertWhen_containingOneFailedInternalCall() external {
-    _proposal.loose = false;
     _proposal.gasAmounts[1] = 1_000; // Set gas for the second call becomes failed
 
     vm.expectEmit(false, true, true, true);
@@ -94,7 +92,6 @@ contract LooseProposal_CurrentNetworkProposal_RoninBridgeManager_Test is BaseInt
 
   // Should the strict proposal passes when all internal calls are valid
   function test_strictProposal_WhenAllInternalCallsPass() external {
-    _proposal.loose = false;
     _proposal.gasAmounts[1] = 1_000_000; // Set gas for the second call becomes success
 
     vm.expectEmit(false, true, true, true);
@@ -114,7 +111,6 @@ contract LooseProposal_CurrentNetworkProposal_RoninBridgeManager_Test is BaseInt
 
   // Should the loose proposal passes when containing one failed internal call
   function test_looseProposal_WhenContainsOneInternalCallFailed() external {
-    _proposal.loose = true;
     _proposal.gasAmounts[1] = 1_000; // Set gas for the second call becomes failed
 
     vm.expectEmit(false, true, true, true);
@@ -134,7 +130,6 @@ contract LooseProposal_CurrentNetworkProposal_RoninBridgeManager_Test is BaseInt
 
   // Should the loose proposal passes when all internal calls are valid
   function test_looseProposal_WhenAllInternalCallsPass() external {
-    _proposal.loose = true;
     _proposal.gasAmounts[1] = 1_000_000; // Set gas for the second call becomes success
 
     vm.expectEmit(false, true, true, true);

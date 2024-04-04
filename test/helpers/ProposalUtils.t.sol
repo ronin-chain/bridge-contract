@@ -29,7 +29,6 @@ contract ProposalUtils is Utils, Test {
   function createProposal(
     uint256 expiryTimestamp,
     address executor,
-    bool loose,
     address target,
     uint256 value,
     bytes memory calldata_,
@@ -40,7 +39,6 @@ contract ProposalUtils is Utils, Test {
       nonce: nonce,
       chainId: block.chainid,
       executor: executor,
-      loose: loose,
       expiryTimestamp: expiryTimestamp,
       targets: wrapAddress(target),
       values: wrapUint(value),
@@ -52,7 +50,6 @@ contract ProposalUtils is Utils, Test {
   function createGlobalProposal(
     uint256 expiryTimestamp,
     address executor,
-    bool loose,
     GlobalProposal.TargetOption targetOption,
     uint256 value,
     bytes memory calldata_,
@@ -66,7 +63,6 @@ contract ProposalUtils is Utils, Test {
       nonce: nonce,
       expiryTimestamp: expiryTimestamp,
       executor: executor,
-      loose: loose,
       targetOptions: targetOptions,
       values: wrapUint(value),
       calldatas: wrapBytes(calldata_),

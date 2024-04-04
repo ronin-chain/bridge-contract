@@ -61,7 +61,6 @@ contract ProposalWithExecutor_GlobalProposal_MainchainBridgeManager_Test is Base
 
     _globalProposal.nonce = _mainchainBridgeManager.round(0) + 1;
     _globalProposal.executor = address(0);
-    _globalProposal.loose = false;
     _globalProposal.expiryTimestamp = block.timestamp + _proposalExpiryDuration;
 
     _globalProposal.targetOptions.push(GlobalProposal.TargetOption.BridgeManager);
@@ -78,7 +77,6 @@ contract ProposalWithExecutor_GlobalProposal_MainchainBridgeManager_Test is Base
 
   // Should the auto proposal executes on the last valid vote
   function test_relayGlobal_autoProposal_strictProposal_WhenAllInternalCallsPass() public {
-    _globalProposal.loose = false;
     _globalProposal.executor = address(0);
 
     vm.expectEmit(false, false, false, false);
@@ -110,7 +108,6 @@ contract ProposalWithExecutor_GlobalProposal_MainchainBridgeManager_Test is Base
 
   // Should the non-auto proposal be execute by the specified executor
   function test_relayGlobal_executorProposal_strictProposal_WhenAllInternalCallsPass() public {
-    _globalProposal.loose = false;
     _globalProposal.executor = _param.roninBridgeManager.governors[0];
     _globalProposal.gasAmounts[1] = 1_000_000; // Set gas for the second call becomes success
 
@@ -142,7 +139,6 @@ contract ProposalWithExecutor_GlobalProposal_MainchainBridgeManager_Test is Base
 
   // Should the non-auto proposal can not be execute by other governor
   function test_relayGlobal_executorProposal_revertWhen_proposalIsExecutedByAnotherGovernor() external {
-    _globalProposal.loose = false;
     _globalProposal.executor = _param.roninBridgeManager.governors[0];
     _globalProposal.gasAmounts[1] = 1_000_000; // Set gas for the second call becomes success
 

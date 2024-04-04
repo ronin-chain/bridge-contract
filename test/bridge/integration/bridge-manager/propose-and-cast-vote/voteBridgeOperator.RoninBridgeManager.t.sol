@@ -59,7 +59,6 @@ contract VoteBridgeOperator_RoninBridgeManager_Test is BaseIntegration_Test {
     _globalProposal = _roninProposalUtils.createGlobalProposal({
       expiryTimestamp: block.timestamp + _proposalExpiryDuration,
       executor: address(0),
-      loose: false,
       targetOption: GlobalProposal.TargetOption.BridgeManager,
       value: 0,
       calldata_: abi.encodeCall(IBridgeManager.addBridgeOperators, (_voteWeights, _addingGovernors, _addingOperators)),
@@ -67,8 +66,7 @@ contract VoteBridgeOperator_RoninBridgeManager_Test is BaseIntegration_Test {
       nonce: _roninBridgeManager.round(0) + 1
     });
 
-    SignatureConsumer.Signature[] memory signatures =
-      _roninProposalUtils.generateSignaturesGlobal(_globalProposal, _param.test.governorPKs);
+    SignatureConsumer.Signature[] memory signatures = _roninProposalUtils.generateSignaturesGlobal(_globalProposal, _param.test.governorPKs);
 
     for (uint256 i; i < signatures.length; i++) {
       _signatures.push(signatures[i]);
@@ -80,9 +78,7 @@ contract VoteBridgeOperator_RoninBridgeManager_Test is BaseIntegration_Test {
     vm.prank(_param.roninBridgeManager.governors[0]);
     _roninBridgeManager.proposeGlobalProposalStructAndCastVotes(_globalProposal, _supports, _signatures);
 
-    assertEq(
-      _roninBridgeManager.globalProposalVoted(_globalProposal.nonce, _param.roninBridgeManager.governors[0]), true
-    );
+    assertEq(_roninBridgeManager.globalProposalVoted(_globalProposal.nonce, _param.roninBridgeManager.governors[0]), true);
     assertEq(_roninBridgeManager.getBridgeOperators(), _afterRelayedOperators);
   }
 
@@ -106,9 +102,7 @@ contract VoteBridgeOperator_RoninBridgeManager_Test is BaseIntegration_Test {
   function test_RevertWhen_RelayAgain() public {
     test_relayAddBridgeOperator();
 
-    vm.expectRevert(
-      abi.encodeWithSelector(ErrInvalidProposalNonce.selector, MainchainBridgeManager.relayGlobalProposal.selector)
-    );
+    vm.expectRevert(abi.encodeWithSelector(ErrInvalidProposalNonce.selector, MainchainBridgeManager.relayGlobalProposal.selector));
 
     vm.prank(_param.mainchainBridgeManager.governors[0]);
     _mainchainBridgeManager.relayGlobalProposal(_globalProposal, _supports, _signatures);
@@ -122,7 +116,6 @@ contract VoteBridgeOperator_RoninBridgeManager_Test is BaseIntegration_Test {
     _globalProposal = _roninProposalUtils.createGlobalProposal({
       expiryTimestamp: block.timestamp + _proposalExpiryDuration,
       executor: address(0),
-      loose: false,
       targetOption: GlobalProposal.TargetOption.BridgeManager,
       value: 0,
       calldata_: abi.encodeCall(IBridgeManager.addBridgeOperators, (_voteWeights, _addingGovernors, _addingOperators)),
@@ -130,8 +123,7 @@ contract VoteBridgeOperator_RoninBridgeManager_Test is BaseIntegration_Test {
       nonce: _roninBridgeManager.round(0) + 1
     });
 
-    SignatureConsumer.Signature[] memory signatures =
-      _roninProposalUtils.generateSignaturesGlobal(_globalProposal, _param.test.governorPKs);
+    SignatureConsumer.Signature[] memory signatures = _roninProposalUtils.generateSignaturesGlobal(_globalProposal, _param.test.governorPKs);
 
     for (uint256 i; i < signatures.length; i++) {
       _signatures.push(signatures[i]);
@@ -143,9 +135,7 @@ contract VoteBridgeOperator_RoninBridgeManager_Test is BaseIntegration_Test {
     vm.prank(_param.roninBridgeManager.governors[0]);
     _roninBridgeManager.proposeGlobalProposalStructAndCastVotes(_globalProposal, _supports, _signatures);
 
-    assertEq(
-      _roninBridgeManager.globalProposalVoted(_globalProposal.nonce, _param.roninBridgeManager.governors[0]), true
-    );
+    assertEq(_roninBridgeManager.globalProposalVoted(_globalProposal.nonce, _param.roninBridgeManager.governors[0]), true);
     assertEq(_roninBridgeManager.getBridgeOperators(), _afterRelayedOperators);
   }
 
