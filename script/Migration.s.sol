@@ -57,6 +57,7 @@ contract Migration is BaseMigrationV2, Utils {
       param.mainchainPauseEnforcer.sentries = wrapAddress(0x8Ed0c5B427688f2Bd945509199CAa4741C81aFFe); // Gnosis Sepolia
 
       // Mainchain Gateway V3
+      param.mainchainGatewayV3.roleSetter = 0x968D0Cd7343f711216817E617d3f92a23dC91c07;
       param.mainchainGatewayV3.roninChainId = 2021;
       param.mainchainGatewayV3.numerator = 4 ;
       param.mainchainGatewayV3.highTierVWNumerator = 7;

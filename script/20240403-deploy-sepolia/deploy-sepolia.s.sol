@@ -27,7 +27,7 @@ import { MockERC721Deploy } from "@ronin/script/contracts/token/MockERC721Deploy
 import { GeneralConfig } from "../GeneralConfig.sol";
 import { Network } from "../utils/Network.sol";
 import { BridgeMigration } from "../BridgeMigration.sol";
-
+import { DefaultContract } from "foundry-deployment-kit/utils/DefaultContract.sol";
 import "./changeGV-config.s.sol";
 
 import "forge-std/console2.sol";
@@ -46,6 +46,8 @@ contract DeploySepolia is BridgeMigration, DeploySepolia__ChangeGV_Config {
   MockERC721 _mainchainMockERC721;
 
   MainchainBridgeAdminUtils _mainchainProposalUtils;
+  // Default proxy admin for sepolia
+  address internal constant PROXY_ADMIN = 0x968D0Cd7343f711216817E617d3f92a23dC91c07;
 
   function _configByteCode() internal virtual override returns (bytes memory) {
     return abi.encodePacked(type(GeneralConfig).creationCode);
@@ -57,12 +59,13 @@ contract DeploySepolia is BridgeMigration, DeploySepolia__ChangeGV_Config {
 
   function setUp() public override {
     super.setUp();
+    CONFIG.setAddress(network(), DefaultContract.ProxyAdmin.key(), PROXY_ADMIN);
   }
 
   function run() public onlyOn(Network.Sepolia.key()) {
-    vm.startBroadcast(0x55ba00EeB8D8d33Df1b1985459D310b9CAfB19f2);
-    payable(sender()).transfer(5 ether);
-    vm.stopBroadcast();
+    // vm.startBroadcast(0x55ba00EeB8D8d33Df1b1985459D310b9CAfB19f2);
+    // payable(PROXY_ADMIN).transfer(5 ether);
+    // vm.stopBroadcast();
 
     _deployContractsOnMainchain();
     _mainchainGatewayV3Initialize();
@@ -230,15 +233,15 @@ contract DeploySepolia is BridgeMigration, DeploySepolia__ChangeGV_Config {
 
   function _grantFundForGateway() internal {
     vm.broadcast(sender());
-    _mainchainGatewayV3.receiveEther{value: 0.1 ether}();
+    _mainchainGatewayV3.receiveEther{ value: 0.1 ether }();
 
-    vm.broadcast(sender());
+    vm.broadcast(PROXY_ADMIN);
     _mainchainAxs.mint(address(_mainchainGatewayV3), 1_000_000 * 1e18);
 
-    vm.broadcast(sender());
+    vm.broadcast(PROXY_ADMIN);
     _mainchainUsdc.mint(address(_mainchainGatewayV3), 500_000 * 1e6);
 
-    vm.broadcast(sender());
+    vm.broadcast(PROXY_ADMIN);
     _mainchainSlp.mint(address(_mainchainGatewayV3), 50_000_000 * 1e6);
   }
 }
