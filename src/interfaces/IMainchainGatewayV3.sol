@@ -28,17 +28,17 @@ interface IMainchainGatewayV3 is SignatureConsumer, MappedTokenConsumer {
   error ErrQueryForInsufficientVoteWeight();
 
   /// @dev Emitted when the deposit is requested
-  event DepositRequested(bytes32 receiptHash, Transfer.Receipt receipt);
+  event DepositRequested(bytes32 receiptHash, Transfer.ReceiptManifest receipt);
   /// @dev Emitted when the assets are withdrawn
-  event Withdrew(bytes32 receiptHash, Transfer.Receipt receipt);
+  event Withdrew(bytes32 receiptHash, Transfer.ReceiptManifest receipt);
   /// @dev Emitted when the tokens are mapped
-  event TokenMapped(address[] mainchainTokens, address[] roninTokens, Token.Standard[] standards);
+  event TokenMapped(address[] mainchainTokens, address[] roninTokens, TokenStandard[] standards);
   /// @dev Emitted when the wrapped native token contract is updated
   event WrappedNativeTokenContractUpdated(IWETH weth);
   /// @dev Emitted when the withdrawal is locked
-  event WithdrawalLocked(bytes32 receiptHash, Transfer.Receipt receipt);
+  event WithdrawalLocked(bytes32 receiptHash, Transfer.ReceiptManifest receipt);
   /// @dev Emitted when the withdrawal is unlocked
-  event WithdrawalUnlocked(bytes32 receiptHash, Transfer.Receipt receipt);
+  event WithdrawalUnlocked(bytes32 receiptHash, Transfer.ReceiptManifest receipt);
 
   /**
    * @dev Returns the domain seperator.
@@ -112,7 +112,7 @@ interface IMainchainGatewayV3 is SignatureConsumer, MappedTokenConsumer {
   function mapTokens(
     address[] calldata _mainchainTokens,
     address[] calldata _roninTokens,
-    Token.Standard[] calldata _standards
+    TokenStandard[] calldata _standards
   ) external;
 
   /**
@@ -128,7 +128,7 @@ interface IMainchainGatewayV3 is SignatureConsumer, MappedTokenConsumer {
   function mapTokensAndThresholds(
     address[] calldata _mainchainTokens,
     address[] calldata _roninTokens,
-    Token.Standard[] calldata _standards,
+    TokenStandard[] calldata _standards,
     uint256[][4] calldata _thresholds
   ) external;
 

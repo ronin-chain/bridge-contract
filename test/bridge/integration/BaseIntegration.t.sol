@@ -22,7 +22,7 @@ import { MockERC721 } from "@ronin/contracts/mocks/token/MockERC721.sol";
 import { MockWrappedToken } from "@ronin/contracts/mocks/token/MockWrappedToken.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
 import { Proposal } from "@ronin/contracts/libraries/Proposal.sol";
-import { Token } from "@ronin/contracts/libraries/Token.sol";
+import { LibTokenInfo, Mode, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { IWETH } from "@ronin/contracts/interfaces/IWETH.sol";
 import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/SignatureConsumer.sol";
 import { Ballot } from "@ronin/contracts/libraries/Ballot.sol";
@@ -232,13 +232,13 @@ contract BaseIntegration_Test is Base_Test {
     uint256 tokenNum = mainchainTokens.length; // reserve slot for ERC721Tokens
     uint256[] memory minimumThreshold = new uint256[](tokenNum);
     uint256[] memory chainIds = new uint256[](tokenNum);
-    Token.Standard[] memory standards = new Token.Standard[](tokenNum);
+    TokenStandard[] memory standards = new TokenStandard[](tokenNum);
     for (uint256 i; i < tokenNum; i++) {
       bool isERC721 = i == mainchainTokens.length - 1; // last item is ERC721
 
       minimumThreshold[i] = 20;
       chainIds[i] = block.chainid;
-      standards[i] = isERC721 ? Token.Standard.ERC721 : Token.Standard.ERC20;
+      standards[i] = isERC721 ? TokenStandard.ERC721 : TokenStandard.ERC20;
     }
 
     // Ronin Gateway V3
@@ -432,7 +432,7 @@ contract BaseIntegration_Test is Base_Test {
     uint256[] memory lockedThreshold = new uint256[](tokenNum);
     uint256[] memory unlockFeePercentages = new uint256[](tokenNum);
     uint256[] memory dailyWithdrawalLimits = new uint256[](tokenNum);
-    Token.Standard[] memory standards = new Token.Standard[](tokenNum);
+    TokenStandard[] memory standards = new TokenStandard[](tokenNum);
 
     for (uint256 i; i < tokenNum; i++) {
       bool isERC721 = i == mainchainTokens.length - 1; // last item is ERC721
@@ -441,7 +441,7 @@ contract BaseIntegration_Test is Base_Test {
       lockedThreshold[i] = 20;
       unlockFeePercentages[i] = 100_000;
       dailyWithdrawalLimits[i] = 12;
-      standards[i] = isERC721 ? Token.Standard.ERC721 : Token.Standard.ERC20;
+      standards[i] = isERC721 ? TokenStandard.ERC721 : TokenStandard.ERC20;
     }
 
     // Mainchain Gateway V3

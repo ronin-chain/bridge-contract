@@ -17,7 +17,7 @@ contract MainchainGatewayV3 is
   IMainchainGatewayV3,
   HasContracts
 {
-  using Token for Token.Info;
+  using LibTokenInfo for TokenInfo;
   using Transfer for Transfer.Request;
   using Transfer for Transfer.Receipt;
 
@@ -75,7 +75,7 @@ contract MainchainGatewayV3 is
     // _thresholds[2]: unlockFeePercentages
     // _thresholds[3]: dailyWithdrawalLimit
     uint256[][4] calldata _thresholds,
-    Token.Standard[] calldata _standards
+    TokenStandard[] calldata _standards
   ) external payable virtual initializer {
     _setupRole(DEFAULT_ADMIN_ROLE, _roleSetter);
     roninChainId = _roninChainId;
@@ -153,29 +153,29 @@ contract MainchainGatewayV3 is
    */
   function unlockWithdrawal(Transfer.Receipt calldata _receipt) external onlyRole(WITHDRAWAL_UNLOCKER_ROLE) {
     bytes32 _receiptHash = _receipt.hash();
-    if (withdrawalHash[_receipt.id] != _receipt.hash()) {
+    if (withdrawalHash[_receipt.manifest.id] != _receipt.hash()) {
       revert ErrInvalidReceipt();
     }
-    if (!withdrawalLocked[_receipt.id]) {
+    if (!withdrawalLocked[_receipt.manifest.id]) {
       revert ErrQueryForApprovedWithdrawal();
     }
-    delete withdrawalLocked[_receipt.id];
-    emit WithdrawalUnlocked(_receiptHash, _receipt);
+    delete withdrawalLocked[_receipt.manifest.id];
+    emit WithdrawalUnlocked(_receiptHash, _receipt.manifest);
 
-    address _token = _receipt.mainchain.tokenAddr;
-    if (_receipt.info.erc == Token.Standard.ERC20) {
-      Token.Info memory _feeInfo = _receipt.info;
+    address _token = _receipt.manifest.mainchain.tokenAddr;
+    if (_receipt.info.erc == TokenStandard.ERC20) {
+      TokenInfo memory _feeInfo = _receipt.info;
       _feeInfo.quantity = _computeFeePercentage(_receipt.info.quantity, unlockFeePercentages[_token]);
-      Token.Info memory _withdrawInfo = _receipt.info;
+      TokenInfo memory _withdrawInfo = _receipt.info;
       _withdrawInfo.quantity = _receipt.info.quantity - _feeInfo.quantity;
 
-      _feeInfo.handleAssetTransfer(payable(msg.sender), _token, wrappedNativeToken);
-      _withdrawInfo.handleAssetTransfer(payable(_receipt.mainchain.addr), _token, wrappedNativeToken);
+      _feeInfo.handleAssetOut(payable(msg.sender), _token, wrappedNativeToken);
+      _withdrawInfo.handleAssetOut(payable(_receipt.manifest.mainchain.addr), _token, wrappedNativeToken);
     } else {
-      _receipt.info.handleAssetTransfer(payable(_receipt.mainchain.addr), _token, wrappedNativeToken);
+      _receipt.info.handleAssetOut(payable(_receipt.manifest.mainchain.addr), _token, wrappedNativeToken);
     }
 
-    emit Withdrew(_receiptHash, _receipt);
+    emit Withdrew(_receiptHash, _receipt.manifest);
   }
 
   /**
@@ -184,7 +184,7 @@ contract MainchainGatewayV3 is
   function mapTokens(
     address[] calldata _mainchainTokens,
     address[] calldata _roninTokens,
-    Token.Standard[] calldata _standards
+    TokenStandard[] calldata _standards
   ) external virtual onlyAdmin {
     if (_mainchainTokens.length == 0) revert ErrEmptyArray();
     _mapTokens(_mainchainTokens, _roninTokens, _standards);
@@ -196,7 +196,7 @@ contract MainchainGatewayV3 is
   function mapTokensAndThresholds(
     address[] calldata _mainchainTokens,
     address[] calldata _roninTokens,
-    Token.Standard[] calldata _standards,
+    TokenStandard[] calldata _standards,
     // _thresholds[0]: highTierThreshold
     // _thresholds[1]: lockedThreshold
     // _thresholds[2]: unlockFeePercentages
@@ -231,7 +231,7 @@ contract MainchainGatewayV3 is
   function _mapTokens(
     address[] calldata _mainchainTokens,
     address[] calldata _roninTokens,
-    Token.Standard[] calldata _standards
+    TokenStandard[] calldata _standards
   ) internal virtual {
     if (!(_mainchainTokens.length == _roninTokens.length && _mainchainTokens.length == _standards.length)) {
       revert ErrLengthMismatch(msg.sig);
@@ -268,24 +268,24 @@ contract MainchainGatewayV3 is
     virtual
     returns (bool _locked)
   {
-    uint256 _id = _receipt.id;
+    uint256 _id = _receipt.manifest.id;
     uint256 _quantity = _receipt.info.quantity;
-    address _tokenAddr = _receipt.mainchain.tokenAddr;
+    address _tokenAddr = _receipt.manifest.mainchain.tokenAddr;
 
     _receipt.info.validate();
-    if (_receipt.kind != Transfer.Kind.Withdrawal) revert ErrInvalidReceiptKind();
+    if (_receipt.manifest.kind != Transfer.Kind.Withdrawal) revert ErrInvalidReceiptKind();
 
-    if (_receipt.mainchain.chainId != block.chainid) {
-      revert ErrInvalidChainId(msg.sig, _receipt.mainchain.chainId, block.chainid);
+    if (_receipt.manifest.mainchain.chainId != block.chainid) {
+      revert ErrInvalidChainId(msg.sig, _receipt.manifest.mainchain.chainId, block.chainid);
     }
 
-    MappedToken memory _token = getRoninToken(_receipt.mainchain.tokenAddr);
+    MappedToken memory _token = getRoninToken(_receipt.manifest.mainchain.tokenAddr);
 
-    if (!(_token.erc == _receipt.info.erc && _token.tokenAddr == _receipt.ronin.tokenAddr)) revert ErrInvalidReceipt();
+    if (!(_token.erc == _receipt.info.erc && _token.tokenAddr == _receipt.manifest.ronin.tokenAddr)) revert ErrInvalidReceipt();
 
     if (withdrawalHash[_id] != 0) revert ErrQueryForProcessedWithdrawal();
 
-    if (!(_receipt.info.erc == Token.Standard.ERC721 || !_reachedWithdrawalLimit(_tokenAddr, _quantity))) {
+    if (!(_receipt.info.erc == TokenStandard.ERC721 || !_reachedWithdrawalLimit(_tokenAddr, _quantity))) {
       revert ErrReachedDailyWithdrawalLimit();
     }
 
@@ -325,13 +325,13 @@ contract MainchainGatewayV3 is
 
     if (_locked) {
       withdrawalLocked[_id] = true;
-      emit WithdrawalLocked(_receiptHash, _receipt);
+      emit WithdrawalLocked(_receiptHash, _receipt.manifest);
       return _locked;
     }
 
     _recordWithdrawal(_tokenAddr, _quantity);
-    _receipt.info.handleAssetTransfer(payable(_receipt.mainchain.addr), _tokenAddr, wrappedNativeToken);
-    emit Withdrew(_receiptHash, _receipt);
+    _receipt.info.handleAssetOut(payable(_receipt.manifest.mainchain.addr), _tokenAddr, wrappedNativeToken);
+    emit Withdrew(_receiptHash, _receipt.manifest);
   }
 
   /**
@@ -363,7 +363,7 @@ contract MainchainGatewayV3 is
       _token = getRoninToken(_request.tokenAddr);
       if (_token.erc != _request.info.erc) revert ErrInvalidTokenStandard();
 
-      _request.info.transferFrom(_requester, address(this), _request.tokenAddr);
+      _request.info.handleAssetIn(_requester, _request.tokenAddr);
       // Withdraw if token is WETH
       if (_roninWeth == _request.tokenAddr) {
         IWETH(_roninWeth).withdraw(_request.info.quantity);
@@ -374,20 +374,20 @@ contract MainchainGatewayV3 is
     Transfer.Receipt memory _receipt =
       _request.into_deposit_receipt(_requester, _depositId, _token.tokenAddr, roninChainId);
 
-    emit DepositRequested(_receipt.hash(), _receipt);
+    emit DepositRequested(_receipt.hash(), _receipt.manifest);
   }
 
   /**
    * @dev Returns the minimum vote weight for the token.
    */
-  function _computeMinVoteWeight(Token.Standard _erc, address _token, uint256 _quantity)
+  function _computeMinVoteWeight(TokenStandard _erc, address _token, uint256 _quantity)
     internal
     virtual
     returns (uint256 _weight, bool _locked)
   {
     uint256 _totalWeight = _getTotalWeight();
     _weight = _minimumVoteWeight(_totalWeight);
-    if (_erc == Token.Standard.ERC20) {
+    if (_erc == TokenStandard.ERC20) {
       if (highTierThreshold[_token] <= _quantity) {
         _weight = _highTierVoteWeight(_totalWeight);
       }

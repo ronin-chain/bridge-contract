@@ -7,7 +7,7 @@ import { BaseMigration } from "foundry-deployment-kit/BaseMigration.s.sol";
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
-import { Token } from "@ronin/contracts/libraries/Token.sol";
+import { LibTokenInfo, Mode, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { Contract } from "../utils/Contract.sol";
 import { BridgeMigration } from "../BridgeMigration.sol";
 import { Network } from "../utils/Network.sol";
@@ -39,7 +39,7 @@ contract Migration__20240131_MapTokenPixelMainchain is BridgeMigration, Migratio
   function run() public {
     address[] memory mainchainTokens = new address[](1);
     address[] memory roninTokens = new address[](1);
-    Token.Standard[] memory standards = new Token.Standard[](1);
+    TokenStandard[] memory standards = new TokenStandard[](1);
     uint256[][4] memory thresholds;
 
     uint256 expiredTime = block.timestamp + 10 days;
@@ -52,7 +52,7 @@ contract Migration__20240131_MapTokenPixelMainchain is BridgeMigration, Migratio
 
     mainchainTokens[0] = _pixelMainchainToken;
     roninTokens[0] = _pixelRoninToken;
-    standards[0] = Token.Standard.ERC20;
+    standards[0] = TokenStandard.ERC20;
     // highTierThreshold
     thresholds[0] = new uint256[](1);
     thresholds[0][0] = _highTierThreshold;
@@ -69,7 +69,7 @@ contract Migration__20240131_MapTokenPixelMainchain is BridgeMigration, Migratio
     // function mapTokensAndThresholds(
     //   address[] calldata _mainchainTokens,
     //   address[] calldata _roninTokens,
-    //   Token.Standard[] calldata _standards,
+    //   TokenStandard[] calldata _standards,
     //   uint256[][4] calldata _thresholds
     // )
 
@@ -91,12 +91,12 @@ contract Migration__20240131_MapTokenPixelMainchain is BridgeMigration, Migratio
 
     mainchainTokens[0] = _farmlandMainchainToken;
     roninTokens[0] = _farmlandRoninToken;
-    standards[0] = Token.Standard.ERC721;
+    standards[0] = TokenStandard.ERC721;
 
     // function mapTokens(
     //   address[] calldata _mainchainTokens,
     //   address[] calldata _roninTokens,
-    //   Token.Standard[] calldata _standards
+    //   TokenStandard[] calldata _standards
     // ) external;
 
     innerData = abi.encodeCall(IMainchainGatewayV3.mapTokens, (

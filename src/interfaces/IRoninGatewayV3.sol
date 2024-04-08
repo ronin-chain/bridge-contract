@@ -21,15 +21,15 @@ interface IRoninGatewayV3 is MappedTokenConsumer {
   error ErrWithdrawnOnMainchainAlready();
 
   /// @dev Emitted when the assets are depositted
-  event Deposited(bytes32 receiptHash, Transfer.Receipt receipt);
+  event Deposited(bytes32 receiptHash, Transfer.ReceiptManifest receipt);
   /// @dev Emitted when the withdrawal is requested
-  event WithdrawalRequested(bytes32 receiptHash, Transfer.Receipt);
+  event WithdrawalRequested(bytes32 receiptHash, Transfer.ReceiptManifest);
   /// @dev Emitted when the assets are withdrawn on mainchain
-  event MainchainWithdrew(bytes32 receiptHash, Transfer.Receipt receipt);
+  event MainchainWithdrew(bytes32 receiptHash, Transfer.ReceiptManifest receipt);
   /// @dev Emitted when the withdrawal signatures is requested
-  event WithdrawalSignaturesRequested(bytes32 receiptHash, Transfer.Receipt);
+  event WithdrawalSignaturesRequested(bytes32 receiptHash, Transfer.ReceiptManifest);
   /// @dev Emitted when the tokens are mapped
-  event TokenMapped(address[] roninTokens, address[] mainchainTokens, uint256[] chainIds, Token.Standard[] standards);
+  event TokenMapped(address[] roninTokens, address[] mainchainTokens, uint256[] chainIds, TokenStandard[] standards);
   /// @dev Emitted when the threshold is updated
   event TrustedThresholdUpdated(
     uint256 indexed nonce,
@@ -144,7 +144,7 @@ interface IRoninGatewayV3 is MappedTokenConsumer {
     address[] calldata _roninTokens,
     address[] calldata _mainchainTokens,
     uint256[] calldata chainIds,
-    Token.Standard[] calldata _standards
+    TokenStandard[] calldata _standards
   ) external;
 
   /**

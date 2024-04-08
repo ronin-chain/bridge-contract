@@ -8,7 +8,7 @@ import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeMa
 import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
 import { IBridgeManager } from "@ronin/contracts/interfaces/bridge/IBridgeManager.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
-import { Token } from "@ronin/contracts/libraries/Token.sol";
+import { LibTokenInfo, Mode, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { Contract } from "../utils/Contract.sol";
 import { BridgeMigration } from "../BridgeMigration.sol";
 import { Network } from "../utils/Network.sol";
@@ -56,16 +56,16 @@ contract Migration__MapTokenMainchain is BridgeMigration {
   function _mapFarmlandToken() internal pure returns (bytes memory) {
     address[] memory mainchainTokens = new address[](1);
     address[] memory roninTokens = new address[](1);
-    Token.Standard[] memory standards = new Token.Standard[](1);
+    TokenStandard[] memory standards = new TokenStandard[](1);
 
     mainchainTokens[0] = _farmlandMainchainToken;
     roninTokens[0] = _farmlandRoninToken;
-    standards[0] = Token.Standard.ERC721;
+    standards[0] = TokenStandard.ERC721;
 
     // function mapTokens(
     //   address[] calldata _mainchainTokens,
     //   address[] calldata _roninTokens,
-    //   Token.Standard[] calldata _standards
+    //   TokenStandard[] calldata _standards
     // )
 
     bytes memory innerData = abi.encodeCall(IMainchainGatewayV3.mapTokens, (
@@ -79,7 +79,7 @@ contract Migration__MapTokenMainchain is BridgeMigration {
   function _mapPixelToken() internal pure returns (bytes memory) {
     address[] memory mainchainTokens = new address[](1);
     address[] memory roninTokens = new address[](1);
-    Token.Standard[] memory standards = new Token.Standard[](1);
+    TokenStandard[] memory standards = new TokenStandard[](1);
     uint256[][4] memory thresholds;
 
     // highTierThreshold
@@ -97,12 +97,12 @@ contract Migration__MapTokenMainchain is BridgeMigration {
 
     mainchainTokens[0] = _farmlandMainchainToken;
     roninTokens[0] = _farmlandRoninToken;
-    standards[0] = Token.Standard.ERC20;
+    standards[0] = TokenStandard.ERC20;
 
     // function mapTokensAndThresholds(
     //   address[] calldata _mainchainTokens,
     //   address[] calldata _roninTokens,
-    //   Token.Standard[] calldata _standards,
+    //   TokenStandard[] calldata _standards,
     //   uint256[][4] calldata _thresholds
     // )
 

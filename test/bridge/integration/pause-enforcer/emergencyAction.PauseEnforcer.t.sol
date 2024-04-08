@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import { Transfer } from "@ronin/contracts/libraries/Transfer.sol";
 import { GatewayV3 } from "@ronin/contracts/extensions/GatewayV3.sol";
+import { LibTokenOwner, TokenOwner } from "@ronin/contracts/libraries/LibTokenOwner.sol";
 import "../BaseIntegration.t.sol";
 
 contract EmergencyAction_PauseEnforcer_Test is BaseIntegration_Test {
@@ -25,11 +26,20 @@ contract EmergencyAction_PauseEnforcer_Test is BaseIntegration_Test {
   function test_RevertWhen_InteractWithGateway_AfterPause() public {
     test_EmergencyPause_RoninGatewayV3();
     Transfer.Receipt memory receipt = Transfer.Receipt({
-      id: 0,
-      kind: Transfer.Kind.Deposit,
-      ronin: Token.Owner({ addr: makeAddr("recipient"), tokenAddr: address(_roninWeth), chainId: block.chainid }),
-      mainchain: Token.Owner({ addr: makeAddr("requester"), tokenAddr: address(_mainchainWeth), chainId: block.chainid }),
-      info: Token.Info({ erc: Token.Standard.ERC20, id: 0, quantity: 100 })
+      manifest: Transfer.ReceiptManifest({
+        id: 0,
+        kind: Transfer.Kind.Deposit,
+        ronin: TokenOwner({ addr: makeAddr("recipient"), tokenAddr: address(_roninWeth), chainId: block.chainid }),
+        mainchain: TokenOwner({ addr: makeAddr("requester"), tokenAddr: address(_mainchainWeth), chainId: block.chainid })
+      }),
+      info: TokenInfo({
+        erc: TokenStandard.ERC20,
+        mode: Mode.Single,
+        id: 0,
+        quantity: 100,
+        ids: new uint256[](0),
+        quantities: new uint256[](0)
+      })
     });
 
     vm.expectRevert("Pausable: paused");
@@ -62,11 +72,20 @@ contract EmergencyAction_PauseEnforcer_Test is BaseIntegration_Test {
   function test_InteractWithGateway_AfterUnpause() public {
     test_EmergencyUnpause_RoninGatewayV3();
     Transfer.Receipt memory receipt = Transfer.Receipt({
-      id: 0,
-      kind: Transfer.Kind.Deposit,
-      ronin: Token.Owner({ addr: makeAddr("recipient"), tokenAddr: address(_roninWeth), chainId: block.chainid }),
-      mainchain: Token.Owner({ addr: makeAddr("requester"), tokenAddr: address(_mainchainWeth), chainId: block.chainid }),
-      info: Token.Info({ erc: Token.Standard.ERC20, id: 0, quantity: 100 })
+      manifest: Transfer.ReceiptManifest({
+        id: 0,
+        kind: Transfer.Kind.Deposit,
+        ronin: TokenOwner({ addr: makeAddr("recipient"), tokenAddr: address(_roninWeth), chainId: block.chainid }),
+        mainchain: TokenOwner({ addr: makeAddr("requester"), tokenAddr: address(_mainchainWeth), chainId: block.chainid })
+      }),
+      info: TokenInfo({
+        erc: TokenStandard.ERC20,
+        mode: Mode.Single,
+        id: 0,
+        quantity: 100,
+        ids: new uint256[](0),
+        quantities: new uint256[](0)
+      })
     });
 
     uint256 numOperatorsForVoteExecuted =

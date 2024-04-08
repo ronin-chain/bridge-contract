@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../../libraries/Token.sol";
+import "../../libraries/LibTokenInfo.sol";
 
 interface MappedTokenConsumer {
   struct MappedToken {
-    Token.Standard erc;
+    TokenStandard erc;
     address tokenAddr;
   }
 }

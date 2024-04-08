@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import { console2 as console } from "forge-std/console2.sol";
 import { Transfer as LibTransfer } from "@ronin/contracts/libraries/Transfer.sol";
-import { Token } from "@ronin/contracts/libraries/Token.sol";
+import { LibTokenInfo, Mode, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 
 import "../BaseIntegration.t.sol";
 
@@ -16,7 +16,7 @@ interface IERC20 {
 }
 
 contract RequestDepositFor_MainchainGatewayV3_Test is BaseIntegration_Test {
-  event DepositRequested(bytes32 receiptHash, LibTransfer.Receipt receipt);
+  event DepositRequested(bytes32 receiptHash, LibTransfer.ReceiptManifest receipt);
 
   using LibTransfer for LibTransfer.Request;
   using LibTransfer for LibTransfer.Receipt;
@@ -34,7 +34,8 @@ contract RequestDepositFor_MainchainGatewayV3_Test is BaseIntegration_Test {
 
     _depositRequest.recipientAddr = makeAddr("recipient");
     _depositRequest.tokenAddr = address(0);
-    _depositRequest.info.erc = Token.Standard.ERC20;
+    _depositRequest.info.erc = TokenStandard.ERC20;
+    _depositRequest.info.mode = Mode.Single;
     _depositRequest.info.id = 0;
     _depositRequest.info.quantity = _quantity;
 
@@ -52,7 +53,7 @@ contract RequestDepositFor_MainchainGatewayV3_Test is BaseIntegration_Test {
     LibTransfer.Receipt memory receipt = cachedRequest.into_deposit_receipt(
       _sender, _mainchainGatewayV3.depositCount(), address(_roninWeth), block.chainid
     );
-    emit DepositRequested(receipt.hash(), receipt);
+    emit DepositRequested(receipt.hash(), receipt.manifest);
 
     vm.prank(_sender);
     _mainchainGatewayV3.requestDepositFor{ value: _quantity }(_depositRequest);
@@ -73,7 +74,8 @@ contract RequestDepositFor_MainchainGatewayV3_Test is BaseIntegration_Test {
     LibTransfer.Receipt memory receipt = _depositRequest.into_deposit_receipt(
       _sender, _mainchainGatewayV3.depositCount(), address(_roninAxs), block.chainid
     );
-    emit DepositRequested(receipt.hash(), receipt);
+
+    emit DepositRequested(receipt.hash(), receipt.manifest);
 
     vm.prank(_sender);
     _mainchainGatewayV3.requestDepositFor(_depositRequest);
@@ -90,7 +92,7 @@ contract RequestDepositFor_MainchainGatewayV3_Test is BaseIntegration_Test {
     _mainchainMockERC721.approve(address(_mainchainGatewayV3), tokenId);
 
     _depositRequest.tokenAddr = address(_mainchainMockERC721);
-    _depositRequest.info.erc = Token.Standard.ERC721;
+    _depositRequest.info.erc = TokenStandard.ERC721;
     _depositRequest.info.id = tokenId;
     _depositRequest.info.quantity = 0;
 
@@ -98,7 +100,7 @@ contract RequestDepositFor_MainchainGatewayV3_Test is BaseIntegration_Test {
       _sender, _mainchainGatewayV3.depositCount(), address(_roninMockERC721), block.chainid
     );
     vm.expectEmit(address(_mainchainGatewayV3));
-    emit DepositRequested(receipt.hash(), receipt);
+    emit DepositRequested(receipt.hash(), receipt.manifest);
 
     assertEq(_mainchainMockERC721.ownerOf(tokenId), _sender);
 
@@ -123,7 +125,7 @@ contract RequestDepositFor_MainchainGatewayV3_Test is BaseIntegration_Test {
       _sender, _mainchainGatewayV3.depositCount(), address(_roninWeth), block.chainid
     );
     vm.expectEmit(address(_mainchainGatewayV3));
-    emit DepositRequested(receipt.hash(), receipt);
+    emit DepositRequested(receipt.hash(), receipt.manifest);
 
     assertEq(address(_mainchainWeth).balance, _quantity);
 
