@@ -58,6 +58,10 @@ contract RoninGatewayV3 is
   uint256 internal _trustedNum;
   uint256 internal _trustedDenom;
 
+  constructor () {
+    _disableInitializers();
+  }
+
   fallback() external payable {
     _fallback();
   }
