@@ -29,7 +29,7 @@ library GlobalProposal {
   }
 
   // keccak256("GlobalProposalDetail(uint256 nonce,uint256 expiryTimestamp,address executor,uint8[] targetOptions,uint256[] values,bytes[] calldatas,uint256[] gasAmounts)");
-  bytes32 internal constant TYPE_HASH = 0x8fdb3bc7211cb44f39a2cae84127672c4570a00720dfbf2bb58285070faa28da;
+  bytes32 internal constant TYPE_HASH = 0xde480f0c53a3651c08fbab1dffbc45fe574f31188827fe52cb9035da9fe57e4a;
 
   /**
    * @dev Returns struct hash of the proposal.
