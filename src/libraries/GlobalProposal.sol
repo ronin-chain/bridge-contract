@@ -22,15 +22,14 @@ library GlobalProposal {
     uint256 nonce;
     uint256 expiryTimestamp;
     address executor;
-    bool loose;
     TargetOption[] targetOptions;
     uint256[] values;
     bytes[] calldatas;
     uint256[] gasAmounts;
   }
 
-  // keccak256("GlobalProposalDetail(uint256 nonce,uint256 expiryTimestamp,address executor,bool loose,uint8[] targetOptions,uint256[] values,bytes[] calldatas,uint256[] gasAmounts)");
-  bytes32 internal constant TYPE_HASH = 0x8fdb3bc7211cb44f39a2cae84127672c4570a00720dfbf2bb58285070faa28da;
+  // keccak256("GlobalProposalDetail(uint256 nonce,uint256 expiryTimestamp,address executor,uint8[] targetOptions,uint256[] values,bytes[] calldatas,uint256[] gasAmounts)");
+  bytes32 internal constant TYPE_HASH = 0xde480f0c53a3651c08fbab1dffbc45fe574f31188827fe52cb9035da9fe57e4a;
 
   /**
    * @dev Returns struct hash of the proposal.
@@ -57,7 +56,6 @@ library GlobalProposal {
      *       proposal.nonce,
      *       proposal.expiryTimestamp,
      *       proposal.executor,
-     *       proposal.loose,
      *       targetsHash,
      *       valuesHash,
      *       calldatasHash,
@@ -71,18 +69,17 @@ library GlobalProposal {
       mstore(add(ptr, 0x20), mload(self)) // proposal.nonce
       mstore(add(ptr, 0x40), mload(add(self, 0x20))) // proposal.expiryTimestamp
       mstore(add(ptr, 0x60), mload(add(self, 0x40))) // proposal.executor
-      mstore(add(ptr, 0x80), mload(add(self, 0x60))) // proposal.loose
 
       let arrayHashed
       arrayHashed := keccak256(add(targets, 32), mul(mload(targets), 32)) // targetsHash
-      mstore(add(ptr, 0xa0), arrayHashed)
+      mstore(add(ptr, 0x80), arrayHashed)
       arrayHashed := keccak256(add(values, 32), mul(mload(values), 32)) // valuesHash
-      mstore(add(ptr, 0xc0), arrayHashed)
+      mstore(add(ptr, 0xa0), arrayHashed)
       arrayHashed := keccak256(add(calldataHashList, 32), mul(mload(calldataHashList), 32)) // calldatasHash
-      mstore(add(ptr, 0xe0), arrayHashed)
+      mstore(add(ptr, 0xc0), arrayHashed)
       arrayHashed := keccak256(add(gasAmounts, 32), mul(mload(gasAmounts), 32)) // gasAmountsHash
-      mstore(add(ptr, 0x100), arrayHashed)
-      digest_ := keccak256(ptr, 0x120)
+      mstore(add(ptr, 0xe0), arrayHashed)
+      digest_ := keccak256(ptr, 0x100)
     }
   }
 
@@ -94,7 +91,6 @@ library GlobalProposal {
     detail_.chainId = 0;
     detail_.expiryTimestamp = self.expiryTimestamp;
     detail_.executor = self.executor;
-    detail_.loose = self.loose;
 
     detail_.targets = new address[](self.targetOptions.length);
     detail_.values = self.values;

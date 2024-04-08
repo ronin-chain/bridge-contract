@@ -63,7 +63,6 @@ contract ProposalWithExecutor_CurrentNetworkProposal_RoninBridgeManager_Test is 
     _proposal.nonce = _roninBridgeManager.round(block.chainid) + 1;
     _proposal.chainId = block.chainid;
     _proposal.executor = address(0);
-    _proposal.loose = false;
     _proposal.expiryTimestamp = block.timestamp + _proposalExpiryDuration;
 
     _proposal.targets.push(address(_roninBridgeManager));
@@ -80,7 +79,6 @@ contract ProposalWithExecutor_CurrentNetworkProposal_RoninBridgeManager_Test is 
 
   // Should the auto proposal executes on the last valid vote
   function test_autoProposal_strictProposal_WhenAllInternalCallsPass() public {
-    _proposal.loose = false;
     _proposal.executor = address(0);
 
     vm.expectEmit(false, true, true, true);
@@ -114,7 +112,6 @@ contract ProposalWithExecutor_CurrentNetworkProposal_RoninBridgeManager_Test is 
 
   // Should the non-auto proposal be execute by the specified executor
   function test_executorProposal_strictProposal_WhenAllInternalCallsPass() public {
-    _proposal.loose = false;
     _proposal.executor = _param.roninBridgeManager.governors[0];
     _proposal.gasAmounts[1] = 1_000_000; // Set gas for the second call becomes success
 
@@ -153,7 +150,6 @@ contract ProposalWithExecutor_CurrentNetworkProposal_RoninBridgeManager_Test is 
 
   // Should the non-auto proposal can not be execute by other governor
   function test_executorProposal_revertWhen_proposalIsExecutedByAnotherGovernor() external {
-    _proposal.loose = false;
     _proposal.executor = _param.roninBridgeManager.governors[0];
     _proposal.gasAmounts[1] = 1_000_000; // Set gas for the second call becomes success
 

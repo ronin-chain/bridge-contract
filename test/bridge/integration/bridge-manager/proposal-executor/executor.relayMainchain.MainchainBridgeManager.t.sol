@@ -62,7 +62,6 @@ contract ProposalWithExecutor_MainchainProposal_MainchainBridgeManager_Test is B
     _proposal.nonce = _mainchainBridgeManager.round(block.chainid) + 1;
     _proposal.chainId = block.chainid;
     _proposal.executor = address(0);
-    _proposal.loose = false;
     _proposal.expiryTimestamp = block.timestamp + _proposalExpiryDuration;
 
     _proposal.targets.push(address(_mainchainBridgeManager)); // Test Relay
@@ -79,7 +78,6 @@ contract ProposalWithExecutor_MainchainProposal_MainchainBridgeManager_Test is B
 
   // Should the proposal is approved but not executed on Ronin chain
   function test_relayMainchain_autoProposal_looseProposal() public {
-    _proposal.loose = true;
     _proposal.executor = address(0);
 
     vm.expectEmit(false, false, false, false);
@@ -101,7 +99,6 @@ contract ProposalWithExecutor_MainchainProposal_MainchainBridgeManager_Test is B
 
   // Should the non-auto proposal be relay by the specified executor
   function test_relayMainchain_executorProposal_looseProposal_WhenAllInternalCallsPass() public {
-    _proposal.loose = true;
     _proposal.executor = _param.roninBridgeManager.governors[0];
     _proposal.gasAmounts[1] = 1_000_000; // Set gas for the second call becomes success
 
@@ -124,7 +121,6 @@ contract ProposalWithExecutor_MainchainProposal_MainchainBridgeManager_Test is B
 
   // Should the non-auto proposal can not be execute by other governor
   function test_relayMainchain_executorProposal_revertWhen_proposalIsExecutedByAnotherGovernor() external {
-    _proposal.loose = false;
     _proposal.executor = _param.roninBridgeManager.governors[0];
     _proposal.gasAmounts[1] = 1_000_000; // Set gas for the second call becomes success
 

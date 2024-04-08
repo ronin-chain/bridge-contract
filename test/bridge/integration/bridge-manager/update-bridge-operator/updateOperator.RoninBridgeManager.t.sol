@@ -41,52 +41,53 @@ contract UpdateOperator_RoninBridgeManager_Test is BaseIntegration_Test {
   }
 
   function test_updateOperator_and_wrapUpEpoch() public {
-    // Disable test due to not supporting update operator
     vm.skip(true);
-    console.log("=============== Test Update Operator ===========");
+    // // Disable test due to not supporting update operator
+    // vm.skip(true);
+    // console.log("=============== Test Update Operator ===========");
 
-    _depositFor();
-    _moveToEndPeriodAndWrapUpEpoch();
+    // _depositFor();
+    // _moveToEndPeriodAndWrapUpEpoch();
 
-    console.log("=============== First 50 Receipts ===========");
-    // _bulkDepositFor(first50Receipts);
+    // console.log("=============== First 50 Receipts ===========");
+    // // _bulkDepositFor(first50Receipts);
 
-    for (uint i; i < 50; i++) {
-      _depositFor();
-    }
+    // for (uint i; i < 50; i++) {
+    //   _depositFor();
+    // }
 
-    console.log("=============== Update bridge operator ===========");
-    _updateBridgeOperator();
+    // console.log("=============== Update bridge operator ===========");
+    // _updateBridgeOperator();
 
-    console.log("=============== Second 50 Receipts ===========");
-    // _bulkDepositFor(second50Receipts);
-    for (uint i; i < 50; i++) {
-      _depositFor();
-    }
+    // console.log("=============== Second 50 Receipts ===========");
+    // // _bulkDepositFor(second50Receipts);
+    // for (uint i; i < 50; i++) {
+    //   _depositFor();
+    // }
 
-    _wrapUpEpoch();
-    _wrapUpEpoch();
+    // _wrapUpEpoch();
+    // _wrapUpEpoch();
 
-    _moveToEndPeriodAndWrapUpEpoch();
+    // _moveToEndPeriodAndWrapUpEpoch();
 
-    console.log("=============== Check slash and reward behavior  ===========");
-    _depositFor();
+    // console.log("=============== Check slash and reward behavior  ===========");
+    // _depositFor();
 
-    logBridgeTracking();
-    logBridgeSlash();
+    // logBridgeTracking();
+    // logBridgeSlash();
   }
 
-  function _updateBridgeOperator() internal {
-    vm.prank(_param.roninBridgeManager.governors[0]);
-    address previousOperator = _param.roninBridgeManager.bridgeOperators[0];
-    _roninBridgeManager.updateBridgeOperator(previousOperator, _newBridgeOperator);
-    _param.roninBridgeManager.bridgeOperators[0] = _newBridgeOperator;
+  // function _updateBridgeOperator() internal {
+  //   vm.prank(_param.roninBridgeManager.governors[0]);
+  //   address previousOperator = _param.roninBridgeManager.bridgeOperators[0];
+  //   _roninBridgeManager.updateBridgeOperator(previousOperator, _newBridgeOperator);
+  //   _param.roninBridgeManager.bridgeOperators[0] = _newBridgeOperator;
 
-    console.log(
-      "Update operator: ",
-      string(abi.encodePacked(vm.toString(previousOperator), " => ", vm.toString(_newBridgeOperator)))
-    );
-  }
+  //   console.log(
+  //     "Update operator: ",
+  //     string(abi.encodePacked(vm.toString(previousOperator), " => ", vm.toString(_newBridgeOperator)))
+  //   );
+  // }
 
   function _depositFor() internal {
     console.log(">> depositFor ....");

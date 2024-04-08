@@ -26,14 +26,9 @@ contract Migration__20240131_MapTokenPixelMainchain is BridgeMigration, Migratio
     super.setUp();
 
     _roninBridgeManager = RoninBridgeManager(_config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
-    _mainchainGatewayV3 = _config.getAddress(
-      _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).key(),
-      Contract.MainchainGatewayV3.key()
-    );
-    _mainchainBridgeManager = _config.getAddress(
-      _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).key(),
-      Contract.MainchainBridgeManager.key()
-    );
+    _mainchainGatewayV3 = _config.getAddress(_config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).key(), Contract.MainchainGatewayV3.key());
+    _mainchainBridgeManager =
+      _config.getAddress(_config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).key(), Contract.MainchainBridgeManager.key());
   }
 
   function run() public {
@@ -73,12 +68,7 @@ contract Migration__20240131_MapTokenPixelMainchain is BridgeMigration, Migratio
     //   uint256[][4] calldata _thresholds
     // )
 
-    bytes memory innerData = abi.encodeCall(IMainchainGatewayV3.mapTokensAndThresholds, (
-      mainchainTokens,
-      roninTokens,
-      standards,
-      thresholds
-    ));
+    bytes memory innerData = abi.encodeCall(IMainchainGatewayV3.mapTokensAndThresholds, (mainchainTokens, roninTokens, standards, thresholds));
 
     bytes memory proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
 
@@ -99,11 +89,7 @@ contract Migration__20240131_MapTokenPixelMainchain is BridgeMigration, Migratio
     //   Token.Standard[] calldata _standards
     // ) external;
 
-    innerData = abi.encodeCall(IMainchainGatewayV3.mapTokens, (
-      mainchainTokens,
-      roninTokens,
-      standards
-    ));
+    innerData = abi.encodeCall(IMainchainGatewayV3.mapTokens, (mainchainTokens, roninTokens, standards));
 
     proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
 
@@ -130,15 +116,6 @@ contract Migration__20240131_MapTokenPixelMainchain is BridgeMigration, Migratio
     uint256 chainId = _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).chainId();
 
     vm.broadcast(_governor);
-    _roninBridgeManager.propose(
-      chainId,
-      expiredTime,
-      address(0),
-      false,
-      targets,
-      values,
-      calldatas,
-      gasAmounts
-    );
+    _roninBridgeManager.propose(chainId, expiredTime, address(0), targets, values, calldatas, gasAmounts);
   }
 }

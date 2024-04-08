@@ -43,14 +43,9 @@ contract Migration__MapTokenMainchain is BridgeMigration {
     super.setUp();
 
     _roninBridgeManager = RoninBridgeManager(_config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
-    _mainchainGatewayV3 = _config.getAddress(
-      _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).key(),
-      Contract.MainchainGatewayV3.key()
-    );
-    _mainchainBridgeManager = _config.getAddress(
-      _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).key(),
-      Contract.MainchainBridgeManager.key()
-    );
+    _mainchainGatewayV3 = _config.getAddress(_config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).key(), Contract.MainchainGatewayV3.key());
+    _mainchainBridgeManager =
+      _config.getAddress(_config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).key(), Contract.MainchainBridgeManager.key());
   }
 
   function _mapFarmlandToken() internal pure returns (bytes memory) {
@@ -68,11 +63,7 @@ contract Migration__MapTokenMainchain is BridgeMigration {
     //   Token.Standard[] calldata _standards
     // )
 
-    bytes memory innerData = abi.encodeCall(IMainchainGatewayV3.mapTokens, (
-      mainchainTokens,
-      roninTokens,
-      standards
-    ));
+    bytes memory innerData = abi.encodeCall(IMainchainGatewayV3.mapTokens, (mainchainTokens, roninTokens, standards));
     return abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
   }
 
@@ -106,25 +97,18 @@ contract Migration__MapTokenMainchain is BridgeMigration {
     //   uint256[][4] calldata _thresholds
     // )
 
-    bytes memory innerData = abi.encodeCall(IMainchainGatewayV3.mapTokensAndThresholds, (
-      mainchainTokens,
-      roninTokens,
-      standards,
-      thresholds
-    ));
+    bytes memory innerData = abi.encodeCall(IMainchainGatewayV3.mapTokensAndThresholds, (mainchainTokens, roninTokens, standards, thresholds));
     return abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
   }
 
-  function _removeAxieChatGovernorAddress() pure internal returns (bytes memory) {
+  function _removeAxieChatGovernorAddress() internal pure returns (bytes memory) {
     address[] memory bridgeOperator = new address[](1);
     bridgeOperator[0] = _axieChatBridgeOperator;
 
-    return abi.encodeCall(IBridgeManager.removeBridgeOperators, (
-      bridgeOperator
-    ));
+    return abi.encodeCall(IBridgeManager.removeBridgeOperators, (bridgeOperator));
   }
 
-  function _addAxieChatGovernorAddress() pure internal returns (bytes memory) {
+  function _addAxieChatGovernorAddress() internal pure returns (bytes memory) {
     uint96[] memory voteWeight = new uint96[](1);
     address[] memory governor = new address[](1);
     address[] memory bridgeOperator = new address[](1);
@@ -133,11 +117,7 @@ contract Migration__MapTokenMainchain is BridgeMigration {
     governor[0] = _axieChatGovernor;
     bridgeOperator[0] = _axieChatBridgeOperator;
 
-    return abi.encodeCall(IBridgeManager.addBridgeOperators, (
-      voteWeight,
-      governor,
-      bridgeOperator
-    ));
+    return abi.encodeCall(IBridgeManager.addBridgeOperators, (voteWeight, governor, bridgeOperator));
   }
 
   function run() public {
@@ -172,15 +152,6 @@ contract Migration__MapTokenMainchain is BridgeMigration {
     uint256 chainId = _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).chainId();
 
     vm.broadcast(sender());
-    _roninBridgeManager.propose(
-      chainId,
-      expiredTime,
-      address(0),
-      false,
-      targets,
-      values,
-      calldatas,
-      gasAmounts
-    );
+    _roninBridgeManager.propose(chainId, expiredTime, address(0), targets, values, calldatas, gasAmounts);
   }
 }

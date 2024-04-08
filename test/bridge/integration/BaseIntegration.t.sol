@@ -318,7 +318,6 @@ contract BaseIntegration_Test is Base_Test {
       GlobalProposal.GlobalProposalDetail memory globalProposal = _roninProposalUtils.createGlobalProposal({
         expiryTimestamp: block.timestamp + 10,
         executor: address(0),
-        loose: false,
         targetOption: GlobalProposal.TargetOption.BridgeManager,
         value: 0,
         calldata_: abi.encodeCall(GlobalCoreGovernance.updateManyTargetOption, (param.targetOptions, param.targets)),
@@ -336,7 +335,6 @@ contract BaseIntegration_Test is Base_Test {
       GlobalProposal.GlobalProposalDetail memory globalProposal = _roninProposalUtils.createGlobalProposal({
         expiryTimestamp: block.timestamp + 10,
         executor: address(0),
-        loose: false,
         targetOption: GlobalProposal.TargetOption.BridgeManager,
         value: 0,
         calldata_: abi.encodeCall(IHasContracts.setContract, (ContractType.BRIDGE, param.bridgeContract)),
@@ -356,7 +354,6 @@ contract BaseIntegration_Test is Base_Test {
       GlobalProposal.GlobalProposalDetail memory globalProposal = _roninProposalUtils.createGlobalProposal({
         expiryTimestamp: block.timestamp + 10,
         executor: address(0),
-        loose: false,
         targetOption: GlobalProposal.TargetOption.BridgeManager,
         value: 0,
         calldata_: calldata_,
@@ -375,7 +372,6 @@ contract BaseIntegration_Test is Base_Test {
       GlobalProposal.GlobalProposalDetail memory globalProposal = _roninProposalUtils.createGlobalProposal({
         expiryTimestamp: block.timestamp + 10,
         executor: address(0),
-        loose: false,
         targetOption: GlobalProposal.TargetOption.BridgeManager,
         value: 0,
         calldata_: abi.encodeCall(IBridgeManager.setMinRequiredGovernor, (_param.roninBridgeManager.minRequiredGovernor)),
@@ -415,7 +411,6 @@ contract BaseIntegration_Test is Base_Test {
       GlobalProposal.GlobalProposalDetail memory globalProposal = _mainchainProposalUtils.createGlobalProposal({
         expiryTimestamp: block.timestamp + 10,
         executor: address(0),
-        loose: false,
         targetOption: GlobalProposal.TargetOption.BridgeManager,
         value: 0,
         calldata_: abi.encodeCall(GlobalCoreGovernance.updateManyTargetOption, (param.targetOptions, param.targets)),
@@ -433,7 +428,6 @@ contract BaseIntegration_Test is Base_Test {
       GlobalProposal.GlobalProposalDetail memory globalProposal = _mainchainProposalUtils.createGlobalProposal({
         expiryTimestamp: block.timestamp + 10,
         executor: address(0),
-        loose: false,
         targetOption: GlobalProposal.TargetOption.BridgeManager,
         value: 0,
         calldata_: abi.encodeCall(IHasContracts.setContract, (ContractType.BRIDGE, param.bridgeContract)),
@@ -453,7 +447,6 @@ contract BaseIntegration_Test is Base_Test {
       GlobalProposal.GlobalProposalDetail memory globalProposal = _mainchainProposalUtils.createGlobalProposal({
         expiryTimestamp: block.timestamp + 10,
         executor: address(0),
-        loose: false,
         targetOption: GlobalProposal.TargetOption.BridgeManager,
         value: 0,
         calldata_: calldata_,
@@ -472,7 +465,6 @@ contract BaseIntegration_Test is Base_Test {
       GlobalProposal.GlobalProposalDetail memory globalProposal = _roninProposalUtils.createGlobalProposal({
         expiryTimestamp: block.timestamp + 10,
         executor: address(0),
-        loose: false,
         targetOption: GlobalProposal.TargetOption.BridgeManager,
         value: 0,
         calldata_: abi.encodeCall(IBridgeManager.setMinRequiredGovernor, (_param.roninBridgeManager.minRequiredGovernor)),

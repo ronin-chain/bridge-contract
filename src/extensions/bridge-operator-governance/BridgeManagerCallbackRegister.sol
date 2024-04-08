@@ -34,8 +34,14 @@ abstract contract BridgeManagerCallbackRegister is Initializable, IdentityGuard,
   /**
    * @inheritdoc IBridgeManagerCallbackRegister
    */
-  function unregisterCallbacks(address[] calldata registers) external onlySelfCall returns (bool[] memory unregistereds) {
-    unregistereds = _unregisterCallbacks(registers);
+  function unregisterCallbacks(address[] calldata registers) external onlySelfCall nonDuplicate(registers) returns (bool[] memory unregistereds) {
+    uint256 length = registers.length;
+    unregistereds = new bool[](length);
+    EnumerableSet.AddressSet storage _callbackRegisters = _getCallbackRegisters();
+
+    for (uint256 i; i < length; i++) {
+      unregistereds[i] = _callbackRegisters.remove(registers[i]);
+    }
   }
 
   /**
@@ -51,36 +57,19 @@ abstract contract BridgeManagerCallbackRegister is Initializable, IdentityGuard,
    * @return registereds An array indicating the success status of each registration.
    */
   function _registerCallbacks(address[] memory registers) internal nonDuplicate(registers) returns (bool[] memory registereds) {
-    uint256 length = registers.length;
-    registereds = new bool[](length);
-    if (length == 0) return registereds;
+    registereds = new bool[](registers.length);
+    if (registers.length == 0) return registereds;
 
     EnumerableSet.AddressSet storage _callbackRegisters = _getCallbackRegisters();
     address register;
-    bytes4 callbackInterface = type(IBridgeManagerCallback).interfaceId;
 
-    for (uint256 i; i < length; i++) {
+    for (uint256 i; i < registers.length; i++) {
       register = registers[i];
 
       _requireHasCode(register);
-      _requireSupportsInterface(register, callbackInterface);
+      _requireSupportsInterface(register, type(IBridgeManagerCallback).interfaceId);
 
       registereds[i] = _callbackRegisters.add(register);
-    }
-  }
-
-  /**
-   * @dev Internal function to unregister multiple callbacks from the bridge.
-   * @param registers The array of callback addresses to unregister.
-   * @return unregistereds An array indicating the success status of each unregistration.
-   */
-  function _unregisterCallbacks(address[] memory registers) internal nonDuplicate(registers) returns (bool[] memory unregistereds) {
-    uint256 length = registers.length;
-    unregistereds = new bool[](length);
-    EnumerableSet.AddressSet storage _callbackRegisters = _getCallbackRegisters();
-
-    for (uint256 i; i < length; i++) {
-      unregistereds[i] = _callbackRegisters.remove(registers[i]);
     }
   }
 

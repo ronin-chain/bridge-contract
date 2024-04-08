@@ -74,12 +74,7 @@ contract Migration__20240131_MapTokenPixelRoninchain is BridgeMigration, Migrati
     //   uint256[] calldata chainIds,
     //   Token.Standard[] calldata _standards
     // )
-    bytes memory innerData = abi.encodeCall(IRoninGatewayV3.mapTokens, (
-      roninTokens,
-      mainchainTokens,
-      chainIds,
-      standards
-    ));
+    bytes memory innerData = abi.encodeCall(IRoninGatewayV3.mapTokens, (roninTokens, mainchainTokens, chainIds, standards));
     bytes memory proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
 
     targets[0] = _roninGatewayV3;
@@ -101,10 +96,7 @@ contract Migration__20240131_MapTokenPixelRoninchain is BridgeMigration, Migrati
     mainchainTokensToSetMinThreshold[1] = _aggMainchainToken;
     minThresholds[1] = _aggMinThreshold;
 
-    innerData = abi.encodeCall(MinimumWithdrawal.setMinimumThresholds, (
-      mainchainTokensToSetMinThreshold,
-      minThresholds
-    ));
+    innerData = abi.encodeCall(MinimumWithdrawal.setMinimumThresholds, (mainchainTokensToSetMinThreshold, minThresholds));
     proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
 
     targets[1] = _roninGatewayV3;
@@ -128,15 +120,6 @@ contract Migration__20240131_MapTokenPixelRoninchain is BridgeMigration, Migrati
     _verifyRoninProposalGasAmount(targets, values, calldatas, gasAmounts);
 
     vm.broadcast(_governor);
-    _roninBridgeManager.propose(
-      block.chainid,
-      expiredTime,
-      address(0),
-      false,
-      targets,
-      values,
-      calldatas,
-      gasAmounts
-    );
+    _roninBridgeManager.propose(block.chainid, expiredTime, address(0), targets, values, calldatas, gasAmounts);
   }
 }

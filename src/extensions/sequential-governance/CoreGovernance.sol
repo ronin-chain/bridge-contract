@@ -98,37 +98,6 @@ abstract contract CoreGovernance is Initializable, SignatureConsumer, VoteStatus
   }
 
   /**
-   * @dev Proposes for a new proposal.
-   *
-   * Requirements:
-   * - The chain id is not equal to 0.
-   *
-   * Emits the `ProposalCreated` event.
-   *
-   */
-  function _proposeProposal(
-    uint256 chainId,
-    uint256 expiryTimestamp,
-    address executor,
-    bool loose,
-    address[] memory targets,
-    uint256[] memory values,
-    bytes[] memory calldatas,
-    uint256[] memory gasAmounts,
-    address creator
-  ) internal virtual returns (Proposal.ProposalDetail memory proposal) {
-    if (chainId == 0) revert ErrInvalidChainId(msg.sig, 0, block.chainid);
-    uint256 round_ = _createVotingRound(chainId);
-
-    proposal = Proposal.ProposalDetail(round_, chainId, expiryTimestamp, executor, loose, targets, values, calldatas, gasAmounts);
-    proposal.validate(_proposalExpiryDuration);
-
-    bytes32 proposalHash = proposal.hash();
-    _saveVotingRound(vote[chainId][round_], proposalHash, expiryTimestamp);
-    emit ProposalCreated(chainId, round_, proposalHash, proposal, creator);
-  }
-
-  /**
    * @dev Proposes proposal struct.
    *
    * Requirements:
@@ -290,13 +259,6 @@ abstract contract CoreGovernance is Initializable, SignatureConsumer, VoteStatus
   function _setProposalExpiryDuration(uint256 expiryDuration) internal {
     _proposalExpiryDuration = expiryDuration;
     emit ProposalExpiryDurationChanged(expiryDuration);
-  }
-
-  /**
-   * @dev Returns the expiry duration for a new proposal.
-   */
-  function _getProposalExpiryDuration() internal view returns (uint256) {
-    return _proposalExpiryDuration;
   }
 
   /**
