@@ -69,6 +69,7 @@ contract DeploySepolia is BridgeMigration, DeploySepolia__ChangeGV_Config {
 
     _deployContractsOnMainchain();
     _mainchainGatewayV3Initialize();
+    // _mainchainPauseEnforcerInitialize();
     _correctGVs();
     _grantFundForGateway();
   }
@@ -129,6 +130,9 @@ contract DeploySepolia is BridgeMigration, DeploySepolia__ChangeGV_Config {
 
     vm.broadcast(sender());
     _mainchainGatewayV3.initializeV2(address(_mainchainBridgeManager));
+
+    vm.broadcast(sender());
+    _mainchainGatewayV3.setEmergencyPauser(address(_mainchainPauseEnforcer));
   }
 
   function _correctGVs() internal {
