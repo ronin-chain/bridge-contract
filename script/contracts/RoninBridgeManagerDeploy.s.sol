@@ -6,7 +6,7 @@ import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeMa
 import { Contract } from "../utils/Contract.sol";
 import { ISharedArgument } from "../interfaces/ISharedArgument.sol";
 import { Migration } from "../Migration.s.sol";
-import { LibProxy } from "foundry-deployment-kit/libraries/LibProxy.sol";
+import { LibProxy } from "@fdk/libraries/LibProxy.sol";
 import { RoninGatewayV3Deploy } from "./RoninGatewayV3Deploy.s.sol";
 import { BridgeSlashDeploy } from "./BridgeSlashDeploy.s.sol";
 
