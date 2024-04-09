@@ -60,6 +60,7 @@ contract Migration__20240409_MapTokenSlpMainchain is BridgeMigration, Migration_
     MockSLP _mainchainSlp = new SLPDeploy().run();
 
     assertEq(_mainchainSlp.decimals(), 0);
+    assertEq(_mainchainSlp.symbol(), "SLP");
 
     mainchainTokens[0] = address(_mainchainSlp);
     roninTokens[0] = _slpRoninToken;

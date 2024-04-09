@@ -14,7 +14,7 @@ contract SLPDeploy is Migration {
   }
 
   function _arguments() internal virtual returns (ISharedArgument.MockERC20Param memory) {
-    return config.sharedArguments().usdc;
+    return config.sharedArguments().slp;
   }
 
   function _getContract() internal pure returns (Contract) {
