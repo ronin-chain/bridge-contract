@@ -53,7 +53,7 @@ contract GeneralConfig is BaseGeneralConfig, Utils {
     _contractNameMap[Contract.WETH.key()] = "MockWrappedToken";
     _contractNameMap[Contract.WRON.key()] = "MockWrappedToken";
     _contractNameMap[Contract.AXS.key()] = "MockERC20";
-    _contractNameMap[Contract.SLP.key()] = "MockERC20";
+    _contractNameMap[Contract.SLP.key()] = "MockSLP";
     _contractNameMap[Contract.USDC.key()] = "MockUSDC";
 
     _contractNameMap[Contract.RoninPauseEnforcer.key()] = "PauseEnforcer";

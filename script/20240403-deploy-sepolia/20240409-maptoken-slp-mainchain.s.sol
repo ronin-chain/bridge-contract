@@ -49,15 +49,17 @@ contract Migration__20240409_MapTokenSlpMainchain is BridgeMigration, Migration_
     thresholds[2] = new uint256[](1);
     thresholds[3] = new uint256[](1);
 
-    uint256 expiredTime = block.timestamp + 10 days;
-    address[] memory targets = new address[](1);
-    uint256[] memory values = new uint256[](1);
-    bytes[] memory calldatas = new bytes[](1);
-    uint256[] memory gasAmounts = new uint256[](1);
+    // uint256 expiredTime = block.timestamp + 10 days;
+    // address[] memory targets = new address[](1);
+    // uint256[] memory values = new uint256[](1);
+    // bytes[] memory calldatas = new bytes[](1);
+    // uint256[] memory gasAmounts = new uint256[](1);
 
     // ================ SLP ERC-20 ======================
 
     MockSLP _mainchainSlp = new SLPDeploy().run();
+
+    assertEq(_mainchainSlp.decimals(), 0);
 
     mainchainTokens[0] = address(_mainchainSlp);
     roninTokens[0] = _slpRoninToken;
@@ -76,6 +78,9 @@ contract Migration__20240409_MapTokenSlpMainchain is BridgeMigration, Migration_
 
     vm.startBroadcast(0x968D0Cd7343f711216817E617d3f92a23dC91c07);
     address(_mainchainGatewayV3).call(abi.encodeWithSignature("functionDelegateCall(bytes)",innerData));
+
+    _mainchainSlp.mint(address(_mainchainGatewayV3), 50_000_000);
+    _mainchainSlp.mint(address(0xC65C6BEA96666f150BEF9b936630f6355BfFCC06), 100_000);
 
     return;
 
