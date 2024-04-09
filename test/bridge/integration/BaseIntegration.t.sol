@@ -16,6 +16,7 @@ import { BridgeSlash } from "@ronin/contracts/ronin/gateway/BridgeSlash.sol";
 import { BridgeReward } from "@ronin/contracts/ronin/gateway/BridgeReward.sol";
 import { MainchainGatewayV3 } from "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
 import { MainchainBridgeManager } from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
+import { MockSLP } from "@ronin/contracts/mocks/token/MockSLP.sol";
 import { MockUSDC } from "@ronin/contracts/mocks/token/MockUSDC.sol";
 import { MockERC20 } from "@ronin/contracts/mocks/token/MockERC20.sol";
 import { MockERC721 } from "@ronin/contracts/mocks/token/MockERC721.sol";
@@ -76,13 +77,13 @@ contract BaseIntegration_Test is Base_Test {
   MockWrappedToken _roninWeth;
   MockWrappedToken _roninWron;
   MockERC20 _roninAxs;
-  MockERC20 _roninSlp;
+  MockSLP _roninSlp;
   MockUSDC _roninUsdc;
   MockERC721 _roninMockERC721;
 
   MockWrappedToken _mainchainWeth;
   MockERC20 _mainchainAxs;
-  MockERC20 _mainchainSlp;
+  MockSLP _mainchainSlp;
   MockUSDC _mainchainUsdc;
   MockERC721 _mainchainMockERC721;
 

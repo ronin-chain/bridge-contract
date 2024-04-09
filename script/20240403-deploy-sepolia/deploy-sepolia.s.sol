@@ -8,6 +8,7 @@ import "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
 import "@ronin/contracts/ronin/gateway/PauseEnforcer.sol";
 import "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
 import { MockUSDC } from "@ronin/contracts/mocks/token/MockUSDC.sol";
+import { MockSLP } from "@ronin/contracts/mocks/token/MockSLP.sol";
 import { MockERC20 } from "@ronin/contracts/mocks/token/MockERC20.sol";
 import { MockERC721 } from "@ronin/contracts/mocks/token/MockERC721.sol";
 import { MockWrappedToken } from "@ronin/contracts/mocks/token/MockWrappedToken.sol";
@@ -42,7 +43,7 @@ contract DeploySepolia is BridgeMigration, DeploySepolia__ChangeGV_Config {
   MockWrappedToken _mainchainWeth;
   MockERC20 _mainchainAxs;
   MockUSDC _mainchainUsdc;
-  MockERC20 _mainchainSlp;
+  MockSLP _mainchainSlp;
   MockERC721 _mainchainMockERC721;
 
   MainchainBridgeAdminUtils _mainchainProposalUtils;
