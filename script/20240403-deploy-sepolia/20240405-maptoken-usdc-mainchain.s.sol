@@ -133,6 +133,7 @@ contract Migration__20240405_MapTokenUsdcMainchain is BridgeMigration, Migration
       nonce: MainchainBridgeManager(_mainchainBridgeManager).round(11155111) + 1,
       chainId: block.chainid,
       expiryTimestamp: expiredTime,
+      executor: address(0),
       targets: targets,
       values: values,
       calldatas: calldatas,

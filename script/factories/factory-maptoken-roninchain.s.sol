@@ -111,6 +111,6 @@ abstract contract Factory__MapTokensRoninchain is BridgeMigration {
     _verifyRoninProposalGasAmount(targets, values, calldatas, gasAmounts);
 
     vm.broadcast(_governor);
-    _roninBridgeManager.propose(block.chainid, expiredTime, targets, values, calldatas, gasAmounts);
+    _roninBridgeManager.propose(block.chainid, expiredTime, address(0), targets, values, calldatas, gasAmounts);
   }
 }

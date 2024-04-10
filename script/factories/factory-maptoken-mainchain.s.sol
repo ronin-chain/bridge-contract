@@ -94,6 +94,6 @@ abstract contract Factory__MapTokensMainchain is BridgeMigration {
     uint256 chainId = _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).chainId();
 
     vm.broadcast(_governor);
-    _roninBridgeManager.propose(chainId, expiredTime, targets, values, calldatas, gasAmounts);
+    _roninBridgeManager.propose(chainId, expiredTime, address(0), targets, values, calldatas, gasAmounts);
   }
 }

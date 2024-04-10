@@ -161,6 +161,7 @@ contract DeploySepolia is BridgeMigration, DeploySepolia__ChangeGV_Config {
       nonce: _mainchainBridgeManager.round(0) + 1,
       chainId: block.chainid,
       expiryTimestamp: expiredTime,
+      executor: address(0),
       targets: targets,
       values: values,
       calldatas: calldatas,

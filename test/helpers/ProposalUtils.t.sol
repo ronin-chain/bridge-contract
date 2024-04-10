@@ -22,9 +22,9 @@ contract ProposalUtils is Utils, Test {
     _domain = keccak256(
       abi.encode(
         keccak256("EIP712Domain(string name,string version,bytes32 salt)"),
-        keccak256("BridgeAdmin"), // name hash
-        keccak256("2"), // version hash
-        keccak256(abi.encode("BRIDGE_ADMIN", roninChainId)) // salt
+        keccak256("BridgeManager"), // name hash
+        keccak256("3"), // version hash
+        keccak256(abi.encode("BRIDGE_MANAGER", roninChainId)) // salt
       )
     );
 
