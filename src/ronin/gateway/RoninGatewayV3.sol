@@ -161,21 +161,24 @@ contract RoninGatewayV3 is
     _executedReceipts = new bool[](length);
     IBridgeTracking bridgeTrackingContract = IBridgeTracking(getContract(ContractType.BRIDGE_TRACKING));
 
-    for (uint256 i; i < length; i++) {
+    for (uint256 i; i < length; ++i) {
       withdrawalId = _withdrawalIds[i];
       bridgeTrackingContract.recordVote(IBridgeTracking.VoteKind.MainchainWithdrawal, withdrawalId, governor);
+
+      // Mark the withdrawal is executed
       if (mainchainWithdrew(withdrawalId)) {
         _executedReceipts[i] = true;
-      } else {
-        IsolatedGovernance.Vote storage _vote = mainchainWithdrewVote[withdrawalId];
-        Transfer.Receipt memory _withdrawal = withdrawal[withdrawalId];
-        bytes32 _hash = _withdrawal.hash();
-        VoteStatus _status = _castIsolatedVote(_vote, governor, minVoteWeight, _hash);
-        if (_status == VoteStatus.Approved) {
-          _vote.status = VoteStatus.Executed;
-          bridgeTrackingContract.handleVoteApproved(IBridgeTracking.VoteKind.MainchainWithdrawal, withdrawalId);
-          emit MainchainWithdrew(_hash, _withdrawal);
-        }
+      }
+
+      // Process all votes, not early-exit to track all votes in BridgeTracking
+      IsolatedGovernance.Vote storage _vote = mainchainWithdrewVote[withdrawalId];
+      Transfer.Receipt memory _withdrawal = withdrawal[withdrawalId];
+      bytes32 _hash = _withdrawal.hash();
+      VoteStatus _status = _castIsolatedVote(_vote, governor, minVoteWeight, _hash);
+      if (_status == VoteStatus.Approved) {
+        _vote.status = VoteStatus.Executed;
+        bridgeTrackingContract.handleVoteApproved(IBridgeTracking.VoteKind.MainchainWithdrawal, withdrawalId);
+        emit MainchainWithdrew(_hash, _withdrawal);
       }
     }
   }
@@ -198,9 +201,10 @@ contract RoninGatewayV3 is
       iReceipt = receipts[i];
       if (depositVote[iReceipt.mainchain.chainId][iReceipt.id].status == VoteStatus.Executed) {
         _executedReceipts[i] = true;
-      } else {
-        _depositFor(iReceipt, msg.sender, minVoteWeight);
       }
+
+      // Process all votes, not early-exit to track all votes in BridgeTracking
+      _depositFor(iReceipt, msg.sender, minVoteWeight);
     }
   }
 
