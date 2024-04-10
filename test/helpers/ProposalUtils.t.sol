@@ -18,8 +18,15 @@ contract ProposalUtils is Utils, Test {
   uint256[] _signerPKs;
   bytes32 _domain;
 
-  constructor(uint256[] memory signerPKs) {
-    _domain = getBridgeManagerDomain();
+  constructor(uint256 roninChainId, uint256[] memory signerPKs) {
+    _domain = keccak256(
+      abi.encode(
+        keccak256("EIP712Domain(string name,string version,bytes32 salt)"),
+        keccak256("BridgeAdmin"), // name hash
+        keccak256("2"), // version hash
+        keccak256(abi.encode("BRIDGE_ADMIN", roninChainId)) // salt
+      )
+    );
 
     for (uint256 i; i < signerPKs.length; i++) {
       _signerPKs.push(signerPKs[i]);
@@ -111,14 +118,7 @@ contract ProposalUtils is Utils, Test {
   }
 
   function getBridgeManagerDomain() public view returns (bytes32) {
-    return keccak256(
-      abi.encode(
-        keccak256("EIP712Domain(string name,string version,bytes32 salt)"),
-        keccak256("BridgeManager"), // name hash
-        keccak256("3"), // version hash
-        keccak256(abi.encode("BRIDGE_MANAGER", block.chainid)) // salt
-      )
-    );
+    return _domain;
   }
 
   function generateSignaturesFor(
@@ -129,7 +129,7 @@ contract ProposalUtils is Utils, Test {
     sigs = new SignatureConsumer.Signature[](signerPKs.length);
 
     for (uint256 i; i < signerPKs.length; i++) {
-      bytes32 digest = _domain.toTypedDataHash(Ballot.hash(proposalHash, support));
+      bytes32 digest = ECDSA.toTypedDataHash(_domain, Ballot.hash(proposalHash, support));
       sigs[i] = _sign(signerPKs[i], digest);
     }
   }

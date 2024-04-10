@@ -10,7 +10,7 @@ import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeMa
 import { ErrorHandler } from "@ronin/contracts/libraries/ErrorHandler.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
 
-import { GeneralConfigExtended } from "./GeneralConfigExtended.sol";
+import { GeneralConfig } from "./GeneralConfig.sol";
 import { IGeneralConfigExtended } from "./IGeneralConfigExtended.sol";
 import { Network } from "./utils/Network.sol";
 import { Contract } from "./utils/Contract.sol";
@@ -24,7 +24,7 @@ contract BridgeMigration is BaseMigration {
   IGeneralConfigExtended internal constant _config = IGeneralConfigExtended(address(CONFIG));
 
   function _configByteCode() internal virtual override returns (bytes memory) {
-    return abi.encodePacked(type(GeneralConfigExtended).creationCode);
+    return abi.encodePacked(type(GeneralConfig).creationCode);
   }
 
   function _sharedArguments() internal virtual override returns (bytes memory rawArgs) {
