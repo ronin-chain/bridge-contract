@@ -8,7 +8,9 @@ contract RoninBridgeAdminUtils is ProposalUtils {
   RoninBridgeManager _contract;
   address _sender;
 
-  constructor(uint256[] memory signerPKs, RoninBridgeManager contract_, address sender) ProposalUtils(signerPKs) {
+  constructor(uint256 roninChainId, uint256[] memory signerPKs, RoninBridgeManager contract_, address sender)
+    ProposalUtils(roninChainId, signerPKs)
+  {
     _contract = contract_;
     _sender = sender;
   }

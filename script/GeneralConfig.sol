@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 import { console2 as console } from "forge-std/console2.sol";
 import { BaseGeneralConfig } from "foundry-deployment-kit/BaseGeneralConfig.sol";
 import { DefaultNetwork } from "foundry-deployment-kit/utils/DefaultNetwork.sol";
+import { TNetwork } from "foundry-deployment-kit/types/Types.sol";
 import { Contract } from "./utils/Contract.sol";
 import { Network } from "./utils/Network.sol";
 import { Utils } from "./utils/Utils.sol";
@@ -13,12 +14,12 @@ contract GeneralConfig is BaseGeneralConfig, Utils {
 
   function _setUpNetworks() internal virtual override {
     setNetworkInfo(
-      Network.Goerli.chainId(),
-      Network.Goerli.key(),
-      Network.Goerli.chainAlias(),
-      Network.Goerli.deploymentDir(),
-      Network.Goerli.envLabel(),
-      Network.Goerli.explorer()
+      Network.Sepolia.chainId(),
+      Network.Sepolia.key(),
+      Network.Sepolia.chainAlias(),
+      Network.Sepolia.deploymentDir(),
+      Network.Sepolia.envLabel(),
+      Network.Sepolia.explorer()
     );
     setNetworkInfo(
       Network.EthMainnet.chainId(),
@@ -52,8 +53,8 @@ contract GeneralConfig is BaseGeneralConfig, Utils {
     _contractNameMap[Contract.WETH.key()] = "MockWrappedToken";
     _contractNameMap[Contract.WRON.key()] = "MockWrappedToken";
     _contractNameMap[Contract.AXS.key()] = "MockERC20";
-    _contractNameMap[Contract.SLP.key()] = "MockERC20";
-    _contractNameMap[Contract.USDC.key()] = "MockERC20";
+    _contractNameMap[Contract.SLP.key()] = "MockSLP";
+    _contractNameMap[Contract.USDC.key()] = "MockUSDC";
 
     _contractNameMap[Contract.RoninPauseEnforcer.key()] = "PauseEnforcer";
     _contractNameMap[Contract.MainchainPauseEnforcer.key()] = "PauseEnforcer";
@@ -69,5 +70,11 @@ contract GeneralConfig is BaseGeneralConfig, Utils {
 
     if (sender == address(0x0) && isLocalNetwork) sender = payable(DEFAULT_SENDER);
     require(sender != address(0x0), "GeneralConfig: Sender is address(0x0)");
+  }
+
+  function getCompanionNetwork(TNetwork network) external pure returns (Network) {
+    if (network == DefaultNetwork.RoninTestnet.key()) return Network.Sepolia;
+    if (network == DefaultNetwork.RoninMainnet.key()) return Network.EthMainnet;
+    revert("Network: Unknown companion network");
   }
 }
