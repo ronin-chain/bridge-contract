@@ -14,7 +14,8 @@ library GlobalProposal {
     GatewayContract, // 1
     BridgeReward, // 2
     BridgeSlash, // 3
-    BridgeTracking // 4
+    BridgeTracking, // 4
+    PauseEnforcer // 5
 
   }
 
