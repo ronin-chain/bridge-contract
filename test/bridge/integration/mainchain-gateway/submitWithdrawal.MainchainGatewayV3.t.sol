@@ -16,6 +16,13 @@ interface IERC20 {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
+contract ReentrancyActor {
+  fallback() external payable {
+    // reentrancy
+    payable(msg.sender).transfer(msg.value);
+  }
+}
+
 contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
   event Withdrew(bytes32 receiptHash, LibTransfer.Receipt receipt);
 
@@ -29,9 +36,12 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
 
   LibTransfer.Receipt _withdrawalReceipt;
   bytes32 _domainSeparator;
+  address actor;
 
   function setUp() public virtual override {
     super.setUp();
+
+    actor = address(new ReentrancyActor());
 
     _domainSeparator = _mainchainGatewayV3.DOMAIN_SEPARATOR();
 
