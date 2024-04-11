@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import { IBridgeManager } from "../interfaces/bridge/IBridgeManager.sol";
 import { IBridgeManagerCallback } from "../interfaces/bridge/IBridgeManagerCallback.sol";
 import { HasContracts, ContractType } from "../extensions/collections/HasContracts.sol";
@@ -14,10 +15,11 @@ contract MainchainGatewayV3 is
   WithdrawalLimitation,
   Initializable,
   AccessControlEnumerable,
+  ERC1155Holder,
   IMainchainGatewayV3,
   HasContracts
 {
-  using Token for Token.Info;
+  using LibTokenInfo for TokenInfo;
   using Transfer for Transfer.Request;
   using Transfer for Transfer.Receipt;
 
@@ -75,7 +77,7 @@ contract MainchainGatewayV3 is
     // _thresholds[2]: unlockFeePercentages
     // _thresholds[3]: dailyWithdrawalLimit
     uint256[][4] calldata _thresholds,
-    Token.Standard[] calldata _standards
+    TokenStandard[] calldata _standards
   ) external payable virtual initializer {
     _setupRole(DEFAULT_ADMIN_ROLE, _roleSetter);
     roninChainId = _roninChainId;
@@ -163,16 +165,16 @@ contract MainchainGatewayV3 is
     emit WithdrawalUnlocked(_receiptHash, _receipt);
 
     address _token = _receipt.mainchain.tokenAddr;
-    if (_receipt.info.erc == Token.Standard.ERC20) {
-      Token.Info memory _feeInfo = _receipt.info;
+    if (_receipt.info.erc == TokenStandard.ERC20) {
+      TokenInfo memory _feeInfo = _receipt.info;
       _feeInfo.quantity = _computeFeePercentage(_receipt.info.quantity, unlockFeePercentages[_token]);
-      Token.Info memory _withdrawInfo = _receipt.info;
+      TokenInfo memory _withdrawInfo = _receipt.info;
       _withdrawInfo.quantity = _receipt.info.quantity - _feeInfo.quantity;
 
-      _feeInfo.handleAssetTransfer(payable(msg.sender), _token, wrappedNativeToken);
-      _withdrawInfo.handleAssetTransfer(payable(_receipt.mainchain.addr), _token, wrappedNativeToken);
+      _feeInfo.handleAssetOut(payable(msg.sender), _token, wrappedNativeToken);
+      _withdrawInfo.handleAssetOut(payable(_receipt.mainchain.addr), _token, wrappedNativeToken);
     } else {
-      _receipt.info.handleAssetTransfer(payable(_receipt.mainchain.addr), _token, wrappedNativeToken);
+      _receipt.info.handleAssetOut(payable(_receipt.mainchain.addr), _token, wrappedNativeToken);
     }
 
     emit Withdrew(_receiptHash, _receipt);
@@ -184,7 +186,7 @@ contract MainchainGatewayV3 is
   function mapTokens(
     address[] calldata _mainchainTokens,
     address[] calldata _roninTokens,
-    Token.Standard[] calldata _standards
+    TokenStandard[] calldata _standards
   ) external virtual onlyAdmin {
     if (_mainchainTokens.length == 0) revert ErrEmptyArray();
     _mapTokens(_mainchainTokens, _roninTokens, _standards);
@@ -196,7 +198,7 @@ contract MainchainGatewayV3 is
   function mapTokensAndThresholds(
     address[] calldata _mainchainTokens,
     address[] calldata _roninTokens,
-    Token.Standard[] calldata _standards,
+    TokenStandard[] calldata _standards,
     // _thresholds[0]: highTierThreshold
     // _thresholds[1]: lockedThreshold
     // _thresholds[2]: unlockFeePercentages
@@ -231,7 +233,7 @@ contract MainchainGatewayV3 is
   function _mapTokens(
     address[] calldata _mainchainTokens,
     address[] calldata _roninTokens,
-    Token.Standard[] calldata _standards
+    TokenStandard[] calldata _standards
   ) internal virtual {
     if (!(_mainchainTokens.length == _roninTokens.length && _mainchainTokens.length == _standards.length)) {
       revert ErrLengthMismatch(msg.sig);
@@ -285,7 +287,7 @@ contract MainchainGatewayV3 is
 
     if (withdrawalHash[_id] != 0) revert ErrQueryForProcessedWithdrawal();
 
-    if (!(_receipt.info.erc == Token.Standard.ERC721 || !_reachedWithdrawalLimit(_tokenAddr, _quantity))) {
+    if (!(_receipt.info.erc == TokenStandard.ERC721 || !_reachedWithdrawalLimit(_tokenAddr, _quantity))) {
       revert ErrReachedDailyWithdrawalLimit();
     }
 
@@ -330,7 +332,7 @@ contract MainchainGatewayV3 is
     }
 
     _recordWithdrawal(_tokenAddr, _quantity);
-    _receipt.info.handleAssetTransfer(payable(_receipt.mainchain.addr), _tokenAddr, wrappedNativeToken);
+    _receipt.info.handleAssetOut(payable(_receipt.mainchain.addr), _tokenAddr, wrappedNativeToken);
     emit Withdrew(_receiptHash, _receipt);
   }
 
@@ -363,7 +365,7 @@ contract MainchainGatewayV3 is
       _token = getRoninToken(_request.tokenAddr);
       if (_token.erc != _request.info.erc) revert ErrInvalidTokenStandard();
 
-      _request.info.transferFrom(_requester, address(this), _request.tokenAddr);
+      _request.info.handleAssetIn(_requester, _request.tokenAddr);
       // Withdraw if token is WETH
       if (_roninWeth == _request.tokenAddr) {
         IWETH(_roninWeth).withdraw(_request.info.quantity);
@@ -380,14 +382,14 @@ contract MainchainGatewayV3 is
   /**
    * @dev Returns the minimum vote weight for the token.
    */
-  function _computeMinVoteWeight(Token.Standard _erc, address _token, uint256 _quantity)
+  function _computeMinVoteWeight(TokenStandard _erc, address _token, uint256 _quantity)
     internal
     virtual
     returns (uint256 _weight, bool _locked)
   {
     uint256 _totalWeight = _getTotalWeight();
     _weight = _minimumVoteWeight(_totalWeight);
-    if (_erc == Token.Standard.ERC20) {
+    if (_erc == TokenStandard.ERC20) {
       if (highTierThreshold[_token] <= _quantity) {
         _weight = _highTierVoteWeight(_totalWeight);
       }
@@ -459,5 +461,13 @@ contract MainchainGatewayV3 is
    */
   function _getWeight(address _addr) internal view returns (uint256) {
     return IBridgeManager(getContract(ContractType.BRIDGE_MANAGER)).getBridgeOperatorWeight(_addr);
+  }
+
+  function supportsInterface(bytes4 interfaceId)
+    public
+    view
+    override(AccessControlEnumerable, ERC1155Receiver) returns (bool)
+  {
+    return AccessControlEnumerable.supportsInterface(interfaceId) || ERC1155Receiver.supportsInterface(interfaceId);
   }
 }

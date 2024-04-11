@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import { console2 as console } from "forge-std/console2.sol";
 import { Transfer as LibTransfer } from "@ronin/contracts/libraries/Transfer.sol";
-import { Token } from "@ronin/contracts/libraries/Token.sol";
+import { LibTokenInfo, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/SignatureConsumer.sol";
 import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
 import "../BaseIntegration.t.sol";
@@ -43,7 +43,7 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
     _withdrawalReceipt.mainchain.addr = makeAddr("recipient");
     _withdrawalReceipt.mainchain.tokenAddr = address(_mainchainWeth);
     _withdrawalReceipt.mainchain.chainId = block.chainid;
-    _withdrawalReceipt.info.erc = Token.Standard.ERC20;
+    _withdrawalReceipt.info.erc = TokenStandard.ERC20;
     _withdrawalReceipt.info.id = 0;
     _withdrawalReceipt.info.quantity = 10;
 
@@ -187,7 +187,7 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
     _withdrawalReceipt.mainchain.tokenAddr = address(_mainchainMockERC721);
     _withdrawalReceipt.ronin.tokenAddr = address(_roninMockERC721);
     _withdrawalReceipt.info.id = tokenId;
-    _withdrawalReceipt.info.erc = Token.Standard.ERC721;
+    _withdrawalReceipt.info.erc = TokenStandard.ERC721;
     _withdrawalReceipt.info.quantity = 0;
 
     SignatureConsumer.Signature[] memory signatures =
@@ -215,7 +215,7 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
     _withdrawalReceipt.mainchain.tokenAddr = address(_mainchainMockERC721);
     _withdrawalReceipt.ronin.tokenAddr = address(_roninMockERC721);
     _withdrawalReceipt.info.id = tokenId;
-    _withdrawalReceipt.info.erc = Token.Standard.ERC721;
+    _withdrawalReceipt.info.erc = TokenStandard.ERC721;
     _withdrawalReceipt.info.quantity = 0;
 
     SignatureConsumer.Signature[] memory signatures =
