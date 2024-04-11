@@ -27,7 +27,7 @@ import "../BridgeMigration.sol";
 
 contract Migration__20240409_P1_DeployRoninBridgeManager is BridgeMigration {
   ISharedArgument.SharedParameter _param;
-  RoninBridgeManager _roninBridgeManager;
+  RoninBridgeManager _newRoninBridgeManager;
 
   function setUp() public override {
     super.setUp();
@@ -71,7 +71,7 @@ contract Migration__20240409_P1_DeployRoninBridgeManager is BridgeMigration {
     param.roninBridgeManager.targets[2] = _config.getAddressFromCurrentNetwork(Contract.BridgeSlash.key());
     param.roninBridgeManager.targets[3] = _config.getAddressFromCurrentNetwork(Contract.BridgeTracking.key());
 
-    _roninBridgeManager = RoninBridgeManager(new RoninBridgeManagerDeploy().overrideArgs(
+    _newRoninBridgeManager = RoninBridgeManager(new RoninBridgeManagerDeploy().overrideArgs(
       abi.encodeCall(
         RoninBridgeManagerConstructor.initialize,
         (
