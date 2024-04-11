@@ -3,10 +3,13 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./Token.sol";
+import "./LibTokenInfo.sol";
+import "./LibTokenOwner.sol";
 
 library Transfer {
   using ECDSA for bytes32;
+  using LibTokenOwner for TokenOwner;
+  using LibTokenInfo for TokenInfo;
 
   enum Kind {
     Deposit,
@@ -20,7 +23,7 @@ library Transfer {
     // Token address to deposit/withdraw
     // Value 0: native token
     address tokenAddr;
-    Token.Info info;
+    TokenInfo info;
   }
 
   /**
@@ -68,9 +71,9 @@ library Transfer {
   struct Receipt {
     uint256 id;
     Kind kind;
-    Token.Owner mainchain;
-    Token.Owner ronin;
-    Token.Info info;
+    TokenOwner mainchain;
+    TokenOwner ronin;
+    TokenInfo info;
   }
 
   // keccak256("Receipt(uint256 id,uint8 kind,TokenOwner mainchain,TokenOwner ronin,TokenInfo info)TokenInfo(uint8 erc,uint256 id,uint256 quantity)TokenOwner(address addr,address tokenAddr,uint256 chainId)");
@@ -80,9 +83,9 @@ library Transfer {
    * @dev Returns token info struct hash.
    */
   function hash(Receipt memory _receipt) internal pure returns (bytes32 digest) {
-    bytes32 hashedReceiptMainchain = Token.hash(_receipt.mainchain);
-    bytes32 hashedReceiptRonin = Token.hash(_receipt.ronin);
-    bytes32 hashedReceiptInfo = Token.hash(_receipt.info);
+    bytes32 hashedReceiptMainchain = _receipt.mainchain.hash();
+    bytes32 hashedReceiptRonin = _receipt.ronin.hash();
+    bytes32 hashedReceiptInfo = _receipt.info.hash();
 
     /*
      * return

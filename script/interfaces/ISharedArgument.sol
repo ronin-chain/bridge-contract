@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import { IGeneralConfig } from "foundry-deployment-kit/interfaces/IGeneralConfig.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
-import { Token } from "@ronin/contracts/libraries/Token.sol";
+import { LibTokenInfo, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 
 interface ISharedArgument is IGeneralConfig {
   struct BridgeManagerParam {
@@ -37,7 +37,7 @@ interface ISharedArgument is IGeneralConfig {
     // thresholds[2]: unlockFeePercentages
     // thresholds[3]: dailyWithdrawalLimit
     uint256[][4] thresholds;
-    Token.Standard[] standards;
+    TokenStandard[] standards;
   }
 
   struct RoninGatewayV3Param {
@@ -53,7 +53,7 @@ interface ISharedArgument is IGeneralConfig {
     // packedNumbers[0]: chainIds
     // packedNumbers[1]: minimumThresholds
     uint256[][2] packedNumbers;
-    Token.Standard[] standards;
+    TokenStandard[] standards;
   }
 
   struct BridgeSlashParam {
@@ -99,6 +99,10 @@ interface ISharedArgument is IGeneralConfig {
     string symbol;
   }
 
+  struct MockERC1155Param {
+    string uri;
+  }
+
   struct UnitTestParam {
     address proxyAdmin;
     uint256 numberOfBlocksInEpoch;
@@ -132,6 +136,7 @@ interface ISharedArgument is IGeneralConfig {
     MockERC20Param slp;
     MockERC20Param usdc;
     MockERC721Param mockErc721;
+    MockERC1155Param mockErc1155;
     UnitTestParam test;
   }
 

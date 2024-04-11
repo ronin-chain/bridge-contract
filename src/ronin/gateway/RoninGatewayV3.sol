@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "../../extensions/GatewayV3.sol";
 import "../../extensions/collections/HasContracts.sol";
 import "../../extensions/MinimumWithdrawal.sol";
@@ -20,11 +21,12 @@ contract RoninGatewayV3 is
   Initializable,
   MinimumWithdrawal,
   AccessControlEnumerable,
+  ERC1155Holder,
   VoteStatusConsumer,
   IRoninGatewayV3,
   HasContracts
 {
-  using Token for Token.Info;
+  using LibTokenInfo for TokenInfo;
   using Transfer for Transfer.Request;
   using Transfer for Transfer.Receipt;
   using IsolatedGovernance for IsolatedGovernance.Vote;
@@ -57,6 +59,10 @@ contract RoninGatewayV3 is
 
   uint256 internal _trustedNum;
   uint256 internal _trustedDenom;
+
+  constructor () {
+    _disableInitializers();
+  }
 
   fallback() external payable {
     _fallback();
@@ -96,7 +102,7 @@ contract RoninGatewayV3 is
     // _packedNumbers[0]: chainIds
     // _packedNumbers[1]: minimumThresholds
     uint256[][2] calldata _packedNumbers,
-    Token.Standard[] calldata _standards
+    TokenStandard[] calldata _standards
   ) external virtual initializer {
     _setupRole(DEFAULT_ADMIN_ROLE, _roleSetter);
     _setThreshold(_numerator, _denominator);
@@ -280,7 +286,7 @@ contract RoninGatewayV3 is
     address[] calldata _roninTokens,
     address[] calldata _mainchainTokens,
     uint256[] calldata _chainIds,
-    Token.Standard[] calldata _standards
+    TokenStandard[] calldata _standards
   ) external onlyAdmin {
     if (_roninTokens.length == 0) revert ErrLengthMismatch(msg.sig);
     _mapTokens(_roninTokens, _mainchainTokens, _chainIds, _standards);
@@ -328,7 +334,7 @@ contract RoninGatewayV3 is
     address[] calldata _roninTokens,
     address[] calldata _mainchainTokens,
     uint256[] calldata _chainIds,
-    Token.Standard[] calldata _standards
+    TokenStandard[] calldata _standards
   ) internal {
     if (!(_roninTokens.length == _mainchainTokens.length && _roninTokens.length == _chainIds.length)) {
       revert ErrLengthMismatch(msg.sig);
@@ -373,7 +379,7 @@ contract RoninGatewayV3 is
     IBridgeTracking bridgeTrackingContract = IBridgeTracking(getContract(ContractType.BRIDGE_TRACKING));
     if (status == VoteStatus.Approved) {
       _proposal.status = VoteStatus.Executed;
-      receipt.info.handleAssetTransfer(payable(receipt.ronin.addr), receipt.ronin.tokenAddr, IWETH(address(0)));
+      receipt.info.handleAssetOut(payable(receipt.ronin.addr), receipt.ronin.tokenAddr, IWETH(address(0)));
       bridgeTrackingContract.handleVoteApproved(IBridgeTracking.VoteKind.Deposit, receipt.id);
       emit Deposited(_receiptHash, receipt);
     }
@@ -397,7 +403,7 @@ contract RoninGatewayV3 is
     MappedToken memory _token = getMainchainToken(_request.tokenAddr, _chainId);
     if (_request.info.erc != _token.erc) revert ErrInvalidTokenStandard();
 
-    _request.info.transferFrom(_requester, address(this), _request.tokenAddr);
+    _request.info.handleAssetIn(_requester, _request.tokenAddr);
     _storeAsReceipt(_request, _chainId, _requester, _token.tokenAddr);
   }
 
@@ -514,5 +520,13 @@ contract RoninGatewayV3 is
    */
   function _minimumTrustedVoteWeight(uint256 _totalTrustedWeight) internal view virtual returns (uint256) {
     return (_trustedNum * _totalTrustedWeight + _trustedDenom - 1) / _trustedDenom;
+  }
+
+  function supportsInterface(bytes4 interfaceId)
+    public
+    view
+    override(AccessControlEnumerable, ERC1155Receiver) returns (bool)
+  {
+    return AccessControlEnumerable.supportsInterface(interfaceId) || ERC1155Receiver.supportsInterface(interfaceId);
   }
 }

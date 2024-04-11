@@ -9,7 +9,7 @@ import {DefaultNetwork} from "foundry-deployment-kit/utils/DefaultNetwork.sol";
 import {RoninBridgeManager} from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import {IRoninGatewayV3} from "@ronin/contracts/interfaces/IRoninGatewayV3.sol";
 import {MinimumWithdrawal} from "@ronin/contracts/extensions/MinimumWithdrawal.sol";
-import {Token} from "@ronin/contracts/libraries/Token.sol";
+import {LibTokenInfo, TokenStandard} from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import {Ballot} from "@ronin/contracts/libraries/Ballot.sol";
 import {GlobalProposal} from "@ronin/contracts/libraries/GlobalProposal.sol";
 import {Proposal} from "@ronin/contracts/libraries/Proposal.sol";
@@ -64,7 +64,7 @@ contract Migration__20240206_MapTokenBananaRoninChain is
     address[] memory roninTokens = new address[](3);
     address[] memory mainchainTokens = new address[](3);
     uint256[] memory chainIds = new uint256[](3);
-    Token.Standard[] memory standards = new Token.Standard[](3);
+    TokenStandard[] memory standards = new TokenStandard[](3);
 
     uint256 expiredTime = block.timestamp + 10 days;
     address[] memory targets = new address[](4);
@@ -77,23 +77,23 @@ contract Migration__20240206_MapTokenBananaRoninChain is
     roninTokens[0] = _bananaRoninToken;
     mainchainTokens[0] = _bananaMainchainToken;
     chainIds[0] = _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).chainId();
-    standards[0] = Token.Standard.ERC20;
+    standards[0] = TokenStandard.ERC20;
 
     roninTokens[1] = _VxRoninToken;
     mainchainTokens[1] = _VxMainchainToken;
     chainIds[1] = _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).chainId();
-    standards[1] = Token.Standard.ERC721;
+    standards[1] = TokenStandard.ERC721;
 
     roninTokens[2] = _genkaiRoninToken;
     mainchainTokens[2] = _genkaiMainchainToken;
     chainIds[2] = _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).chainId();
-    standards[2] = Token.Standard.ERC721;
+    standards[2] = TokenStandard.ERC721;
 
     // function mapTokens(
     //   address[] calldata _roninTokens,
     //   address[] calldata _mainchainTokens,
     //   uint256[] calldata chainIds,
-    //   Token.Standard[] calldata _standards
+    //   TokenStandard[] calldata _standards
     // )
     bytes memory innerData =
       abi.encodeCall(IRoninGatewayV3.mapTokens, (roninTokens, mainchainTokens, chainIds, standards));

@@ -7,7 +7,7 @@ import { BaseMigration } from "foundry-deployment-kit/BaseMigration.s.sol";
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import { IRoninGatewayV3 } from "@ronin/contracts/interfaces/IRoninGatewayV3.sol";
 import { IBridgeManager } from "@ronin/contracts/interfaces/bridge/IBridgeManager.sol";
-import { Token } from "@ronin/contracts/libraries/Token.sol";
+import { LibTokenInfo, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { Contract } from "../utils/Contract.sol";
 import { BridgeMigration } from "../BridgeMigration.sol";
 import { Network } from "../utils/Network.sol";
@@ -40,23 +40,23 @@ contract Migration__MapTokenRoninchain is BridgeMigration {
     address[] memory mainchainTokens = new address[](2);
     address[] memory roninTokens = new address[](2);
     uint256[] memory chainIds = new uint256[](2);
-    Token.Standard[] memory standards = new Token.Standard[](2);
+    TokenStandard[] memory standards = new TokenStandard[](2);
 
     mainchainTokens[0] = _farmlandMainchainToken;
     roninTokens[0] = _farmlandRoninToken;
     chainIds[0] = _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).chainId();
-    standards[0] = Token.Standard.ERC721;
+    standards[0] = TokenStandard.ERC721;
 
     mainchainTokens[1] = _pixelMainchainToken;
     roninTokens[1] = _pixelRoninToken;
     chainIds[1] = _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).chainId();
-    standards[1] = Token.Standard.ERC20;
+    standards[1] = TokenStandard.ERC20;
 
     // function mapTokens(
     //   address[] calldata _roninTokens,
     //   address[] calldata _mainchainTokens,
     //   uint256[] calldata chainIds,
-    //   Token.Standard[] calldata _standards
+    //   TokenStandard[] calldata _standards
     // )
 
     bytes memory innerData = abi.encodeCall(IRoninGatewayV3.mapTokens, (roninTokens, mainchainTokens, chainIds, standards));

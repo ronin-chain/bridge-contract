@@ -9,7 +9,7 @@ import { Network } from "./utils/Network.sol";
 import { Utils } from "./utils/Utils.sol";
 import { Contract } from "./utils/Contract.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
-import { Token } from "@ronin/contracts/libraries/Token.sol";
+import { LibTokenInfo, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { LibArray } from "./libraries/LibArray.sol";
 
 contract Migration is BaseMigrationV2, Utils {
@@ -93,6 +93,7 @@ contract Migration is BaseMigrationV2, Utils {
       param.usdc.symbol = "USDC";
       param.mockErc721.name = "Mock ERC721";
       param.mockErc721.symbol = "M_ERC721";
+      param.mockErc1155.uri = "mock://erc1155/";
 
       uint256 num = 22;
       address[] memory operatorAddrs = new address[](num);

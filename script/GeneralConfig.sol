@@ -47,8 +47,10 @@ contract GeneralConfig is BaseGeneralConfig, Utils {
     _mapContractName(Contract.RoninGatewayV3);
     _mapContractName(Contract.RoninBridgeManager);
     _mapContractName(Contract.MainchainGatewayV3);
+    _mapContractName(Contract.MainchainGatewayBatcher);
     _mapContractName(Contract.MainchainBridgeManager);
     _mapContractName(Contract.MockERC721);
+    _mapContractName(Contract.MockERC1155);
     _mapContractName(Contract.RoninBridgeManagerConstructor);
 
     _contractNameMap[Contract.WETH.key()] = "MockWrappedToken";

@@ -3,7 +3,8 @@ pragma solidity ^0.8.19;
 
 import { console2 as console } from "forge-std/console2.sol";
 import { Transfer } from "@ronin/contracts/libraries/Transfer.sol";
-import { Token } from "@ronin/contracts/libraries/Token.sol";
+import { LibTokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
+import { TokenOwner } from "@ronin/contracts/libraries/LibTokenOwner.sol";
 import "../../BaseIntegration.t.sol";
 
 contract DepositAndRecord_Gateway_Test is BaseIntegration_Test {
@@ -21,9 +22,9 @@ contract DepositAndRecord_Gateway_Test is BaseIntegration_Test {
     _sampleReceipt = Transfer.Receipt({
       id: 0,
       kind: Transfer.Kind.Deposit,
-      ronin: Token.Owner({ addr: makeAddr("recipient"), tokenAddr: address(_roninWeth), chainId: block.chainid }),
-      mainchain: Token.Owner({ addr: makeAddr("requester"), tokenAddr: address(_mainchainWeth), chainId: block.chainid }),
-      info: Token.Info({ erc: Token.Standard.ERC20, id: 0, quantity: 100 })
+      ronin: TokenOwner({ addr: makeAddr("recipient"), tokenAddr: address(_roninWeth), chainId: block.chainid }),
+      mainchain: TokenOwner({ addr: makeAddr("requester"), tokenAddr: address(_mainchainWeth), chainId: block.chainid }),
+      info: TokenInfo({ erc: TokenStandard.ERC20, id: 0, quantity: 100 })
     });
 
     _numOperatorsForVoteExecuted = (_roninBridgeManager.minimumVoteWeight() - 1) / 100 + 1;

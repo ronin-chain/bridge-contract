@@ -3,11 +3,12 @@ pragma solidity ^0.8.19;
 
 import { console2 as console } from "forge-std/console2.sol";
 import { Transfer } from "@ronin/contracts/libraries/Transfer.sol";
-import { Token } from "@ronin/contracts/libraries/Token.sol";
+import { LibTokenInfo, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { ContractType } from "@ronin/contracts/utils/ContractType.sol";
 import { IsolatedGovernance } from "@ronin/contracts/libraries/IsolatedGovernance.sol";
 import { VoteStatusConsumer } from "@ronin/contracts/interfaces/consumers/VoteStatusConsumer.sol";
 import { MockRoninGatewayV3Extended } from "@ronin/contracts/mocks/ronin/MockRoninGatewayV3Extended.sol";
+import { LibTokenOwner, TokenOwner } from "@ronin/contracts/libraries/LibTokenOwner.sol";
 import "../BaseIntegration.t.sol";
 
 contract DepositVote_RoninGatewayV3_Test is BaseIntegration_Test {
@@ -24,9 +25,15 @@ contract DepositVote_RoninGatewayV3_Test is BaseIntegration_Test {
     Transfer.Receipt memory receipt = Transfer.Receipt({
       id: 0,
       kind: Transfer.Kind.Deposit,
-      ronin: Token.Owner({ addr: makeAddr("recipient"), tokenAddr: address(_roninWeth), chainId: block.chainid }),
-      mainchain: Token.Owner({ addr: makeAddr("requester"), tokenAddr: address(_mainchainWeth), chainId: block.chainid }),
-      info: Token.Info({ erc: Token.Standard.ERC20, id: 0, quantity: 100 })
+      ronin: TokenOwner({ addr: makeAddr("recipient"), tokenAddr: address(_roninWeth), chainId: block.chainid }),
+      mainchain: TokenOwner({ addr: makeAddr("requester"), tokenAddr: address(_mainchainWeth), chainId: block.chainid }),
+      info: TokenInfo({
+        erc: TokenStandard.ERC20,
+        id: 0,
+        quantity: 100
+        // ids: new uint256[](0),
+        // quantities: new uint256[](0)
+      })
     });
 
     _depositReceipts.push(receipt);

@@ -7,7 +7,7 @@ import { BaseMigration } from "foundry-deployment-kit/BaseMigration.s.sol";
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
-import { Token } from "@ronin/contracts/libraries/Token.sol";
+import { LibTokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { Contract } from "../utils/Contract.sol";
 import { Network } from "../utils/Network.sol";
 import { Contract } from "../utils/Contract.sol";
@@ -42,7 +42,7 @@ contract Migration__20240409_MapTokenSlpMainchain is BridgeMigration, Migration_
   function run() public {
     address[] memory mainchainTokens = new address[](1);
     address[] memory roninTokens = new address[](1);
-    Token.Standard[] memory standards = new Token.Standard[](1);
+    TokenStandard[] memory standards = new TokenStandard[](1);
     uint256[][4] memory thresholds;
     thresholds[0] = new uint256[](1);
     thresholds[1] = new uint256[](1);
@@ -64,7 +64,7 @@ contract Migration__20240409_MapTokenSlpMainchain is BridgeMigration, Migration_
 
     mainchainTokens[0] = address(_mainchainSlp);
     roninTokens[0] = _slpRoninToken;
-    standards[0] = Token.Standard.ERC20;
+    standards[0] = TokenStandard.ERC20;
     thresholds[0][0] = _highTierThreshold;
     thresholds[1][0] = _lockedThreshold;
     thresholds[2][0] = _unlockFeePercentages;

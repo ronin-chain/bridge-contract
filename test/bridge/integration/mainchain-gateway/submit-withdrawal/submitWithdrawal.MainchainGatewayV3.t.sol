@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import { console2 as console } from "forge-std/console2.sol";
 import { ContractType } from "@ronin/contracts/utils/ContractType.sol";
 import { Transfer } from "@ronin/contracts/libraries/Transfer.sol";
-import { Token } from "@ronin/contracts/libraries/Token.sol";
+import { LibTokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/SignatureConsumer.sol";
 import { MockDiscardEther } from "@ronin/test/mocks/MockDiscardEther.sol";
 import "../../BaseIntegration.t.sol";
@@ -28,7 +28,7 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
     _withdrawalReceipt.mainchain.addr = makeAddr("recipient");
     _withdrawalReceipt.mainchain.tokenAddr = address(_mainchainWeth);
     _withdrawalReceipt.mainchain.chainId = block.chainid;
-    _withdrawalReceipt.info.erc = Token.Standard.ERC20;
+    _withdrawalReceipt.info.erc = TokenStandard.ERC20;
     _withdrawalReceipt.info.id = 0;
     _withdrawalReceipt.info.quantity = 0;
   }

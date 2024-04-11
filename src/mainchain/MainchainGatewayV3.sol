@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import { IBridgeManager } from "../interfaces/bridge/IBridgeManager.sol";
 import { IBridgeManagerCallback } from "../interfaces/bridge/IBridgeManagerCallback.sol";
 import { HasContracts, ContractType } from "../extensions/collections/HasContracts.sol";
@@ -11,8 +12,8 @@ import "../extensions/WithdrawalLimitation.sol";
 import "../libraries/Transfer.sol";
 import "../interfaces/IMainchainGatewayV3.sol";
 
-contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessControlEnumerable, IMainchainGatewayV3, HasContracts, IBridgeManagerCallback {
-  using Token for Token.Info;
+contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessControlEnumerable, ERC1155Holder, IMainchainGatewayV3, HasContracts, IBridgeManagerCallback {
+  using LibTokenInfo for TokenInfo;
   using Transfer for Transfer.Request;
   using Transfer for Transfer.Receipt;
 
@@ -43,6 +44,10 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
   mapping(address operator => uint96 weight) private _operatorWeight;
   WethUnwrapper public wethUnwrapper;
 
+  constructor() {
+    _disableInitializers();
+  }
+
   fallback() external payable {
     _fallback();
   }
@@ -70,7 +75,7 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
     // _thresholds[2]: unlockFeePercentages
     // _thresholds[3]: dailyWithdrawalLimit
     uint256[][4] calldata _thresholds,
-    Token.Standard[] calldata _standards
+    TokenStandard[] calldata _standards
   ) external payable virtual initializer {
     _setupRole(DEFAULT_ADMIN_ROLE, _roleSetter);
     roninChainId = _roninChainId;
@@ -165,16 +170,16 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
     emit WithdrawalUnlocked(_receiptHash, receipt);
 
     address token = receipt.mainchain.tokenAddr;
-    if (receipt.info.erc == Token.Standard.ERC20) {
-      Token.Info memory feeInfo = receipt.info;
+    if (receipt.info.erc == TokenStandard.ERC20) {
+      TokenInfo memory feeInfo = receipt.info;
       feeInfo.quantity = _computeFeePercentage(receipt.info.quantity, unlockFeePercentages[token]);
-      Token.Info memory withdrawInfo = receipt.info;
+      TokenInfo memory withdrawInfo = receipt.info;
       withdrawInfo.quantity = receipt.info.quantity - feeInfo.quantity;
 
-      feeInfo.handleAssetTransfer(payable(msg.sender), token, wrappedNativeToken);
-      withdrawInfo.handleAssetTransfer(payable(receipt.mainchain.addr), token, wrappedNativeToken);
+      feeInfo.handleAssetOut(payable(msg.sender), token, wrappedNativeToken);
+      withdrawInfo.handleAssetOut(payable(receipt.mainchain.addr), token, wrappedNativeToken);
     } else {
-      receipt.info.handleAssetTransfer(payable(receipt.mainchain.addr), token, wrappedNativeToken);
+      receipt.info.handleAssetOut(payable(receipt.mainchain.addr), token, wrappedNativeToken);
     }
 
     emit Withdrew(_receiptHash, receipt);
@@ -183,7 +188,7 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
   /**
    * @inheritdoc IMainchainGatewayV3
    */
-  function mapTokens(address[] calldata _mainchainTokens, address[] calldata _roninTokens, Token.Standard[] calldata _standards) external virtual onlyAdmin {
+  function mapTokens(address[] calldata _mainchainTokens, address[] calldata _roninTokens, TokenStandard[] calldata _standards) external virtual onlyAdmin {
     if (_mainchainTokens.length == 0) revert ErrEmptyArray();
     _mapTokens(_mainchainTokens, _roninTokens, _standards);
   }
@@ -194,7 +199,7 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
   function mapTokensAndThresholds(
     address[] calldata _mainchainTokens,
     address[] calldata _roninTokens,
-    Token.Standard[] calldata _standards,
+    TokenStandard[] calldata _standards,
     // _thresholds[0]: highTierThreshold
     // _thresholds[1]: lockedThreshold
     // _thresholds[2]: unlockFeePercentages
@@ -226,10 +231,10 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
    * Emits the `TokenMapped` event.
    *
    */
-  function _mapTokens(address[] calldata mainchainTokens, address[] calldata roninTokens, Token.Standard[] calldata standards) internal virtual {
+  function _mapTokens(address[] calldata mainchainTokens, address[] calldata roninTokens, TokenStandard[] calldata standards) internal virtual {
     if (!(mainchainTokens.length == roninTokens.length && mainchainTokens.length == standards.length)) revert ErrLengthMismatch(msg.sig);
 
-    for (uint256 i; i < mainchainTokens.length; i++) {
+    for (uint256 i; i < mainchainTokens.length; ++i) {
       _roninToken[mainchainTokens[i]].tokenAddr = roninTokens[i];
       _roninToken[mainchainTokens[i]].erc = standards[i];
     }
@@ -271,7 +276,7 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
 
     if (withdrawalHash[id] != 0) revert ErrQueryForProcessedWithdrawal();
 
-    if (!(receipt.info.erc == Token.Standard.ERC721 || !_reachedWithdrawalLimit(tokenAddr, quantity))) {
+    if (!(receipt.info.erc == TokenStandard.ERC721 || !_reachedWithdrawalLimit(tokenAddr, quantity))) {
       revert ErrReachedDailyWithdrawalLimit();
     }
 
@@ -312,7 +317,7 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
     }
 
     _recordWithdrawal(tokenAddr, quantity);
-    receipt.info.handleAssetTransfer(payable(receipt.mainchain.addr), tokenAddr, wrappedNativeToken);
+    receipt.info.handleAssetOut(payable(receipt.mainchain.addr), tokenAddr, wrappedNativeToken);
     emit Withdrew(receiptHash, receipt);
   }
 
@@ -345,8 +350,7 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
       _token = getRoninToken(_request.tokenAddr);
       if (_token.erc != _request.info.erc) revert ErrInvalidTokenStandard();
 
-      _request.info.transferFrom(_requester, address(this), _request.tokenAddr);
-
+      _request.info.handleAssetIn(_requester, _request.tokenAddr);
       // Withdraw if token is WETH
       // The withdraw of WETH must go via `WethUnwrapper`, because `WETH.withdraw` only sends 2300 gas, which is insufficient when recipient is a proxy.
       if (_roninWeth == _request.tokenAddr) {
@@ -364,10 +368,10 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
   /**
    * @dev Returns the minimum vote weight for the token.
    */
-  function _computeMinVoteWeight(Token.Standard _erc, address _token, uint256 _quantity) internal virtual returns (uint256 _weight, bool _locked) {
+  function _computeMinVoteWeight(TokenStandard _erc, address _token, uint256 _quantity) internal virtual returns (uint256 _weight, bool _locked) {
     uint256 _totalWeight = _getTotalWeight();
     _weight = _minimumVoteWeight(_totalWeight);
-    if (_erc == Token.Standard.ERC20) {
+    if (_erc == TokenStandard.ERC20) {
       if (highTierThreshold[_token] <= _quantity) {
         _weight = _highTierVoteWeight(_totalWeight);
       }
@@ -454,10 +458,6 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
   //                CALLBACKS
   ///////////////////////////////////////////////
 
-  function supportsInterface(bytes4 interfaceId) public view override(AccessControlEnumerable, IERC165) returns (bool) {
-    return interfaceId == type(IMainchainGatewayV3).interfaceId || super.supportsInterface(interfaceId);
-  }
-
   /**
    * @inheritdoc IBridgeManagerCallback
    */
@@ -507,5 +507,13 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
     _totalOperatorWeight -= totalRemovingWeight;
 
     return IBridgeManagerCallback.onBridgeOperatorsRemoved.selector;
+  }
+
+  function supportsInterface(bytes4 interfaceId)
+    public
+    view
+    override(AccessControlEnumerable, IERC165, ERC1155Receiver) returns (bool)
+  {
+    return interfaceId == type(IMainchainGatewayV3).interfaceId || super.supportsInterface(interfaceId);
   }
 }

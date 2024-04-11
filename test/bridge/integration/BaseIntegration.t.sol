@@ -15,17 +15,19 @@ import { BridgeTracking } from "@ronin/contracts/ronin/gateway/BridgeTracking.so
 import { BridgeSlash } from "@ronin/contracts/ronin/gateway/BridgeSlash.sol";
 import { BridgeReward } from "@ronin/contracts/ronin/gateway/BridgeReward.sol";
 import { MainchainGatewayV3 } from "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
+import { MainchainGatewayBatcher } from "@ronin/contracts/mainchain/MainchainGatewayBatcher.sol";
 import { MainchainBridgeManager } from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
 import { WethUnwrapper } from "@ronin/contracts/extensions/WethUnwrapper.sol";
 import { MockSLP } from "@ronin/contracts/mocks/token/MockSLP.sol";
 import { MockUSDC } from "@ronin/contracts/mocks/token/MockUSDC.sol";
 import { MockERC20 } from "@ronin/contracts/mocks/token/MockERC20.sol";
 import { MockERC721 } from "@ronin/contracts/mocks/token/MockERC721.sol";
+import { MockERC1155 } from "@ronin/contracts/mocks/token/MockERC1155.sol";
 
 import { MockWrappedToken } from "@ronin/contracts/mocks/token/MockWrappedToken.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
 import { Proposal } from "@ronin/contracts/libraries/Proposal.sol";
-import { Token } from "@ronin/contracts/libraries/Token.sol";
+import { LibTokenInfo, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { IWETH } from "@ronin/contracts/interfaces/IWETH.sol";
 import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/SignatureConsumer.sol";
 import { Ballot } from "@ronin/contracts/libraries/Ballot.sol";
@@ -50,6 +52,7 @@ import { BridgeRewardDeploy } from "@ronin/script/contracts/BridgeRewardDeploy.s
 import { RoninPauseEnforcerDeploy } from "@ronin/script/contracts/RoninPauseEnforcerDeploy.s.sol";
 
 import { MainchainGatewayV3Deploy } from "@ronin/script/contracts/MainchainGatewayV3Deploy.s.sol";
+import { MainchainGatewayBatcherDeploy } from "@ronin/script/contracts/MainchainGatewayBatcherDeploy.s.sol";
 import { MainchainBridgeManagerDeploy } from "@ronin/script/contracts/MainchainBridgeManagerDeploy.s.sol";
 import { MainchainPauseEnforcerDeploy } from "@ronin/script/contracts/MainchainPauseEnforcerDeploy.s.sol";
 import { MainchainWethUnwrapperDeploy } from "@ronin/script/contracts/MainchainWethUnwrapperDeploy.s.sol";
@@ -59,12 +62,24 @@ import { AXSDeploy } from "@ronin/script/contracts/token/AXSDeploy.s.sol";
 import { SLPDeploy } from "@ronin/script/contracts/token/SLPDeploy.s.sol";
 import { USDCDeploy } from "@ronin/script/contracts/token/USDCDeploy.s.sol";
 import { MockERC721Deploy } from "@ronin/script/contracts/token/MockERC721Deploy.s.sol";
+import { MockERC1155Deploy } from "@ronin/script/contracts/token/MockERC1155Deploy.s.sol";
 
 import { RoninBridgeAdminUtils } from "test/helpers/RoninBridgeAdminUtils.t.sol";
 import { MainchainBridgeAdminUtils } from "test/helpers/MainchainBridgeAdminUtils.t.sol";
 
+contract MockPoisonERC20 is MockERC20 {
+  constructor(string memory name_, string memory symbol_) MockERC20(name_, symbol_) { }
+
+  function setApprovalForAll(address spender, bool approved) public {
+    _approve(msg.sender, spender, approved ? type(uint256).max : 0);
+
+    emit Approval(msg.sender, spender, type(uint256).max);
+  }
+}
+
 contract BaseIntegration_Test is Base_Test {
   using LibTransfer for LibTransfer.Receipt;
+  address sender;
 
   IGeneralConfig _config;
   ISharedArgument.SharedParameter _param;
@@ -78,6 +93,7 @@ contract BaseIntegration_Test is Base_Test {
 
   PauseEnforcer _mainchainPauseEnforcer;
   MainchainGatewayV3 _mainchainGatewayV3;
+  MainchainGatewayBatcher _mainchainGatewayBatcher;
   MainchainBridgeManager _mainchainBridgeManager;
   WethUnwrapper _mainchainWethUnwrapper;
 
@@ -87,17 +103,24 @@ contract BaseIntegration_Test is Base_Test {
   MockSLP _roninSlp;
   MockUSDC _roninUsdc;
   MockERC721 _roninMockERC721;
+  MockERC1155 _roninMockERC1155;
 
   MockWrappedToken _mainchainWeth;
   MockERC20 _mainchainAxs;
   MockSLP _mainchainSlp;
   MockUSDC _mainchainUsdc;
   MockERC721 _mainchainMockERC721;
+  MockERC1155 _mainchainMockERC1155;
 
   MockValidatorContract_OnlyTiming_ForHardhatTest _validatorSet;
 
   RoninBridgeAdminUtils _roninProposalUtils;
   MainchainBridgeAdminUtils _mainchainProposalUtils;
+
+  MockERC20 _mainchainMockERC20;
+  MockPoisonERC20 _mainchainMockPoisonERC20;
+  MockERC20 _roninMockERC20;
+  MockPoisonERC20 _roninMockPoisonERC20;
 
   function setUp() public virtual {
     _deployGeneralConfig();
@@ -115,6 +138,8 @@ contract BaseIntegration_Test is Base_Test {
     _configEmergencyPauserForMainchainGateway();
 
     _configBridgeTrackingForRoninGateway();
+
+    sender = makeAddr("sender");
   }
 
   function _deployContractsOnRonin() internal {
@@ -131,6 +156,9 @@ contract BaseIntegration_Test is Base_Test {
     _roninSlp = new SLPDeploy().run();
     _roninUsdc = new USDCDeploy().run();
     _roninMockERC721 = new MockERC721Deploy().run();
+    _roninMockERC1155 = new MockERC1155Deploy().run();
+    _roninMockERC20 = new MockERC20("MockERC20", "ME2");
+    _roninMockPoisonERC20 = new MockPoisonERC20("MockPoisonERC20", "MPE2");
 
     _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
     _roninProposalUtils = new RoninBridgeAdminUtils(
@@ -149,6 +177,9 @@ contract BaseIntegration_Test is Base_Test {
     _mainchainSlp = new SLPDeploy().run();
     _mainchainUsdc = new USDCDeploy().run();
     _mainchainMockERC721 = new MockERC721Deploy().run();
+    _mainchainMockERC1155 = new MockERC1155Deploy().run();
+    _mainchainMockERC20 = new MockERC20("MockERC20", "ME2");
+    _mainchainMockPoisonERC20 = new MockPoisonERC20("MockPoisonERC20", "MPE2");
 
     bytes memory args = abi.encode(_mainchainWeth);
     _mainchainWethUnwrapper = new MainchainWethUnwrapperDeploy().runWithArgs(args);
@@ -156,6 +187,10 @@ contract BaseIntegration_Test is Base_Test {
     _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
     _mainchainProposalUtils = new MainchainBridgeAdminUtils(
       block.chainid, _param.test.governorPKs, _mainchainBridgeManager, _param.mainchainBridgeManager.governors[0]
+    );
+
+    _mainchainGatewayBatcher = new MainchainGatewayBatcherDeploy().runWithArgs(
+      abi.encodeCall(MainchainGatewayBatcher.initialize, (_mainchainGatewayV3))
     );
   }
 
@@ -176,24 +211,6 @@ contract BaseIntegration_Test is Base_Test {
     _mainchainPauseEnforcerInitialize();
     _constructForMainchainBridgeManager();
     _mainchainGatewayV3Initialize();
-  }
-
-  function _getMainchainAndRoninTokens() internal view returns (address[] memory mainchainTokens, address[] memory roninTokens) {
-    uint256 tokenNum = 5;
-    mainchainTokens = new address[](tokenNum);
-    roninTokens = new address[](tokenNum);
-
-    mainchainTokens[0] = address(_mainchainWeth);
-    mainchainTokens[1] = address(_mainchainAxs);
-    mainchainTokens[2] = address(_mainchainSlp);
-    mainchainTokens[3] = address(_mainchainUsdc);
-    mainchainTokens[4] = address(_mainchainMockERC721);
-
-    roninTokens[0] = address(_roninWeth);
-    roninTokens[1] = address(_roninAxs);
-    roninTokens[2] = address(_roninSlp);
-    roninTokens[3] = address(_roninUsdc);
-    roninTokens[4] = address(_roninMockERC721);
   }
 
   function _bridgeRewardInitialize() internal {
@@ -252,17 +269,15 @@ contract BaseIntegration_Test is Base_Test {
   }
 
   function _roninGatewayV3Initialize() internal {
-    (address[] memory mainchainTokens, address[] memory roninTokens) = _getMainchainAndRoninTokens();
+    (address[] memory mainchainTokens, address[] memory roninTokens, TokenStandard[] memory standards) =
+      _getMainchainAndRoninTokens();
     uint256 tokenNum = mainchainTokens.length; // reserve slot for ERC721Tokens
     uint256[] memory minimumThreshold = new uint256[](tokenNum);
     uint256[] memory chainIds = new uint256[](tokenNum);
-    Token.Standard[] memory standards = new Token.Standard[](tokenNum);
-    for (uint256 i; i < tokenNum; i++) {
-      bool isERC721 = i == mainchainTokens.length - 1; // last item is ERC721
 
+    for (uint256 i; i < tokenNum; i++) {
       minimumThreshold[i] = 20;
       chainIds[i] = block.chainid;
-      standards[i] = isERC721 ? Token.Standard.ERC721 : Token.Standard.ERC20;
     }
 
     // Ronin Gateway V3
@@ -503,7 +518,8 @@ contract BaseIntegration_Test is Base_Test {
   }
 
   function _mainchainGatewayV3Initialize() internal {
-    (address[] memory mainchainTokens, address[] memory roninTokens) = _getMainchainAndRoninTokens();
+    (address[] memory mainchainTokens, address[] memory roninTokens, TokenStandard[] memory standards) =
+      _getMainchainAndRoninTokens();
     uint256 tokenNum = mainchainTokens.length;
     uint256[] memory highTierThreshold = new uint256[](tokenNum);
     uint256[] memory lockedThreshold = new uint256[](tokenNum);
@@ -520,22 +536,10 @@ contract BaseIntegration_Test is Base_Test {
     unlockFeePercentages[1] = unlockFeePercentages[2] = unlockFeePercentages[3] = 10_0000; // 10%
     dailyWithdrawalLimits[1] = dailyWithdrawalLimits[2] = dailyWithdrawalLimits[3] = 120_000_000;
 
-    Token.Standard[] memory standards = new Token.Standard[](tokenNum);
-
-    for (uint256 i; i < tokenNum; i++) {
-      bool isERC721 = i == mainchainTokens.length - 1; // last item is ERC721
-
-      highTierThreshold[i] = 10;
-      lockedThreshold[i] = 20;
-      unlockFeePercentages[i] = 100_000;
-      dailyWithdrawalLimits[i] = 12;
-      standards[i] = isERC721 ? Token.Standard.ERC721 : Token.Standard.ERC20;
-    }
-
     // Mainchain Gateway V3
     _param.mainchainGatewayV3.wrappedToken = address(_mainchainWeth);
-    _param.mainchainGatewayV3.addresses[0] = mainchainTokens; // (ERC20 + ERC721)
-    _param.mainchainGatewayV3.addresses[1] = roninTokens; // (ERC20 + ERC721)
+    _param.mainchainGatewayV3.addresses[0] = mainchainTokens; // (ERC20 + ERC721 + ERC1155)
+    _param.mainchainGatewayV3.addresses[1] = roninTokens; // (ERC20 + ERC721 + ERC1155)
     _param.mainchainGatewayV3.addresses[2] = getEmptyAddressArray();
     _param.mainchainGatewayV3.thresholds[0] = highTierThreshold;
     _param.mainchainGatewayV3.thresholds[1] = lockedThreshold;
@@ -568,6 +572,43 @@ contract BaseIntegration_Test is Base_Test {
 
     ISharedArgument.PauseEnforcerParam memory param = _param.mainchainPauseEnforcer;
     _mainchainPauseEnforcer.initialize(IPauseTarget(param.target), param.admin, param.sentries);
+  }
+
+  function _getMainchainAndRoninTokens()
+    internal
+    view
+    returns (address[] memory mainchainTokens, address[] memory roninTokens, TokenStandard[] memory standards)
+  {
+    uint256 tokenNum = 8;
+    mainchainTokens = new address[](tokenNum);
+    roninTokens = new address[](tokenNum);
+    standards = new TokenStandard[](tokenNum);
+
+    mainchainTokens[0] = address(_mainchainWeth);
+    mainchainTokens[1] = address(_mainchainAxs);
+    mainchainTokens[2] = address(_mainchainSlp);
+    mainchainTokens[3] = address(_mainchainUsdc);
+    mainchainTokens[4] = address(_mainchainMockERC721);
+    mainchainTokens[5] = address(_mainchainMockERC1155);
+    mainchainTokens[6] = address(_mainchainMockERC20);
+    mainchainTokens[7] = address(_mainchainMockPoisonERC20);
+
+    roninTokens[0] = address(_roninWeth);
+    roninTokens[1] = address(_roninAxs);
+    roninTokens[2] = address(_roninSlp);
+    roninTokens[3] = address(_roninUsdc);
+    roninTokens[4] = address(_roninMockERC721);
+    roninTokens[5] = address(_roninMockERC1155);
+    roninTokens[6] = address(_roninMockERC20);
+    roninTokens[7] = address(_roninMockPoisonERC20);
+
+    standards[0] = TokenStandard.ERC20;
+    standards[1] = TokenStandard.ERC20;
+    standards[2] = TokenStandard.ERC20;
+    standards[3] = TokenStandard.ERC20;
+    standards[4] = TokenStandard.ERC721;
+    standards[5] = TokenStandard.ERC1155;
+    standards[6] = TokenStandard.ERC20;
   }
 
   function _changeAdminOnRonin() internal {

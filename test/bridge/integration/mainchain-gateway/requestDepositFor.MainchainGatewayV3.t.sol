@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import { console2 as console } from "forge-std/console2.sol";
 import { Transfer as LibTransfer } from "@ronin/contracts/libraries/Transfer.sol";
-import { Token } from "@ronin/contracts/libraries/Token.sol";
+import { LibTokenInfo, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 
 import "../BaseIntegration.t.sol";
 
@@ -34,7 +34,7 @@ contract RequestDepositFor_MainchainGatewayV3_Test is BaseIntegration_Test {
 
     _depositRequest.recipientAddr = makeAddr("recipient");
     _depositRequest.tokenAddr = address(0);
-    _depositRequest.info.erc = Token.Standard.ERC20;
+    _depositRequest.info.erc = TokenStandard.ERC20;
     _depositRequest.info.id = 0;
     _depositRequest.info.quantity = _quantity;
 
@@ -86,7 +86,7 @@ contract RequestDepositFor_MainchainGatewayV3_Test is BaseIntegration_Test {
     _mainchainMockERC721.approve(address(_mainchainGatewayV3), tokenId);
 
     _depositRequest.tokenAddr = address(_mainchainMockERC721);
-    _depositRequest.info.erc = Token.Standard.ERC721;
+    _depositRequest.info.erc = TokenStandard.ERC721;
     _depositRequest.info.id = tokenId;
     _depositRequest.info.quantity = 0;
 
