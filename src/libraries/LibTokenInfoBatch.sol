@@ -52,8 +52,8 @@ library LibTokenInfoBatch {
 
   function checkERC721Batch(TokenInfoBatch memory self) internal pure returns (bool res) {
     return self.erc == TokenStandard.ERC721 // Check ERC721
-      && self.ids.length != 0 // Info must contain valid array of ids
-      && self.quantities.length == 0; // Quantity of each ERC721 alway is 1, no input to save gas
+      && self.ids.length != 0 // Info must contain at least one id in the array
+      && self.quantities.length == 0; // No requires quantity to save gas, because ERC-721 qty is always 1.
   }
 
   function checkERC1155Batch(TokenInfoBatch memory self) internal pure returns (bool res) {
@@ -61,7 +61,8 @@ library LibTokenInfoBatch {
 
     if (
       !(self.erc == TokenStandard.ERC1155 // Check ERC1155
-        && length == self.quantities.length) // Info must have same length for each token id
+        && self.ids.length != 0 // Info must contain at least one id in the array
+        && length == self.quantities.length) // Info must have same length for each pair id and quantity
     ) {
       return false;
     }
