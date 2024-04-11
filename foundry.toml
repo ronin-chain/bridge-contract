@@ -22,9 +22,11 @@ evm_version = 'istanbul'
 [profile.ethereum]
 evm_version = 'shanghai'
 
-[profile.ronin.ronin_bridge_manager]
+[profile.ronin_bridge_manager]
 evm_version = 'istanbul'
+optimizer = true
 optimizer_runs = 1
+ffi = true
 
 [fmt]
 line_length = 160
