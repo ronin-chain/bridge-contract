@@ -59,17 +59,19 @@ contract Migration__20240409_P1_DeployRoninBridgeManager is BridgeMigration {
     param.roninBridgeManager.voteWeights[2] = 100;
     param.roninBridgeManager.voteWeights[3] = 100;
 
-    param.roninBridgeManager.targetOptions = new GlobalProposal.TargetOption[](4);
+    param.roninBridgeManager.targetOptions = new GlobalProposal.TargetOption[](5);
     param.roninBridgeManager.targetOptions[0] = GlobalProposal.TargetOption.GatewayContract;
     param.roninBridgeManager.targetOptions[1] = GlobalProposal.TargetOption.BridgeReward;
     param.roninBridgeManager.targetOptions[2] = GlobalProposal.TargetOption.BridgeSlash;
     param.roninBridgeManager.targetOptions[3] = GlobalProposal.TargetOption.BridgeTracking;
+    param.roninBridgeManager.targetOptions[4] = GlobalProposal.TargetOption.PauseEnforcer;
 
     param.roninBridgeManager.targets = new address[](4);
     param.roninBridgeManager.targets[0] = _config.getAddressFromCurrentNetwork(Contract.RoninGatewayV3.key());
     param.roninBridgeManager.targets[1] = _config.getAddressFromCurrentNetwork(Contract.BridgeReward.key());
     param.roninBridgeManager.targets[2] = _config.getAddressFromCurrentNetwork(Contract.BridgeSlash.key());
     param.roninBridgeManager.targets[3] = _config.getAddressFromCurrentNetwork(Contract.BridgeTracking.key());
+    param.roninBridgeManager.targets[4] = _config.getAddressFromCurrentNetwork(Contract.RoninPauseEnforcer.key());
 
     _newRoninBridgeManager = RoninBridgeManager(new RoninBridgeManagerDeploy().overrideArgs(
       abi.encodeCall(
