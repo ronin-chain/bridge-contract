@@ -3,7 +3,6 @@ pragma solidity ^0.8.19;
 
 import { console2 } from "forge-std/console2.sol";
 import { StdStyle } from "forge-std/StdStyle.sol";
-import { BaseMigration } from "foundry-deployment-kit/BaseMigration.s.sol";
 import { MainchainBridgeManager } from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
 import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
@@ -11,14 +10,14 @@ import { LibTokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibToken
 import { Contract } from "../utils/Contract.sol";
 import { Network } from "../utils/Network.sol";
 import { Contract } from "../utils/Contract.sol";
-import { IGeneralConfigExtended } from "../IGeneralConfigExtended.sol";
+import { IGeneralConfigExtended } from "../interfaces/IGeneralConfigExtended.sol";
 import { ISharedArgument } from "../interfaces/ISharedArgument.sol";
 import "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
 import "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
 import "@ronin/contracts/libraries/Proposal.sol";
 import "@ronin/contracts/libraries/Ballot.sol";
 
-import { DefaultContract } from "foundry-deployment-kit/utils/DefaultContract.sol";
+import { DefaultContract } from "@fdk/utils/DefaultContract.sol";
 import { MockSLP } from "@ronin/contracts/mocks/token/MockSLP.sol";
 import { SLPDeploy } from "@ronin/script/contracts/token/SLPDeploy.s.sol";
 import { MainchainBridgeAdminUtils } from "test/helpers/MainchainBridgeAdminUtils.t.sol";
@@ -26,7 +25,7 @@ import "@ronin/script/contracts/MainchainBridgeManagerDeploy.s.sol";
 import "@ronin/script/contracts/MainchainWethUnwrapperDeploy.s.sol";
 
 import "./20240411-operators-key.s.sol";
-import "../BridgeMigration.sol";
+import "../Migration.s.sol";
 
 struct LegacyProposalDetail {
   uint256 nonce;
@@ -38,7 +37,7 @@ struct LegacyProposalDetail {
   uint256[] gasAmounts;
 }
 
-contract Migration__20240409_P3_UpgradeBridgeMainchain is BridgeMigration, Migration__20240409_GovernorsKey {
+contract Migration__20240409_P3_UpgradeBridgeMainchain is Migration, Migration__20240409_GovernorsKey {
   ISharedArgument.SharedParameter _param;
   MainchainBridgeManager _currMainchainBridgeManager;
   MainchainBridgeManager _newMainchainBridgeManager;
@@ -52,7 +51,7 @@ contract Migration__20240409_P3_UpgradeBridgeMainchain is BridgeMigration, Migra
     super.setUp();
     CONFIG.setAddress(network(), DefaultContract.ProxyAdmin.key(), PROXY_ADMIN);
 
-    _currMainchainBridgeManager = MainchainBridgeManager(_config.getAddressFromCurrentNetwork(Contract.MainchainBridgeManager.key()));
+    _currMainchainBridgeManager = MainchainBridgeManager(config.getAddressFromCurrentNetwork(Contract.MainchainBridgeManager.key()));
   }
 
   function run() public onlyOn(Network.Sepolia.key()) {
@@ -67,8 +66,8 @@ contract Migration__20240409_P3_UpgradeBridgeMainchain is BridgeMigration, Migra
   }
 
   function _changeTempAdmin() internal {
-    address pauseEnforcerProxy = _config.getAddressFromCurrentNetwork(Contract.MainchainPauseEnforcer.key());
-    address mainchainGatewayV3Proxy = _config.getAddressFromCurrentNetwork(Contract.MainchainGatewayV3.key());
+    address pauseEnforcerProxy = config.getAddressFromCurrentNetwork(Contract.MainchainPauseEnforcer.key());
+    address mainchainGatewayV3Proxy = config.getAddressFromCurrentNetwork(Contract.MainchainGatewayV3.key());
 
     vm.startBroadcast(0x968D0Cd7343f711216817E617d3f92a23dC91c07);
     address(pauseEnforcerProxy).call(abi.encodeWithSignature("changeAdmin(address)", _currMainchainBridgeManager));
@@ -79,14 +78,14 @@ contract Migration__20240409_P3_UpgradeBridgeMainchain is BridgeMigration, Migra
   function _upgradeBridge() internal {
     _newMainchainBridgeManager = new MainchainBridgeManagerDeploy().run();
 
-    address weth = _config.getAddressFromCurrentNetwork(Contract.WETH.key());
+    address weth = config.getAddressFromCurrentNetwork(Contract.WETH.key());
     address wethUnwrapper = new MainchainWethUnwrapperDeploy().overrideArgs(abi.encode(weth)).run();
 
     address pauseEnforcerLogic = _deployLogic(Contract.MainchainPauseEnforcer.key());
     address mainchainGatewayV3Logic = _deployLogic(Contract.MainchainGatewayV3.key());
 
-    address pauseEnforcerProxy = _config.getAddressFromCurrentNetwork(Contract.MainchainPauseEnforcer.key());
-    address mainchainGatewayV3Proxy = _config.getAddressFromCurrentNetwork(Contract.MainchainGatewayV3.key());
+    address pauseEnforcerProxy = config.getAddressFromCurrentNetwork(Contract.MainchainPauseEnforcer.key());
+    address mainchainGatewayV3Proxy = config.getAddressFromCurrentNetwork(Contract.MainchainGatewayV3.key());
 
     uint256 expiredTime = block.timestamp + 14 days;
     uint N = 4;
@@ -207,7 +206,7 @@ contract Migration__20240409_P3_UpgradeBridgeMainchain is BridgeMigration, Migra
     param.mainchainBridgeManager.denom = 10;
     param.mainchainBridgeManager.roninChainId = 2021;
     param.mainchainBridgeManager.expiryDuration = 60 * 60 * 24 * 14; // 14 days
-    param.mainchainBridgeManager.bridgeContract = _config.getAddressFromCurrentNetwork(Contract.MainchainGatewayV3.key());
+    param.mainchainBridgeManager.bridgeContract = config.getAddressFromCurrentNetwork(Contract.MainchainGatewayV3.key());
     param.mainchainBridgeManager.bridgeOperators = new address[](4);
     param.mainchainBridgeManager.bridgeOperators[0] = 0x2e82D2b56f858f79DeeF11B160bFC4631873da2B;
     param.mainchainBridgeManager.bridgeOperators[1] = 0xBcb61783dd2403FE8cC9B89B27B1A9Bb03d040Cb;
@@ -231,8 +230,8 @@ contract Migration__20240409_P3_UpgradeBridgeMainchain is BridgeMigration, Migra
     param.mainchainBridgeManager.targetOptions[1] = GlobalProposal.TargetOption.PauseEnforcer;
 
     param.mainchainBridgeManager.targets = new address[](2);
-    param.mainchainBridgeManager.targets[0] = _config.getAddressFromCurrentNetwork(Contract.MainchainGatewayV3.key());
-    param.mainchainBridgeManager.targets[1] = _config.getAddressFromCurrentNetwork(Contract.MainchainPauseEnforcer.key());
+    param.mainchainBridgeManager.targets[0] = config.getAddressFromCurrentNetwork(Contract.MainchainGatewayV3.key());
+    param.mainchainBridgeManager.targets[1] = config.getAddressFromCurrentNetwork(Contract.MainchainPauseEnforcer.key());
 
     _newMainchainBridgeManager = MainchainBridgeManager(
       new MainchainBridgeManagerDeploy().overrideArgs(

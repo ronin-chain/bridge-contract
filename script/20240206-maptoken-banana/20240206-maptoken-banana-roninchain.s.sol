@@ -3,7 +3,6 @@ pragma solidity ^0.8.19;
 
 import { console2 } from "forge-std/console2.sol";
 import { StdStyle } from "forge-std/StdStyle.sol";
-import { BaseMigration } from "@fdk/BaseMigration.s.sol";
 import { DefaultNetwork } from "@fdk/utils/DefaultNetwork.sol";
 
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
@@ -14,12 +13,11 @@ import { Ballot } from "@ronin/contracts/libraries/Ballot.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
 import { Proposal } from "@ronin/contracts/libraries/Proposal.sol";
 
+import { Migration } from "../Migration.s.sol";
 import { Contract } from "../utils/Contract.sol";
-import { BridgeMigration } from "../BridgeMigration.sol";
 import { TNetwork, Network } from "../utils/Network.sol";
 import { LibProposal } from "script/shared/libraries/LibProposal.sol";
 import { LibCompanionNetwork } from "script/shared/libraries/LibCompanionNetwork.sol";
-import { Contract } from "../utils/Contract.sol";
 
 import "./maptoken-banana-configs.s.sol";
 import "./maptoken-genkai-configs.s.sol";
@@ -152,10 +150,12 @@ contract Migration__20240206_MapTokenBananaRoninChain is
 
     TNetwork currentNetwork = network();
     TNetwork companionNetwork = config.getCompanionNetwork(currentNetwork);
-    address companionManager = config.getAddress(companionNetwork, Contract.MainchainBridgeManager.key());
     config.createFork(companionNetwork);
     config.switchTo(companionNetwork);
-    LibProposal.verifyProposalGasAmount(companionManager, targets, values, calldatas, gasAmounts);
+    {
+      address companionManager = config.getAddress(companionNetwork, Contract.MainchainBridgeManager.key());
+      LibProposal.verifyProposalGasAmount(companionManager, targets, values, calldatas, gasAmounts);
+    }
     config.switchTo(currentNetwork);
 
     console2.log("Nonce:", vm.getNonce(_governor));

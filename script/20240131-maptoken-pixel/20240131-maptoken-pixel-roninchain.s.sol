@@ -120,6 +120,6 @@ contract Migration__20240131_MapTokenPixelRoninchain is Migration, Migration__Ma
     LibProposal.verifyProposalGasAmount(address(_roninBridgeManager), targets, values, calldatas, gasAmounts);
 
     vm.broadcast(_governor);
-    _roninBridgeManager.propose(block.chainid, expiredTime, targets, values, calldatas, gasAmounts);
+    _roninBridgeManager.propose(block.chainid, expiredTime, address(0), targets, values, calldatas, gasAmounts);
   }
 }

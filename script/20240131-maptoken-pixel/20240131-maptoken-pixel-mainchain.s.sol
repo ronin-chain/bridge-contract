@@ -122,6 +122,6 @@ contract Migration__20240131_MapTokenPixelMainchain is Migration, Migration__Map
     config.switchTo(currentNetwork);
 
     vm.broadcast(_governor);
-    _roninBridgeManager.propose(companionChainId, expiredTime, targets, values, calldatas, gasAmounts);
+    _roninBridgeManager.propose(companionChainId, expiredTime, address(0), targets, values, calldatas, gasAmounts);
   }
 }

@@ -3,7 +3,6 @@ pragma solidity ^0.8.19;
 
 import { console2 } from "forge-std/console2.sol";
 import { StdStyle } from "forge-std/StdStyle.sol";
-import { BaseMigration } from "foundry-deployment-kit/BaseMigration.s.sol";
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
@@ -11,7 +10,6 @@ import { LibTokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibToken
 import { Contract } from "../utils/Contract.sol";
 import { Network } from "../utils/Network.sol";
 import { Contract } from "../utils/Contract.sol";
-import { IGeneralConfigExtended } from "../IGeneralConfigExtended.sol";
 import "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
 import "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
 import "@ronin/contracts/libraries/Proposal.sol";
@@ -22,9 +20,9 @@ import { USDCDeploy } from "@ronin/script/contracts/token/USDCDeploy.s.sol";
 import { MainchainBridgeAdminUtils } from "test/helpers/MainchainBridgeAdminUtils.t.sol";
 
 import "./maptoken-usdc-configs.s.sol";
-import "../BridgeMigration.sol";
+import "../Migration.s.sol";
 
-contract Migration__20240405_MapTokenUsdcMainchain is BridgeMigration, Migration__MapToken_Usdc_Config {
+contract Migration__20240405_MapTokenUsdcMainchain is Migration, Migration__MapToken_Usdc_Config {
   address internal _mainchainPauseEnforcer;
   address internal _mainchainGatewayV3;
   address internal _mainchainBridgeManager;

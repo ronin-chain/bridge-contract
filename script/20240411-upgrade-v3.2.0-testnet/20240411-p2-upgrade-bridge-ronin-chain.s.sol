@@ -3,7 +3,6 @@ pragma solidity ^0.8.19;
 
 import { console2 } from "forge-std/console2.sol";
 import { StdStyle } from "forge-std/StdStyle.sol";
-import { BaseMigration } from "foundry-deployment-kit/BaseMigration.s.sol";
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
@@ -11,7 +10,7 @@ import { LibTokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibToken
 import { Contract } from "../utils/Contract.sol";
 import { Network } from "../utils/Network.sol";
 import { Contract } from "../utils/Contract.sol";
-import { IGeneralConfigExtended } from "../IGeneralConfigExtended.sol";
+import { IGeneralConfigExtended } from "../interfaces/IGeneralConfigExtended.sol";
 import { ISharedArgument } from "../interfaces/ISharedArgument.sol";
 import "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
 import "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
@@ -37,7 +36,7 @@ contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_H
     _voters.push(0x52ec2e6BBcE45AfFF8955Da6410bb13812F4289F);
 
     _newRoninBridgeManager = RoninBridgeManager(address(0xdeadbeef)); // TODO: fulfill here
-    _currRoninBridgeManager = RoninBridgeManager(_config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
+    _currRoninBridgeManager = RoninBridgeManager(config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
   }
 
   function run() public onlyOn(DefaultNetwork.RoninTestnet.key()) {
@@ -47,7 +46,7 @@ contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_H
 
   function _changeAdminOfEnforcer() internal {
     RoninBridgeManager roninGA = RoninBridgeManager(0x53Ea388CB72081A3a397114a43741e7987815896);
-    address pauseEnforcerProxy = _config.getAddressFromCurrentNetwork(Contract.RoninPauseEnforcer.key());
+    address pauseEnforcerProxy = config.getAddressFromCurrentNetwork(Contract.RoninPauseEnforcer.key());
 
     uint256 expiredTime = block.timestamp + 14 days;
     uint N = 1;
@@ -100,11 +99,11 @@ contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_H
     address pauseEnforcerLogic = _deployLogic(Contract.RoninPauseEnforcer.key());
     address roninGatewayV3Logic = _deployLogic(Contract.RoninGatewayV3.key());
 
-    address bridgeRewardProxy = _config.getAddressFromCurrentNetwork(Contract.BridgeReward.key());
-    address bridgeSlashProxy = _config.getAddressFromCurrentNetwork(Contract.BridgeSlash.key());
-    address bridgeTrackingProxy = _config.getAddressFromCurrentNetwork(Contract.BridgeTracking.key());
-    address pauseEnforcerProxy = _config.getAddressFromCurrentNetwork(Contract.RoninPauseEnforcer.key());
-    address roninGatewayV3Proxy = _config.getAddressFromCurrentNetwork(Contract.RoninGatewayV3.key());
+    address bridgeRewardProxy = config.getAddressFromCurrentNetwork(Contract.BridgeReward.key());
+    address bridgeSlashProxy = config.getAddressFromCurrentNetwork(Contract.BridgeSlash.key());
+    address bridgeTrackingProxy = config.getAddressFromCurrentNetwork(Contract.BridgeTracking.key());
+    address pauseEnforcerProxy = config.getAddressFromCurrentNetwork(Contract.RoninPauseEnforcer.key());
+    address roninGatewayV3Proxy = config.getAddressFromCurrentNetwork(Contract.RoninGatewayV3.key());
 
     uint256 expiredTime = block.timestamp + 14 days;
     uint N = 10;

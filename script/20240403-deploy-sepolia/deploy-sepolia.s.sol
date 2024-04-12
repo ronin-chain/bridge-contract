@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import { ISharedArgument } from "@ronin/script/interfaces/ISharedArgument.sol";
-import { LibSharedAddress } from "foundry-deployment-kit/libraries/LibSharedAddress.sol";
+import { LibSharedAddress } from "@fdk/libraries/LibSharedAddress.sol";
 
 import "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
 import "@ronin/contracts/ronin/gateway/PauseEnforcer.sol";
@@ -27,13 +27,13 @@ import { MockERC721Deploy } from "@ronin/script/contracts/token/MockERC721Deploy
 
 import { GeneralConfig } from "../GeneralConfig.sol";
 import { Network } from "../utils/Network.sol";
-import { BridgeMigration } from "../BridgeMigration.sol";
-import { DefaultContract } from "foundry-deployment-kit/utils/DefaultContract.sol";
+import { Migration } from "../Migration.s.sol";
+import { DefaultContract } from "@fdk/utils/DefaultContract.sol";
 import "./changeGV-config.s.sol";
 
 import "forge-std/console2.sol";
 
-contract DeploySepolia is BridgeMigration, DeploySepolia__ChangeGV_Config {
+contract DeploySepolia is Migration, DeploySepolia__ChangeGV_Config {
   ISharedArgument.SharedParameter _param;
 
   PauseEnforcer _mainchainPauseEnforcer;

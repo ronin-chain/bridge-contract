@@ -149,7 +149,7 @@ contract Migration__20240206_MapTokenBananaMainchain is
 
     console2.log("Nonce:", vm.getNonce(_governor));
     vm.broadcast(_governor);
-    _roninBridgeManager.propose(companionChainId, expiredTime, targets, values, calldatas, gasAmounts);
+    _roninBridgeManager.propose(companionChainId, expiredTime, address(0), targets, values, calldatas, gasAmounts);
   }
 }
 

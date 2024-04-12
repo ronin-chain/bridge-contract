@@ -64,6 +64,7 @@ library LibProposal {
       nonce: nonce,
       chainId: block.chainid,
       expiryTimestamp: expiryTimestamp,
+      executor: address(0),
       targets: targets,
       values: values,
       calldatas: calldatas,
@@ -83,6 +84,7 @@ library LibProposal {
     proposal = GlobalProposal.GlobalProposalDetail({
       nonce: nonce,
       expiryTimestamp: expiryTimestamp,
+      executor: address(0),
       targetOptions: targetOptions,
       values: values,
       calldatas: calldatas,
@@ -102,7 +104,7 @@ library LibProposal {
     } else {
       vm.broadcast(governor0);
     }
-    manager.proposeProposalForCurrentNetwork(proposal.expiryTimestamp, proposal.targets, proposal.values, proposal.calldatas, proposal.gasAmounts, support);
+    manager.proposeProposalForCurrentNetwork(proposal.expiryTimestamp, proposal.executor, proposal.targets, proposal.values, proposal.calldatas, proposal.gasAmounts, support);
 
     uint256 totalGas = proposal.gasAmounts.sum();
     // 20% more gas for each governor

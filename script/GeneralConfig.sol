@@ -40,19 +40,13 @@ contract GeneralConfig is BaseGeneralConfig, Utils {
   }
 
   function getCompanionNetwork(TNetwork network) public view virtual returns (TNetwork companionNetwork) {
-    if (network == DefaultNetwork.RoninMainnet.key()) {
-      return Network.EthMainnet.key();
-    } else if (network == Network.EthMainnet.key()) {
-      return DefaultNetwork.RoninMainnet.key();
-    } else if (network == DefaultNetwork.RoninTestnet.key()) {
-      return Network.Goerli.key();
-    } else if (network == Network.Goerli.key()) {
-      return DefaultNetwork.RoninTestnet.key();
-    } else if (network == DefaultNetwork.Local.key()) {
-      return DefaultNetwork.Local.key();
-    }
+    if (network == DefaultNetwork.RoninMainnet.key()) return Network.EthMainnet.key();
+    if (network == Network.EthMainnet.key()) return DefaultNetwork.RoninMainnet.key();
+    if (network == DefaultNetwork.RoninTestnet.key()) return Network.Goerli.key();
+    if (network == Network.Goerli.key()) return DefaultNetwork.RoninTestnet.key();
+    if (network == DefaultNetwork.Local.key()) return DefaultNetwork.Local.key();
 
-    return network;
+    revert("Network: Unknown companion network");
   }
 
   function _setUpContracts() internal virtual override {
@@ -101,11 +95,5 @@ contract GeneralConfig is BaseGeneralConfig, Utils {
 
     if (sender == address(0x0) && isLocalNetwork) sender = payable(DEFAULT_SENDER);
     require(sender != address(0x0), "GeneralConfig: Sender is address(0x0)");
-  }
-
-  function getCompanionNetwork(TNetwork network) external pure returns (Network) {
-    if (network == DefaultNetwork.RoninTestnet.key()) return Network.Sepolia;
-    if (network == DefaultNetwork.RoninMainnet.key()) return Network.EthMainnet;
-    revert("Network: Unknown companion network");
   }
 }

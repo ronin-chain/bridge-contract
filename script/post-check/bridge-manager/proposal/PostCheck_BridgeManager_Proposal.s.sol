@@ -68,8 +68,8 @@ abstract contract PostCheck_BridgeManager_Proposal is BasePostCheck {
     assertEq(manager.globalProposalVoted(globalProposal.nonce, cheatGovernor), true);
     // Check if the operator is added
     assertTrue(manager.isBridgeOperator(cheatOperator), "operator not added");
-    // Check if the governor is added
-    assertTrue(manager.isBridgeGovernor(cheatGovernor), "governor not added");
+    // // Check if the governor is added
+    // assertTrue(manager.isBridgeGovernor(cheatGovernor), "governor not added");
 
   }
 

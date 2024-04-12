@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import { Ballot } from "@ronin/contracts/libraries/Ballot.sol";
-import "../BridgeMigration.sol";
+import "../Migration.s.sol";
 
 struct LegacyProposalDetail {
   uint256 nonce;
@@ -14,7 +14,7 @@ struct LegacyProposalDetail {
   uint256[] gasAmounts;
 }
 
-contract Migration__20240409_Helper is BridgeMigration {
+contract Migration__20240409_Helper is Migration {
   address internal _governor;
   address[] internal _voters;
 

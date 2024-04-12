@@ -155,6 +155,6 @@ contract Migration__MapTokenMainchain is Migration {
     config.switchTo(currentNetwork);
 
     vm.broadcast(sender());
-    _roninBridgeManager.propose(companionChainId, expiredTime, targets, values, calldatas, gasAmounts);
+    _roninBridgeManager.propose(companionChainId, expiredTime, address(0), targets, values, calldatas, gasAmounts);
   }
 }

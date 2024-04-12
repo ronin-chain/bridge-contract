@@ -128,6 +128,6 @@ contract Migration__MapTokenRoninchain is Migration {
     config.switchTo(currentNetwork);
 
     vm.broadcast(sender());
-    _roninBridgeManager.propose(block.chainid, expiredTime, targets, values, calldatas, gasAmounts);
+    _roninBridgeManager.propose(block.chainid, expiredTime, address(0), targets, values, calldatas, gasAmounts);
   }
 }
