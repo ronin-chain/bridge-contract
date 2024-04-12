@@ -30,16 +30,16 @@ contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_H
   function setUp() public override {
     super.setUp();
 
-    _governor = 0xd24D87DDc1917165435b306aAC68D99e0F49A3Fa;
-    _voters.push(0xb033ba62EC622dC54D0ABFE0254e79692147CA26);
-    _voters.push(0x087D08e3ba42e64E3948962dd1371F906D1278b9);
-    _voters.push(0x52ec2e6BBcE45AfFF8955Da6410bb13812F4289F);
-
     _newRoninBridgeManager = RoninBridgeManager(address(0xdeadbeef)); // TODO: fulfill here
     _currRoninBridgeManager = RoninBridgeManager(config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
   }
 
   function run() public onlyOn(DefaultNetwork.RoninTestnet.key()) {
+    _governor = 0xd24D87DDc1917165435b306aAC68D99e0F49A3Fa;
+    _voters.push(0xb033ba62EC622dC54D0ABFE0254e79692147CA26);
+    _voters.push(0x087D08e3ba42e64E3948962dd1371F906D1278b9);
+    _voters.push(0x52ec2e6BBcE45AfFF8955Da6410bb13812F4289F);
+
     _changeAdminOfEnforcer();
     _upgradeBridge();
   }
