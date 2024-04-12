@@ -11,6 +11,7 @@ import { Contract } from "../utils/Contract.sol";
 import { Migration } from "../Migration.s.sol";
 import { TNetwork, Network } from "../utils/Network.sol";
 import { LibProposal } from "script/shared/libraries/LibProposal.sol";
+import { LibCompanionNetwork } from "script/shared/libraries/LibCompanionNetwork.sol";
 import { DefaultNetwork } from "@fdk/utils/DefaultNetwork.sol";
 import { Contract } from "../utils/Contract.sol";
 
@@ -26,6 +27,8 @@ contract Migration__20240206_MapTokenBananaMainchain is
   Migration__MapToken_Genkai_Config,
   Migration__ChangeGV_StableNode_Config
 {
+  using LibCompanionNetwork for *;
+
   RoninBridgeManager internal _roninBridgeManager;
   address internal _mainchainGatewayV3;
   address internal _mainchainBridgeManager;
@@ -138,14 +141,9 @@ contract Migration__20240206_MapTokenBananaMainchain is
 
     // ================ VERIFY AND EXECUTE PROPOSAL ===============
 
-    TNetwork currentNetwork = network();
-    TNetwork companionNetwork = config.getCompanionNetwork(currentNetwork);
+    (uint256 companionChainId, TNetwork companionNetwork) = network().companionNetworkData();
     address companionManager = config.getAddress(companionNetwork, Contract.MainchainBridgeManager.key());
-    config.createFork(companionNetwork);
-    config.switchTo(companionNetwork);
-    uint256 companionChainId = block.chainid;
-    LibProposal.verifyProposalGasAmount(companionManager, targets, values, calldatas, gasAmounts);
-    config.switchTo(currentNetwork);
+    LibProposal.verifyMainchainProposalGasAmount(companionNetwork, companionManager, targets, values, calldatas, gasAmounts);
 
     console2.log("Nonce:", vm.getNonce(_governor));
     vm.broadcast(_governor);

@@ -4,7 +4,6 @@ pragma solidity ^0.8.23;
 import { console2 as console } from "forge-std/console2.sol";
 import { BaseGeneralConfig } from "@fdk/BaseGeneralConfig.sol";
 import { DefaultNetwork } from "@fdk/utils/DefaultNetwork.sol";
-import { TNetwork } from "@fdk/types/Types.sol";
 import { Contract } from "./utils/Contract.sol";
 import { TNetwork, Network } from "./utils/Network.sol";
 import { Utils } from "./utils/Utils.sol";
@@ -42,8 +41,8 @@ contract GeneralConfig is BaseGeneralConfig, Utils {
   function getCompanionNetwork(TNetwork network) public view virtual returns (TNetwork companionNetwork) {
     if (network == DefaultNetwork.RoninMainnet.key()) return Network.EthMainnet.key();
     if (network == Network.EthMainnet.key()) return DefaultNetwork.RoninMainnet.key();
-    if (network == DefaultNetwork.RoninTestnet.key()) return Network.Goerli.key();
-    if (network == Network.Goerli.key()) return DefaultNetwork.RoninTestnet.key();
+    if (network == DefaultNetwork.RoninTestnet.key()) return Network.Sepolia.key();
+    if (network == Network.Sepolia.key()) return DefaultNetwork.RoninTestnet.key();
     if (network == DefaultNetwork.Local.key()) return DefaultNetwork.Local.key();
 
     revert("Network: Unknown companion network");

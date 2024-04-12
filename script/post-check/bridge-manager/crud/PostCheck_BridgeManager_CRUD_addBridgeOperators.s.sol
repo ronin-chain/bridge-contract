@@ -32,7 +32,7 @@ abstract contract PostCheck_BridgeManager_CRUD_AddBridgeOperators is BasePostChe
   function validate_RevertWhen_NotSelfCalled_addBridgeOperators() private onPostCheck("validate_RevertWhen_NotSelfCalled_addBridgeOperators") {
     vm.expectRevert();
     vm.prank(any);
-    bool[] memory addeds = IBridgeManager(_manager[block.chainid]).addBridgeOperators(
+    IBridgeManager(_manager[block.chainid]).addBridgeOperators(
       voteWeight.toSingletonArray().toUint96sUnsafe(), operator.toSingletonArray(), governor.toSingletonArray()
     );
   }

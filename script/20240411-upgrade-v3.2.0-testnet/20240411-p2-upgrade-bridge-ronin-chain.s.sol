@@ -10,7 +10,6 @@ import { LibTokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibToken
 import { Contract } from "../utils/Contract.sol";
 import { Network } from "../utils/Network.sol";
 import { Contract } from "../utils/Contract.sol";
-import { IGeneralConfigExtended } from "../interfaces/IGeneralConfigExtended.sol";
 import { ISharedArgument } from "../interfaces/ISharedArgument.sol";
 import "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
 import "@ronin/contracts/mainchain/MainchainGatewayV3.sol";

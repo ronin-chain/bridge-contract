@@ -1,11 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import { console } from "forge-std/console.sol";
+import { TransparentUpgradeableProxy } from "@ronin/contracts/extensions/TransparentUpgradeableProxyV2.sol";
 import { BasePostCheck } from "../../BasePostCheck.s.sol";
 import { IBridgeManager } from "@ronin/contracts/interfaces/bridge/IBridgeManager.sol";
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
+import { MainchainBridgeManager } from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
 import { TContract, Contract } from "script/utils/Contract.sol";
-import "script/shared/libraries/LibProposal.sol";
+import { TNetwork, Network } from "script/utils/Network.sol";
+import { LibArray } from "script/shared/libraries/LibArray.sol";
+import { LibCompanionNetwork } from "script/shared/libraries/LibCompanionNetwork.sol";
+import { Ballot, SignatureConsumer, Proposal, GlobalProposal, LibProposal } from "script/shared/libraries/LibProposal.sol";
 import { LibProxy } from "@fdk/libraries/LibProxy.sol";
 import { DefaultNetwork } from "@fdk/utils/DefaultNetwork.sol";
 
@@ -13,13 +19,17 @@ abstract contract PostCheck_BridgeManager_Proposal is BasePostCheck {
   using LibArray for *;
   using LibProxy for *;
   using LibProposal for *;
+  using LibCompanionNetwork for *;
+
+  address private _cheatGovernor;
+  address private _cheatOperator;
+  uint256 private _cheatGovernorPk;
 
   uint96[] private _voteWeights = [100, 100];
   address[] private _addingGovernors = [makeAddr("governor-1"), makeAddr("governor-2")];
   address[] private _addingOperators = [makeAddr("operator-1"), makeAddr("operator-2")];
-  address[] private _proxyTargets;
 
-  modifier onlyOnRoninNetwork() {
+  modifier onlyOnRoninNetworkOrLocal() {
     require(
       block.chainid == DefaultNetwork.RoninMainnet.chainId() || block.chainid == DefaultNetwork.RoninTestnet.chainId()
         || block.chainid == Network.RoninDevnet.chainId() || block.chainid == DefaultNetwork.Local.chainId(),
@@ -30,21 +40,89 @@ abstract contract PostCheck_BridgeManager_Proposal is BasePostCheck {
 
   function _validate_BridgeManager_Proposal() internal {
     validate_ProposeGlobalProposalAndRelay_addBridgeOperator();
+    validate_proposeAndRelay_addBridgeOperator();
     validate_canExecuteUpgradeSingleProposal();
+    validate_canExcuteUpgradeAllOneProposal();
   }
 
-  function validate_ProposeGlobalProposalAndRelay_addBridgeOperator() private onPostCheck("validate_ProposeGlobalProposalAndRelay_addBridgeOperator") {
+  function validate_proposeAndRelay_addBridgeOperator() private onlyOnRoninNetworkOrLocal onPostCheck("validate_proposeAndRelay_addBridgeOperator") {
     RoninBridgeManager manager = RoninBridgeManager(loadContract(Contract.RoninBridgeManager.key()));
-    uint256 totalVoteWeight = manager.getTotalWeight();
 
-    uint256 cheatVoteWeight = totalVoteWeight * 2;
-    address cheatOperator = makeAddr(string.concat("operator-", vm.toString(seed)));
-    (address cheatGovernor, uint256 cheatGovernorPk) = makeAddrAndKey(string.concat("governor-", vm.toString(seed)));
+    // Cheat add governor
+    cheatAddOverWeightedGovernor(address(manager));
 
-    vm.prank(address(manager));
-    bool[] memory addeds =
-      manager.addBridgeOperators(cheatVoteWeight.toSingletonArray().toUint96sUnsafe(), cheatGovernor.toSingletonArray(), cheatOperator.toSingletonArray());
-    assertTrue(addeds[0], "addeds[0] == false");
+    address[] memory targets = address(manager).toSingletonArray();
+    uint256[] memory values = uint256(0).toSingletonArray();
+    bytes[] memory calldatas = abi.encodeCall(IBridgeManager.addBridgeOperators, (_voteWeights, _addingGovernors, _addingOperators)).toSingletonArray();
+    uint256[] memory gasAmounts = uint256(1_000_000).toSingletonArray();
+
+    uint256 roninChainId = block.chainid;
+
+    Proposal.ProposalDetail memory proposal = LibProposal.createProposal({
+      manager: address(manager),
+      expiryTimestamp: block.timestamp + 20 minutes,
+      targets: targets,
+      values: values,
+      calldatas: calldatas,
+      gasAmounts: gasAmounts,
+      nonce: manager.round(0) + 1
+    });
+
+    vm.prank(_cheatGovernor);
+    manager.propose(roninChainId, block.timestamp + 20 minutes, address(0x0), targets, values, calldatas, gasAmounts);
+
+    {
+      TNetwork currentNetwork = CONFIG.getCurrentNetwork();
+      (uint256 companionChainId, TNetwork companionNetwork) = currentNetwork.companionNetworkData();
+      MainchainBridgeManager mainchainManager = MainchainBridgeManager(_manager[companionChainId]);
+      console.log("MainchainBridgeManager:", vm.getLabel(address(mainchainManager)));
+
+      CONFIG.createFork(companionNetwork);
+      CONFIG.switchTo(companionNetwork);
+      uint256 snapshotId = vm.snapshot();
+
+      // Cheat add governor
+      cheatAddOverWeightedGovernor(address(mainchainManager));
+
+      targets = address(mainchainManager).toSingletonArray();
+
+      proposal = LibProposal.createProposal({
+        manager: address(mainchainManager),
+        expiryTimestamp: block.timestamp + 20 minutes,
+        targets: targets,
+        values: proposal.values,
+        calldatas: proposal.calldatas,
+        gasAmounts: proposal.gasAmounts,
+        nonce: mainchainManager.round(block.chainid) + 1
+      });
+
+      SignatureConsumer.Signature[] memory signatures = proposal.generateSignatures(_cheatGovernorPk.toSingletonArray(), Ballot.VoteType.For);
+      Ballot.VoteType[] memory _supports = new Ballot.VoteType[](signatures.length);
+
+      uint256 minimumForVoteWeight = mainchainManager.minimumVoteWeight();
+      uint256 totalForVoteWeight = mainchainManager.getGovernorWeight(_cheatGovernor);
+      console.log("Total for vote weight:", totalForVoteWeight);
+      console.log("Minimum for vote weight:", minimumForVoteWeight);
+
+      vm.prank(_cheatGovernor);
+      mainchainManager.relayProposal(proposal, _supports, signatures);
+      for (uint256 i; i < _addingGovernors.length; ++i) {
+        assertEq(mainchainManager.isBridgeOperator(_addingOperators[i]), true, "isBridgeOperator == false");
+      }
+
+      bool reverted = vm.revertTo(snapshotId);
+      assertTrue(reverted, "Cannot revert to snapshot id");
+      CONFIG.switchTo(currentNetwork);
+    }
+  }
+
+  function validate_ProposeGlobalProposalAndRelay_addBridgeOperator()
+    private
+    onlyOnRoninNetworkOrLocal
+    onPostCheck("validate_ProposeGlobalProposalAndRelay_addBridgeOperator")
+  {
+    RoninBridgeManager manager = RoninBridgeManager(loadContract(Contract.RoninBridgeManager.key()));
+    cheatAddOverWeightedGovernor(address(manager));
 
     GlobalProposal.TargetOption[] memory targetOptions = new GlobalProposal.TargetOption[](1);
     targetOptions[0] = GlobalProposal.TargetOption.BridgeManager;
@@ -55,43 +133,113 @@ abstract contract PostCheck_BridgeManager_Proposal is BasePostCheck {
       values: uint256(0).toSingletonArray(),
       calldatas: abi.encodeCall(IBridgeManager.addBridgeOperators, (_voteWeights, _addingGovernors, _addingOperators)).toSingletonArray(),
       gasAmounts: uint256(1_000_000).toSingletonArray(),
+      nonce: manager.round(0) + 1
+    });
+
+    SignatureConsumer.Signature[] memory signatures;
+    Ballot.VoteType[] memory _supports;
+    {
+      signatures = globalProposal.generateSignaturesGlobal(_cheatGovernorPk.toSingletonArray(), Ballot.VoteType.For);
+      _supports = new Ballot.VoteType[](signatures.length);
+
+      vm.prank(_cheatGovernor);
+      manager.proposeGlobalProposalStructAndCastVotes(globalProposal, _supports, signatures);
+    }
+
+    // Check if the proposal is voted
+    assertEq(manager.globalProposalVoted(globalProposal.nonce, _cheatGovernor), true);
+    for (uint256 i; i < _addingGovernors.length; ++i) {
+      assertEq(manager.isBridgeOperator(_addingOperators[i]), true, "isBridgeOperator == false");
+    }
+
+    {
+      TNetwork currentNetwork = CONFIG.getCurrentNetwork();
+      (uint256 companionChainId, TNetwork companionNetwork) = currentNetwork.companionNetworkData();
+      MainchainBridgeManager mainchainManager = MainchainBridgeManager(_manager[companionChainId]);
+
+      CONFIG.createFork(companionNetwork);
+      CONFIG.switchTo(companionNetwork);
+      uint256 snapshotId = vm.snapshot();
+
+      cheatAddOverWeightedGovernor(address(mainchainManager));
+
+      vm.prank(_cheatGovernor);
+      mainchainManager.relayGlobalProposal(globalProposal, _supports, signatures);
+
+      for (uint256 i; i < _addingGovernors.length; ++i) {
+        assertEq(mainchainManager.isBridgeOperator(_addingOperators[i]), true, "isBridgeOperator == false");
+      }
+
+      bool reverted = vm.revertTo(snapshotId);
+      assertTrue(reverted, "Cannot revert to snapshot id");
+      CONFIG.switchTo(currentNetwork);
+    }
+  }
+
+  function validate_canExecuteUpgradeSingleProposal() private onlyOnRoninNetworkOrLocal onPostCheck("validate_canExecuteUpgradeSingleProposal") {
+    TContract[] memory contractTypes = new TContract[](4);
+    contractTypes[0] = Contract.BridgeSlash.key();
+    contractTypes[1] = Contract.BridgeReward.key();
+    contractTypes[2] = Contract.BridgeTracking.key();
+    contractTypes[3] = Contract.RoninGatewayV3.key();
+
+    address[] memory targets = new address[](contractTypes.length);
+    for (uint256 i; i < contractTypes.length; ++i) {
+      targets[i] = loadContract(contractTypes[i]);
+    }
+
+    for (uint256 i; i < targets.length; ++i) {
+      console.log("Upgrading contract:", vm.getLabel(targets[i]));
+      _upgradeProxy(contractTypes[i]);
+    }
+  }
+
+  function validate_canExcuteUpgradeAllOneProposal() private onlyOnRoninNetworkOrLocal onPostCheck("validate_canExcuteUpgradeAllOneProposal") {
+    RoninBridgeManager manager = RoninBridgeManager(loadContract(Contract.RoninBridgeManager.key()));
+    TContract[] memory contractTypes = new TContract[](4);
+    contractTypes[0] = Contract.BridgeSlash.key();
+    contractTypes[1] = Contract.BridgeReward.key();
+    contractTypes[2] = Contract.BridgeTracking.key();
+    contractTypes[3] = Contract.RoninGatewayV3.key();
+
+    address[] memory targets = new address[](contractTypes.length);
+    for (uint256 i; i < contractTypes.length; ++i) {
+      targets[i] = loadContract(contractTypes[i]);
+    }
+
+    address[] memory logics = new address[](targets.length);
+    for (uint256 i; i < targets.length; ++i) {
+      console.log("Deploy contract logic:", vm.getLabel(targets[i]));
+      logics[i] = _deployLogic(contractTypes[i]);
+    }
+
+    // Upgrade all contracts with proposal
+    bytes[] memory calldatas = new bytes[](targets.length);
+    for (uint256 i; i < targets.length; ++i) {
+      calldatas[i] = abi.encodeCall(TransparentUpgradeableProxy.upgradeTo, (logics[i]));
+    }
+
+    Proposal.ProposalDetail memory proposal = LibProposal.createProposal({
+      manager: address(manager),
+      expiryTimestamp: block.timestamp + 20 minutes,
+      targets: targets,
+      values: uint256(0).repeat(targets.length),
+      calldatas: calldatas,
+      gasAmounts: uint256(1_000_000).repeat(targets.length),
       nonce: manager.round(block.chainid) + 1
     });
 
-    SignatureConsumer.Signature[] memory signatures = globalProposal.generateSignaturesGlobal(cheatGovernorPk.toSingletonArray(), Ballot.VoteType.For);
-    Ballot.VoteType[] memory _supports = new Ballot.VoteType[](signatures.length);
-
-    vm.prank(cheatGovernor);
-    manager.proposeGlobalProposalStructAndCastVotes(globalProposal, _supports, signatures);
-
-    // Check if the proposal is voted
-    assertEq(manager.globalProposalVoted(globalProposal.nonce, cheatGovernor), true);
-    // Check if the operator is added
-    assertTrue(manager.isBridgeOperator(cheatOperator), "operator not added");
-    // // Check if the governor is added
-    // assertTrue(manager.isBridgeGovernor(cheatGovernor), "governor not added");
-
+    manager.executeProposal(proposal);
   }
 
-  function validate_canExecuteUpgradeSingleProposal() private onlyOnRoninNetwork onPostCheck("validate_canExecuteUpgradeProposal") {
-    address manager = loadContract(Contract.RoninBridgeManager.key());
-    // Get all contracts deployed from the current network
-    address payable[] memory addrs = CONFIG.getAllAddresses(network());
+  function cheatAddOverWeightedGovernor(address manager) private {
+    uint256 cheatVoteWeight = IBridgeManager(manager).getTotalWeight() * 100;
+    _cheatOperator = makeAddr(string.concat("cheat-operator-", vm.toString(seed)));
+    (_cheatGovernor, _cheatGovernorPk) = makeAddrAndKey(string.concat("cheat-governor-", vm.toString(seed)));
 
-    // Identify proxy targets to upgrade with proposal
-    for (uint256 i; i < addrs.length; ++i) {
-      address payable proxy = addrs[i].getProxyAdmin({ nullCheck: false });
-      if (proxy == manager) {
-        console.log("Target Proxy to test upgrade with proposal", vm.getLabel(addrs[i]));
-        _proxyTargets.push(addrs[i]);
-      }
-    }
-
-    address[] memory targets = _proxyTargets;
-    for (uint256 i; i < targets.length; ++i) {
-      TContract contractType = CONFIG.getContractTypeFromCurrentNetwok(targets[i]);
-      console.log("Upgrading contract:", vm.getLabel(targets[i]));
-      _upgradeProxy(contractType);
-    }
+    vm.prank(manager);
+    bool[] memory addeds = IBridgeManager(manager).addBridgeOperators(
+      cheatVoteWeight.toSingletonArray().toUint96sUnsafe(), _cheatGovernor.toSingletonArray(), _cheatOperator.toSingletonArray()
+    );
   }
 }

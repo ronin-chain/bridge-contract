@@ -30,7 +30,9 @@ library LibCompanionNetwork {
 
   function companionNetworkData(TNetwork network) internal returns (uint256 chainId, TNetwork companionTNetwork) {
     companionTNetwork = config.getCompanionNetwork(network);
+    config.createFork(companionTNetwork);
     config.switchTo(companionTNetwork);
     chainId = block.chainid;
+    config.switchTo(network);
   }
 }

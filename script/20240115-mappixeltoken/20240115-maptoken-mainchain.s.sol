@@ -11,10 +11,13 @@ import { LibTokenInfo, TokenInfo, TokenStandard } from "@ronin/contracts/librari
 import { Contract } from "../utils/Contract.sol";
 import { Migration } from "../Migration.s.sol";
 import { LibProposal } from "script/shared/libraries/LibProposal.sol";
+import { LibCompanionNetwork } from "script/shared/libraries/LibCompanionNetwork.sol";
 import { TNetwork, Network } from "../utils/Network.sol";
 import { Contract } from "../utils/Contract.sol";
 
 contract Migration__MapTokenMainchain is Migration {
+  using LibCompanionNetwork for *;
+
   RoninBridgeManager internal _roninBridgeManager;
 
   address constant _pixelRoninToken = address(0x8b50c162494567B3c8B7F00F6031341861c8dEeD);
@@ -145,14 +148,9 @@ contract Migration__MapTokenMainchain is Migration {
     calldatas[3] = _addAxieChatGovernorAddress();
     gasAmounts[3] = 1_000_000;
 
-    TNetwork currentNetwork = network();
-    TNetwork companionNetwork = config.getCompanionNetwork(currentNetwork);
+    (uint256 companionChainId, TNetwork companionNetwork) = network().companionNetworkData();
     address companionManager = config.getAddress(companionNetwork, Contract.MainchainBridgeManager.key());
-    config.createFork(companionNetwork);
-    config.switchTo(companionNetwork);
-    uint256 companionChainId = block.chainid;
-    LibProposal.verifyProposalGasAmount(companionManager, targets, values, calldatas, gasAmounts);
-    config.switchTo(currentNetwork);
+    LibProposal.verifyMainchainProposalGasAmount(companionNetwork, companionManager, targets, values, calldatas, gasAmounts);
 
     vm.broadcast(sender());
     _roninBridgeManager.propose(companionChainId, expiredTime, address(0), targets, values, calldatas, gasAmounts);

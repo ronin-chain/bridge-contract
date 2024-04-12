@@ -30,6 +30,7 @@ abstract contract BasePostCheck is BaseMigration {
 
   function _afterPostCheck(string memory postCheckLabel, uint256 snapshotId) private {
     console.log(string.concat("Postcheck ", postCheckLabel.italic(), " successful!\n").green());
-    vm.revertTo(snapshotId);
+    bool reverted = vm.revertTo(snapshotId);
+    assertTrue(reverted, string.concat("Cannot revert to snapshot id: ", vm.toString(snapshotId)));
   }
 }

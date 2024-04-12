@@ -30,6 +30,8 @@ contract Migration is PostChecker, Utils {
   uint256 internal constant DEFAULT_PROPOSAL_GAS = 1_000_000;
   ISharedArgument internal constant config = ISharedArgument(address(CONFIG));
 
+  bool internal _isLocalETH;
+
   function setUp() public virtual override {
     super.setUp();
   }
@@ -92,6 +94,8 @@ contract Migration is PostChecker, Utils {
       param.mainchainBridgeManager.targetOptions = options;
       param.mainchainBridgeManager.targets = targets;
     } else if (network() == DefaultNetwork.RoninTestnet.key()) {
+      // Undefined
+    } else if (network() == DefaultNetwork.RoninMainnet.key()) {
       // Undefined
     } else if (network() == DefaultNetwork.Local.key()) {
       // test
@@ -198,37 +202,43 @@ contract Migration is PostChecker, Utils {
     rawArgs = abi.encode(param);
   }
 
-  function _getProxyAdmin() internal virtual override returns (address payable) {
-    bool isLocalNetwork = network() == DefaultNetwork.Local.key();
-    return isLocalNetwork ? payable(config.sharedArguments().test.proxyAdmin) : super._getProxyAdmin();
-  }
-
-  function _getProxyAdminFromCurrentNetwork() internal view virtual returns (address proxyAdmin) {
+  function _getProxyAdmin() internal virtual override returns (address payable proxyAdmin) {
     TNetwork currentNetwork = network();
-    if (currentNetwork == DefaultNetwork.RoninTestnet.key() || currentNetwork == DefaultNetwork.RoninMainnet.key()) {
-      proxyAdmin = config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key());
-    } else if (currentNetwork == Network.Goerli.key() || currentNetwork == Network.EthMainnet.key()) {
-      proxyAdmin = config.getAddressFromCurrentNetwork(Contract.MainchainBridgeManager.key());
+    if (
+      currentNetwork == DefaultNetwork.RoninTestnet.key() || currentNetwork == DefaultNetwork.RoninMainnet.key() || currentNetwork == Network.RoninDevnet.key()
+    ) {
+      proxyAdmin = loadContract(Contract.RoninBridgeManager.key());
+    } else if (currentNetwork == Network.Sepolia.key() || currentNetwork == Network.Goerli.key() || currentNetwork == Network.EthMainnet.key()) {
+      proxyAdmin = loadContract(Contract.MainchainBridgeManager.key());
+    } else if (currentNetwork == DefaultNetwork.Local.key()) {
+      TContract managerContractType = _isLocalETH ? Contract.MainchainBridgeManager.key() : Contract.RoninBridgeManager.key();
+      try config.getAddressFromCurrentNetwork(managerContractType) returns (address payable addr) {
+        proxyAdmin = addr;
+      } catch {
+        proxyAdmin = payable(config.sharedArguments().test.proxyAdmin);
+      }
     } else {
-      revert("BridgeMigration(_getProxyAdminFromCurrentNetwork): Unhandled case");
+      console.log("Network not supported".yellow(), currentNetwork.networkName());
+      console.log("Chain Id".yellow(), block.chainid);
+      revert("BridgeMigration(_getProxyAdmin): Unhandled case");
     }
   }
 
   function _upgradeRaw(address proxyAdmin, address payable proxy, address logic, bytes memory args) internal virtual override {
-    if (logic.codehash == payable(proxy).getProxyImplementation({ nullCheck: true }).codehash) {
+    if (!config.isPostChecking() && logic.codehash == payable(proxy).getProxyImplementation({ nullCheck: true }).codehash) {
       console.log("BaseMigration: Logic is already upgraded!".yellow());
       return;
     }
 
     assertTrue(proxyAdmin != address(0x0), "BridgeMigration: Invalid {proxyAdmin} or {proxy} is not a Proxy contract");
-    address admin = _getProxyAdminFromCurrentNetwork();
+    address admin = _getProxyAdmin();
     TNetwork currentNetwork = network();
 
     if (proxyAdmin == admin) {
       // in case proxyAdmin is GovernanceAdmin
       if (
         currentNetwork == DefaultNetwork.RoninTestnet.key() || currentNetwork == DefaultNetwork.RoninMainnet.key()
-          || currentNetwork == Network.RoninDevnet.key()
+          || currentNetwork == Network.RoninDevnet.key() || currentNetwork == DefaultNetwork.Local.key()
       ) {
         // handle for ronin network
         console.log(StdStyle.yellow("Voting on RoninBridgeManager for upgrading..."));
@@ -244,6 +254,7 @@ contract Migration is PostChecker, Utils {
           : abi.encodeCall(TransparentUpgradeableProxy.upgradeToAndCall, (logic, args));
 
         Proposal.ProposalDetail memory proposal = LibProposal.createProposal({
+          manager: address(manager),
           nonce: manager.round(block.chainid) + 1,
           expiryTimestamp: block.timestamp + 10 minutes,
           targets: targets,
@@ -254,7 +265,7 @@ contract Migration is PostChecker, Utils {
 
         manager.executeProposal(proposal);
         assertEq(proxy.getProxyImplementation(), logic, "BridgeMigration: Upgrade failed");
-      } else if (currentNetwork == Network.Goerli.key() || currentNetwork == Network.EthMainnet.key()) {
+      } else if (currentNetwork == Network.Sepolia.key() || currentNetwork == Network.Goerli.key() || currentNetwork == Network.EthMainnet.key()) {
         // handle for ethereum
         revert("BridgeMigration: Unhandled case for ETH");
       } else {
@@ -275,6 +286,10 @@ contract Migration is PostChecker, Utils {
       if (args.length == 0) proxyAdminContract.upgrade(TransparentUpgradeableProxy(proxy), logic);
       else proxyAdminContract.upgradeAndCall(TransparentUpgradeableProxy(proxy), logic, args);
     }
+  }
+
+  function _deployLogic(TContract contractType) internal virtual override returns (address payable logic) {
+    logic = _deployLogic(contractType, EMPTY_ARGS);
   }
 
   function _deployProxy(
@@ -301,5 +316,16 @@ contract Migration is PostChecker, Utils {
 
     config.setAddress(network(), contractType, deployed);
     ARTIFACT_FACTORY.generateArtifact(sender(), deployed, proxyAbsolutePath, string.concat(contractName, "Proxy"), args, proxyNonce);
+  }
+
+  function _getProxyAdminFromCurrentNetwork() internal view virtual returns (address proxyAdmin) {
+    TNetwork currentNetwork = network();
+    if (currentNetwork == DefaultNetwork.RoninTestnet.key() || currentNetwork == DefaultNetwork.RoninMainnet.key()) {
+      proxyAdmin = config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key());
+    } else if (currentNetwork == Network.Goerli.key() || currentNetwork == Network.EthMainnet.key()) {
+      proxyAdmin = config.getAddressFromCurrentNetwork(Contract.MainchainBridgeManager.key());
+    } else {
+      revert("BridgeMigration(_getProxyAdminFromCurrentNetwork): Unhandled case");
+    }
   }
 }

@@ -74,21 +74,23 @@ contract Migration__20240206_MapTokenBananaRoninChain is
 
     // ============= MAP NEW BANANA, VX, GENKAI TOKEN  ===========
 
-    uint256 companionChainId = network().companionChainId();
-    roninTokens[0] = _bananaRoninToken;
-    mainchainTokens[0] = _bananaMainchainToken;
-    chainIds[0] = companionChainId;
-    standards[0] = TokenStandard.ERC20;
+    {
+      uint256 companionChainId = network().companionChainId();
+      roninTokens[0] = _bananaRoninToken;
+      mainchainTokens[0] = _bananaMainchainToken;
+      chainIds[0] = companionChainId;
+      standards[0] = TokenStandard.ERC20;
 
-    roninTokens[1] = _VxRoninToken;
-    mainchainTokens[1] = _VxMainchainToken;
-    chainIds[1] = companionChainId;
-    standards[1] = TokenStandard.ERC721;
+      roninTokens[1] = _VxRoninToken;
+      mainchainTokens[1] = _VxMainchainToken;
+      chainIds[1] = companionChainId;
+      standards[1] = TokenStandard.ERC721;
 
-    roninTokens[2] = _genkaiRoninToken;
-    mainchainTokens[2] = _genkaiMainchainToken;
-    chainIds[2] = companionChainId;
-    standards[2] = TokenStandard.ERC721;
+      roninTokens[2] = _genkaiRoninToken;
+      mainchainTokens[2] = _genkaiMainchainToken;
+      chainIds[2] = companionChainId;
+      standards[2] = TokenStandard.ERC721;
+    }
 
     // function mapTokens(
     //   address[] calldata _roninTokens,
@@ -96,55 +98,58 @@ contract Migration__20240206_MapTokenBananaRoninChain is
     //   uint256[] calldata chainIds,
     //   TokenStandard[] calldata _standards
     // )
-    bytes memory innerData = abi.encodeCall(IRoninGatewayV3.mapTokens, (roninTokens, mainchainTokens, chainIds, standards));
-    bytes memory proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
+    {
+      bytes memory innerData = abi.encodeCall(IRoninGatewayV3.mapTokens, (roninTokens, mainchainTokens, chainIds, standards));
+      bytes memory proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
 
-    targets[0] = _roninGatewayV3;
-    values[0] = 0;
-    calldatas[0] = proxyData;
-    gasAmounts[0] = 1_000_000;
+      targets[0] = _roninGatewayV3;
+      values[0] = 0;
+      calldatas[0] = proxyData;
+      gasAmounts[0] = 1_000_000;
 
-    // ============= SET MIN THRESHOLD FOR BANANA, PIXEL, AGG ============
-    // function setMinimumThresholds(
-    //   address[] calldata _tokens,
-    //   uint256[] calldata _thresholds
-    // );
-    address[] memory roninTokensToSetMinThreshold = new address[](5);
-    uint256[] memory minThresholds = new uint256[](5);
+      // ============= SET MIN THRESHOLD FOR BANANA, PIXEL, AGG ============
+      // function setMinimumThresholds(
+      //   address[] calldata _tokens,
+      //   uint256[] calldata _thresholds
+      // );
 
-    roninTokensToSetMinThreshold[0] = _bananaRoninToken;
-    minThresholds[0] = _bananaMinThreshold;
+      address[] memory roninTokensToSetMinThreshold = new address[](5);
+      uint256[] memory minThresholds = new uint256[](5);
 
-    roninTokensToSetMinThreshold[1] = pixelRoninToken;
-    minThresholds[1] = pixelMinThreshold;
+      roninTokensToSetMinThreshold[0] = _bananaRoninToken;
+      minThresholds[0] = _bananaMinThreshold;
 
-    roninTokensToSetMinThreshold[2] = pixelMainchainToken;
-    minThresholds[2] = 0;
+      roninTokensToSetMinThreshold[1] = pixelRoninToken;
+      minThresholds[1] = pixelMinThreshold;
 
-    roninTokensToSetMinThreshold[3] = aggRoninToken;
-    minThresholds[3] = aggMinThreshold;
+      roninTokensToSetMinThreshold[2] = pixelMainchainToken;
+      minThresholds[2] = 0;
 
-    roninTokensToSetMinThreshold[4] = aggMainchainToken;
-    minThresholds[4] = 0;
+      roninTokensToSetMinThreshold[3] = aggRoninToken;
+      minThresholds[3] = aggMinThreshold;
 
-    innerData = abi.encodeCall(MinimumWithdrawal.setMinimumThresholds, (roninTokensToSetMinThreshold, minThresholds));
-    proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
+      roninTokensToSetMinThreshold[4] = aggMainchainToken;
+      minThresholds[4] = 0;
 
-    targets[1] = _roninGatewayV3;
-    values[1] = 0;
-    calldatas[1] = proxyData;
-    gasAmounts[1] = 1_000_000;
+      innerData = abi.encodeCall(MinimumWithdrawal.setMinimumThresholds, (roninTokensToSetMinThreshold, minThresholds));
+      proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
 
-    // =============== AXIE CHAT UPDATE ===========
-    targets[2] = address(_roninBridgeManager);
-    values[2] = 0;
-    calldatas[2] = _removeStableNodeGovernorAddress();
-    gasAmounts[2] = 1_000_000;
+      targets[1] = _roninGatewayV3;
+      values[1] = 0;
+      calldatas[1] = proxyData;
+      gasAmounts[1] = 1_000_000;
 
-    targets[3] = address(_roninBridgeManager);
-    values[3] = 0;
-    calldatas[3] = _addStableNodeGovernorAddress();
-    gasAmounts[3] = 1_000_000;
+      // =============== AXIE CHAT UPDATE ===========
+      targets[2] = address(_roninBridgeManager);
+      values[2] = 0;
+      calldatas[2] = _removeStableNodeGovernorAddress();
+      gasAmounts[2] = 1_000_000;
+
+      targets[3] = address(_roninBridgeManager);
+      values[3] = 0;
+      calldatas[3] = _addStableNodeGovernorAddress();
+      gasAmounts[3] = 1_000_000;
+    }
 
     // ================ VERIFY AND EXECUTE PROPOSAL ===============
 

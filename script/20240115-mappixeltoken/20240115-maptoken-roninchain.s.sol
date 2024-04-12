@@ -118,14 +118,9 @@ contract Migration__MapTokenRoninchain is Migration {
     calldatas[2] = _addAxieChatGovernorAddress();
     gasAmounts[2] = 1_000_000;
 
-    TNetwork currentNetwork = network();
-    TNetwork companionNetwork = config.getCompanionNetwork(currentNetwork);
+    (uint256 companionChainId, TNetwork companionNetwork) = network().companionNetworkData();
     address companionManager = config.getAddress(companionNetwork, Contract.MainchainBridgeManager.key());
-    config.createFork(companionNetwork);
-    config.switchTo(companionNetwork);
-    uint256 companionChainId = block.chainid;
-    LibProposal.verifyProposalGasAmount(companionManager, targets, values, calldatas, gasAmounts);
-    config.switchTo(currentNetwork);
+    LibProposal.verifyMainchainProposalGasAmount(companionNetwork, companionManager, targets, values, calldatas, gasAmounts);
 
     vm.broadcast(sender());
     _roninBridgeManager.propose(block.chainid, expiredTime, address(0), targets, values, calldatas, gasAmounts);

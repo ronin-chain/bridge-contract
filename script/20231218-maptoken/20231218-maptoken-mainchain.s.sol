@@ -76,14 +76,9 @@ contract Migration__20231215_MapTokenMainchain is Migration {
     bytes[] memory calldatas = proxyData.toSingletonArray();
     uint256[] memory gasAmounts = uint256(1_000_000).toSingletonArray();
 
-    TNetwork currentNetwork = network();
-    TNetwork companionNetwork = config.getCompanionNetwork(currentNetwork);
+    (uint256 companionChainId, TNetwork companionNetwork) = network().companionNetworkData();
     address companionManager = config.getAddress(companionNetwork, Contract.MainchainBridgeManager.key());
-    config.createFork(companionNetwork);
-    config.switchTo(companionNetwork);
-    uint256 companionChainId = block.chainid;
-    LibProposal.verifyProposalGasAmount(companionManager, targets, values, calldatas, gasAmounts);
-    config.switchTo(currentNetwork);
+    LibProposal.verifyMainchainProposalGasAmount(companionNetwork, companionManager, targets, values, calldatas, gasAmounts);
 
     vm.broadcast(sender());
     _roninBridgeManager.propose(companionChainId, expiredTime, address(0), targets, values, calldatas, gasAmounts);

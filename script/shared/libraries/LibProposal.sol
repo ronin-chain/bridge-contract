@@ -16,6 +16,7 @@ import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeMa
 import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/SignatureConsumer.sol";
 import { CoreGovernance } from "@ronin/contracts/extensions/sequential-governance/CoreGovernance.sol";
 import { LibArray } from "./LibArray.sol";
+import { LibCompanionNetwork } from "./LibCompanionNetwork.sol";
 import { LibErrorHandler } from "lib/foundry-deployment-kit/lib/contract-libs/src/LibErrorHandler.sol";
 import { VoteStatusConsumer } from "@ronin/contracts/interfaces/consumers/VoteStatusConsumer.sol";
 
@@ -23,6 +24,7 @@ library LibProposal {
   using LibArray for *;
   using ECDSA for bytes32;
   using LibErrorHandler for bool;
+  using LibCompanionNetwork for *;
   using Proposal for Proposal.ProposalDetail;
   using GlobalProposal for GlobalProposal.GlobalProposalDetail;
 
@@ -35,21 +37,30 @@ library LibProposal {
   modifier preserveState() {
     uint256 snapshotId = vm.snapshot();
     _;
-    vm.revertTo(snapshotId);
+    bool reverted = vm.revertTo(snapshotId);
+    require(reverted, string.concat("Cannot revert to snapshot id: ", vm.toString(snapshotId)));
   }
 
-  function getBridgeManagerDomain() internal view returns (bytes32) {
+  function getBridgeManagerDomain() internal returns (bytes32) {
+    uint256 chainId;
+    TNetwork currentNetwork = config.getCurrentNetwork();
+    if (currentNetwork == Network.EthMainnet.key() || currentNetwork == Network.Goerli.key() || currentNetwork == Network.Sepolia.key()) {
+      chainId = currentNetwork.companionChainId();
+    } else {
+      chainId = block.chainid;
+    }
     return keccak256(
       abi.encode(
         keccak256("EIP712Domain(string name,string version,bytes32 salt)"),
         keccak256("BridgeAdmin"), // name hash
         keccak256("2"), // version hash
-        keccak256(abi.encode("BRIDGE_ADMIN", block.chainid)) // salt
+        keccak256(abi.encode("BRIDGE_ADMIN", chainId)) // salt
       )
     );
   }
 
   function createProposal(
+    address manager,
     uint256 nonce,
     uint256 expiryTimestamp,
     address[] memory targets,
@@ -57,15 +68,14 @@ library LibProposal {
     bytes[] memory calldatas,
     uint256[] memory gasAmounts
   ) internal returns (Proposal.ProposalDetail memory proposal) {
-    address manager = config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key());
     verifyProposalGasAmount(manager, targets, values, calldatas, gasAmounts);
 
     proposal = Proposal.ProposalDetail({
       nonce: nonce,
       chainId: block.chainid,
       expiryTimestamp: expiryTimestamp,
-      executor: address(0),
       targets: targets,
+      executor: address(0x0),
       values: values,
       calldatas: calldatas,
       gasAmounts: gasAmounts
@@ -84,9 +94,9 @@ library LibProposal {
     proposal = GlobalProposal.GlobalProposalDetail({
       nonce: nonce,
       expiryTimestamp: expiryTimestamp,
-      executor: address(0),
       targetOptions: targetOptions,
       values: values,
+      executor: address(0x0),
       calldatas: calldatas,
       gasAmounts: gasAmounts
     });
@@ -104,7 +114,17 @@ library LibProposal {
     } else {
       vm.broadcast(governor0);
     }
-    manager.proposeProposalForCurrentNetwork(proposal.expiryTimestamp, proposal.executor, proposal.targets, proposal.values, proposal.calldatas, proposal.gasAmounts, support);
+    manager.proposeProposalForCurrentNetwork(
+      proposal.expiryTimestamp, proposal.executor, proposal.targets, proposal.values, proposal.calldatas, proposal.gasAmounts, support
+    );
+
+    voteFor(manager, proposal);
+  }
+
+  function voteFor(RoninBridgeManager manager, Proposal.ProposalDetail memory proposal) internal {
+    Ballot.VoteType support = Ballot.VoteType.For;
+    address[] memory governors = manager.getGovernors();
+    bool shouldPrankOnly = config.isPostChecking();
 
     uint256 totalGas = proposal.gasAmounts.sum();
     // 20% more gas for each governor
@@ -157,12 +177,42 @@ library LibProposal {
     verifyProposalGasAmount(manager, roninTargets, values, calldatas, gasAmounts);
 
     // Verify gas amount for mainchain targets
+    verifyMainchainProposalGasAmount(companionNetwork, companionManager, mainchainTargets, values, calldatas, gasAmounts);
+  }
+
+  function verifyMainchainProposalGasAmount(
+    TNetwork companionNetwork,
+    address mainchainManager,
+    address[] memory mainchainTargets,
+    uint256[] memory values,
+    bytes[] memory calldatas,
+    uint256[] memory gasAmounts
+  ) internal preserveState {
+    TNetwork currentNetwork = config.getCurrentNetwork();
     config.createFork(companionNetwork);
     config.switchTo(companionNetwork);
+    uint256 snapshotId = vm.snapshot();
 
-    // Verify gas amount for mainchain targets
-    verifyProposalGasAmount(companionManager, mainchainTargets, values, calldatas, gasAmounts);
+    for (uint256 i; i < mainchainTargets.length; i++) {
+      vm.deal(mainchainManager, values[i]);
+      vm.prank(mainchainManager);
 
+      uint256 gasUsed = gasleft();
+      (bool success, bytes memory returnOrRevertData) = mainchainTargets[i].call{ value: values[i], gas: gasAmounts[i] }(calldatas[i]);
+      gasUsed = gasUsed - gasleft();
+
+      if (success) {
+        console.log("Call", i, ": gasUsed", gasUsed);
+      } else {
+        console.log("Call", i, unicode": reverted. ❗ GasUsed", gasUsed);
+      }
+      success.handleRevert(bytes4(calldatas[i]), returnOrRevertData);
+
+      if (gasUsed > gasAmounts[i]) revert ErrProposalOutOfGas(block.chainid, bytes4(calldatas[i]), gasUsed);
+    }
+
+    bool reverted = vm.revertTo(snapshotId);
+    require(reverted, string.concat("Cannot revert to snapshot id: ", vm.toString(snapshotId)));
     config.switchTo(currentNetwork);
   }
 
@@ -196,7 +246,7 @@ library LibProposal {
     Proposal.ProposalDetail memory proposal,
     uint256[] memory signerPKs,
     Ballot.VoteType support
-  ) internal view returns (SignatureConsumer.Signature[] memory sigs) {
+  ) internal returns (SignatureConsumer.Signature[] memory sigs) {
     return generateSignaturesFor(proposal.hash(), signerPKs, support);
   }
 
@@ -204,7 +254,7 @@ library LibProposal {
     GlobalProposal.GlobalProposalDetail memory proposal,
     uint256[] memory signerPKs,
     Ballot.VoteType support
-  ) internal view returns (SignatureConsumer.Signature[] memory sigs) {
+  ) internal returns (SignatureConsumer.Signature[] memory sigs) {
     return generateSignaturesFor(proposal.hash(), signerPKs, support);
   }
 
@@ -212,7 +262,7 @@ library LibProposal {
     bytes32 proposalHash,
     uint256[] memory signerPKs,
     Ballot.VoteType support
-  ) internal view returns (SignatureConsumer.Signature[] memory sigs) {
+  ) internal returns (SignatureConsumer.Signature[] memory sigs) {
     sigs = new SignatureConsumer.Signature[](signerPKs.length);
     bytes32 domain = getBridgeManagerDomain();
     for (uint256 i; i < signerPKs.length; i++) {
