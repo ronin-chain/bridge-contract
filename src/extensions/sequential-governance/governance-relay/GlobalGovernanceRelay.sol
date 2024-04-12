@@ -25,7 +25,6 @@ abstract contract GlobalGovernanceRelay is CommonGovernanceRelay, GlobalCoreGove
     GlobalProposal.GlobalProposalDetail calldata globalProposal,
     Ballot.VoteType[] calldata supports_,
     Signature[] calldata signatures,
-    bytes32 domainSeparator,
     address creator
   ) internal {
     Proposal.ProposalDetail memory _proposal = _proposeGlobalStruct(globalProposal, creator);

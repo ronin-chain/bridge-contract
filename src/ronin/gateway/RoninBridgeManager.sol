@@ -43,8 +43,8 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
   ) external onlyGovernor {
     _proposeProposalStruct(
       Proposal.ProposalDetail({
-        nonce: _createVotingRound(block.chainid),
-        chainId: block.chainid,
+        nonce: _createVotingRound(chainId),
+        chainId: chainId,
         expiryTimestamp: expiryTimestamp,
         executor: executor,
         targets: targets,
@@ -69,7 +69,7 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
     Ballot.VoteType[] calldata _supports,
     Signature[] calldata _signatures
   ) external onlyGovernor {
-    _proposeProposalStructAndCastVotes(_proposal, _supports, _signatures, DOMAIN_SEPARATOR, msg.sender);
+    _proposeProposalStructAndCastVotes(_proposal, _supports, _signatures, msg.sender);
   }
 
   /**
@@ -118,7 +118,7 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
    * @dev See `GovernanceProposal-_castProposalBySignatures`.
    */
   function castProposalBySignatures(Proposal.ProposalDetail calldata proposal, Ballot.VoteType[] calldata supports_, Signature[] calldata signatures) external {
-    _castProposalBySignatures(proposal, supports_, signatures, DOMAIN_SEPARATOR);
+    _castProposalBySignatures(proposal, supports_, signatures);
   }
 
   /**
@@ -167,7 +167,6 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
       globalProposal: globalProposal,
       supports_: supports_,
       signatures: signatures,
-      domainSeparator: DOMAIN_SEPARATOR,
       creator: msg.sender
     });
   }
@@ -180,7 +179,7 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
     Ballot.VoteType[] calldata supports_,
     Signature[] calldata signatures
   ) external {
-    _castGlobalProposalBySignatures({ globalProposal: globalProposal, supports_: supports_, signatures: signatures, domainSeparator: DOMAIN_SEPARATOR });
+    _castGlobalProposalBySignatures({ globalProposal: globalProposal, supports_: supports_, signatures: signatures });
   }
 
   /**

@@ -42,7 +42,7 @@ contract MainchainBridgeManager is BridgeManager, GovernanceRelay, GlobalGoverna
     Signature[] calldata signatures
   ) external onlyGovernor {
     _requireExecutor(proposal.executor, msg.sender);
-    _relayProposal(proposal, supports_, signatures, DOMAIN_SEPARATOR, msg.sender);
+    _relayProposal(proposal, supports_, signatures, msg.sender);
   }
 
   /**
@@ -57,7 +57,7 @@ contract MainchainBridgeManager is BridgeManager, GovernanceRelay, GlobalGoverna
     Signature[] calldata signatures
   ) external onlyGovernor {
     _requireExecutor(globalProposal.executor, msg.sender);
-    _relayGlobalProposal({ globalProposal: globalProposal, supports_: supports_, signatures: signatures, domainSeparator: DOMAIN_SEPARATOR, creator: msg.sender });
+    _relayGlobalProposal({ globalProposal: globalProposal, supports_: supports_, signatures: signatures, creator: msg.sender });
   }
 
   function _requireExecutor(address executor, address caller) internal pure {

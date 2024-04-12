@@ -19,7 +19,6 @@ abstract contract GovernanceRelay is CoreGovernance, CommonGovernanceRelay {
     Proposal.ProposalDetail calldata _proposal,
     Ballot.VoteType[] calldata _supports,
     Signature[] calldata _signatures,
-    bytes32 _domainSeparator,
     address _creator
   ) internal {
     _proposeProposalStruct(_proposal, _creator);

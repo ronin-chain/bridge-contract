@@ -14,7 +14,6 @@ abstract contract GovernanceProposal is CoreGovernance, CommonGovernanceProposal
     Proposal.ProposalDetail calldata _proposal,
     Ballot.VoteType[] calldata _supports,
     Signature[] calldata _signatures,
-    bytes32 _domainSeparator,
     address _creator
   ) internal {
     _proposeProposalStruct(_proposal, _creator);
@@ -27,8 +26,7 @@ abstract contract GovernanceProposal is CoreGovernance, CommonGovernanceProposal
   function _castProposalBySignatures(
     Proposal.ProposalDetail calldata _proposal,
     Ballot.VoteType[] calldata _supports,
-    Signature[] calldata _signatures,
-    bytes32 _domainSeparator
+    Signature[] calldata _signatures
   ) internal {
     bytes32 _proposalHash = _proposal.hash();
 

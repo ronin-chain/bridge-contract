@@ -16,7 +16,6 @@ abstract contract GlobalGovernanceProposal is GlobalCoreGovernance, CommonGovern
     GlobalProposal.GlobalProposalDetail calldata globalProposal,
     Ballot.VoteType[] calldata supports_,
     Signature[] calldata signatures,
-    bytes32 domainSeparator,
     address creator
   ) internal returns (Proposal.ProposalDetail memory proposal) {
     proposal = _proposeGlobalStruct(globalProposal, creator);
@@ -29,8 +28,7 @@ abstract contract GlobalGovernanceProposal is GlobalCoreGovernance, CommonGovern
   function _castGlobalProposalBySignatures(
     GlobalProposal.GlobalProposalDetail calldata globalProposal,
     Ballot.VoteType[] calldata supports_,
-    Signature[] calldata signatures,
-    bytes32 domainSeparator
+    Signature[] calldata signatures
   ) internal {
     Proposal.ProposalDetail memory _proposal = globalProposal.intoProposalDetail(_resolveTargets({ targetOptions: globalProposal.targetOptions, strict: true }));
 
