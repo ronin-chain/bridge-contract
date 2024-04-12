@@ -3,19 +3,18 @@ pragma solidity ^0.8.19;
 
 import { console2 } from "forge-std/console2.sol";
 import { StdStyle } from "forge-std/StdStyle.sol";
-import { BaseMigration } from "foundry-deployment-kit/BaseMigration.s.sol";
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
 import { IBridgeManager } from "@ronin/contracts/interfaces/bridge/IBridgeManager.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
 import { LibTokenInfo, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { Contract } from "../utils/Contract.sol";
-import { BridgeMigration } from "../BridgeMigration.sol";
-import { Network } from "../utils/Network.sol";
+import { Migration } from "../Migration.s.sol";
+import { LibProposal } from "script/shared/libraries/LibProposal.sol";
+import { TNetwork, Network } from "../utils/Network.sol";
 import { Contract } from "../utils/Contract.sol";
-import { IGeneralConfigExtended } from "../IGeneralConfigExtended.sol";
 
-contract Migration__MapTokenMainchain is BridgeMigration {
+contract Migration__MapTokenMainchain is Migration {
   RoninBridgeManager internal _roninBridgeManager;
 
   address constant _pixelRoninToken = address(0x8b50c162494567B3c8B7F00F6031341861c8dEeD);
@@ -42,10 +41,9 @@ contract Migration__MapTokenMainchain is BridgeMigration {
   function setUp() public override {
     super.setUp();
 
-    _roninBridgeManager = RoninBridgeManager(_config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
-    _mainchainGatewayV3 = _config.getAddress(_config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).key(), Contract.MainchainGatewayV3.key());
-    _mainchainBridgeManager =
-      _config.getAddress(_config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).key(), Contract.MainchainBridgeManager.key());
+    _roninBridgeManager = RoninBridgeManager(config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
+    _mainchainGatewayV3 = config.getAddress(config.getCompanionNetwork(network()), Contract.MainchainGatewayV3.key());
+    _mainchainBridgeManager = config.getAddress(config.getCompanionNetwork(network()), Contract.MainchainBridgeManager.key());
   }
 
   function _mapFarmlandToken() internal pure returns (bytes memory) {
@@ -147,11 +145,16 @@ contract Migration__MapTokenMainchain is BridgeMigration {
     calldatas[3] = _addAxieChatGovernorAddress();
     gasAmounts[3] = 1_000_000;
 
-    _verifyMainchainProposalGasAmount(targets, values, calldatas, gasAmounts);
-
-    uint256 chainId = _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).chainId();
+    TNetwork currentNetwork = network();
+    TNetwork companionNetwork = config.getCompanionNetwork(currentNetwork);
+    address companionManager = config.getAddress(companionNetwork, Contract.MainchainBridgeManager.key());
+    config.createFork(companionNetwork);
+    config.switchTo(companionNetwork);
+    uint256 companionChainId = block.chainid;
+    LibProposal.verifyProposalGasAmount(companionManager, targets, values, calldatas, gasAmounts);
+    config.switchTo(currentNetwork);
 
     vm.broadcast(sender());
-    _roninBridgeManager.propose(chainId, expiredTime, address(0), targets, values, calldatas, gasAmounts);
+    _roninBridgeManager.propose(companionChainId, expiredTime, targets, values, calldatas, gasAmounts);
   }
 }

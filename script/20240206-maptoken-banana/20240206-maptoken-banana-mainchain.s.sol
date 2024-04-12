@@ -3,17 +3,16 @@ pragma solidity ^0.8.19;
 
 import { console2 } from "forge-std/console2.sol";
 import { StdStyle } from "forge-std/StdStyle.sol";
-import { BaseMigration } from "foundry-deployment-kit/BaseMigration.s.sol";
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
 import { LibTokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { Contract } from "../utils/Contract.sol";
-import { BridgeMigration } from "../BridgeMigration.sol";
-import { Network } from "../utils/Network.sol";
-import { DefaultNetwork } from "foundry-deployment-kit/utils/DefaultNetwork.sol";
+import { Migration } from "../Migration.s.sol";
+import { TNetwork, Network } from "../utils/Network.sol";
+import { LibProposal } from "script/shared/libraries/LibProposal.sol";
+import { DefaultNetwork } from "@fdk/utils/DefaultNetwork.sol";
 import { Contract } from "../utils/Contract.sol";
-import { IGeneralConfigExtended } from "../IGeneralConfigExtended.sol";
 
 import "./maptoken-banana-configs.s.sol";
 import "./maptoken-genkai-configs.s.sol";
@@ -21,7 +20,7 @@ import "./maptoken-vx-configs.s.sol";
 import "./changeGV-stablenode-config.s.sol";
 
 contract Migration__20240206_MapTokenBananaMainchain is
-  BridgeMigration,
+  Migration,
   Migration__MapToken_Banana_Config,
   Migration__MapToken_Vx_Config,
   Migration__MapToken_Genkai_Config,
@@ -31,13 +30,12 @@ contract Migration__20240206_MapTokenBananaMainchain is
   address internal _mainchainGatewayV3;
   address internal _mainchainBridgeManager;
 
-  function setUp() public override {
+  function setUp() public virtual override {
     super.setUp();
 
-    _roninBridgeManager = RoninBridgeManager(_config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
-    _mainchainGatewayV3 = _config.getAddress(_config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).key(), Contract.MainchainGatewayV3.key());
-    _mainchainBridgeManager =
-      _config.getAddress(_config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).key(), Contract.MainchainBridgeManager.key());
+    _roninBridgeManager = RoninBridgeManager(config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
+    _mainchainGatewayV3 = config.getAddress(config.getCompanionNetwork(network()), Contract.MainchainGatewayV3.key());
+    _mainchainBridgeManager = config.getAddress(config.getCompanionNetwork(network()), Contract.MainchainBridgeManager.key());
   }
 
   function run() public onlyOn(DefaultNetwork.RoninMainnet.key()) {
@@ -140,13 +138,18 @@ contract Migration__20240206_MapTokenBananaMainchain is
 
     // ================ VERIFY AND EXECUTE PROPOSAL ===============
 
-    _verifyMainchainProposalGasAmount(targets, values, calldatas, gasAmounts);
-
-    uint256 chainId = _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).chainId();
+    TNetwork currentNetwork = network();
+    TNetwork companionNetwork = config.getCompanionNetwork(currentNetwork);
+    address companionManager = config.getAddress(companionNetwork, Contract.MainchainBridgeManager.key());
+    config.createFork(companionNetwork);
+    config.switchTo(companionNetwork);
+    uint256 companionChainId = block.chainid;
+    LibProposal.verifyProposalGasAmount(companionManager, targets, values, calldatas, gasAmounts);
+    config.switchTo(currentNetwork);
 
     console2.log("Nonce:", vm.getNonce(_governor));
     vm.broadcast(_governor);
-    _roninBridgeManager.propose(chainId, expiredTime, address(0), targets, values, calldatas, gasAmounts);
+    _roninBridgeManager.propose(companionChainId, expiredTime, targets, values, calldatas, gasAmounts);
   }
 }
 

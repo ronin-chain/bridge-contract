@@ -3,9 +3,9 @@ pragma solidity ^0.8.19;
 
 import { console2 as console } from "forge-std/console2.sol";
 import { Base_Test } from "../../Base.t.sol";
-import { LibSharedAddress } from "foundry-deployment-kit/libraries/LibSharedAddress.sol";
+import { LibSharedAddress } from "@fdk/libraries/LibSharedAddress.sol";
 import { ISharedArgument } from "@ronin/script/interfaces/ISharedArgument.sol";
-import { IGeneralConfig } from "foundry-deployment-kit/interfaces/IGeneralConfig.sol";
+import { IGeneralConfig } from "@fdk/interfaces/IGeneralConfig.sol";
 import { GeneralConfig } from "@ronin/script/GeneralConfig.sol";
 import { Network } from "@ronin/script/utils/Network.sol";
 
