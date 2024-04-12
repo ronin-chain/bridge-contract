@@ -43,8 +43,8 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
   ) external onlyGovernor {
     _proposeProposalStruct(
       Proposal.ProposalDetail({
-        nonce: _createVotingRound(block.chainid),
-        chainId: block.chainid,
+        nonce: _createVotingRound(chainId),
+        chainId: chainId,
         expiryTimestamp: expiryTimestamp,
         executor: executor,
         targets: targets,
