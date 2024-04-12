@@ -33,7 +33,7 @@ contract Migration__20240409_P1_DeployRoninBridgeManager is BridgeMigration {
     super.setUp();
   }
 
-  function run() public  onlyOn(DefaultNetwork.RoninTestnet.key()) {
+  function run() public onlyOn(DefaultNetwork.RoninTestnet.key()) {
     ISharedArgument.SharedParameter memory param;
 
     param.roninBridgeManager.num = 7;
@@ -73,23 +73,25 @@ contract Migration__20240409_P1_DeployRoninBridgeManager is BridgeMigration {
     param.roninBridgeManager.targets[3] = _config.getAddressFromCurrentNetwork(Contract.BridgeTracking.key());
     param.roninBridgeManager.targets[4] = _config.getAddressFromCurrentNetwork(Contract.RoninPauseEnforcer.key());
 
-    _newRoninBridgeManager = RoninBridgeManager(new RoninBridgeManagerDeploy().overrideArgs(
-      abi.encodeCall(
-        RoninBridgeManagerConstructor.initialize,
-        (
-          param.roninBridgeManager.num,
-          param.roninBridgeManager.denom,
-          param.roninBridgeManager.roninChainId,
-          param.roninBridgeManager.expiryDuration,
-          param.roninBridgeManager.bridgeContract,
-          param.roninBridgeManager.callbackRegisters,
-          param.roninBridgeManager.bridgeOperators,
-          param.roninBridgeManager.governors,
-          param.roninBridgeManager.voteWeights,
-          param.roninBridgeManager.targetOptions,
-          param.roninBridgeManager.targets
+    _newRoninBridgeManager = RoninBridgeManager(
+      new RoninBridgeManagerDeploy().overrideArgs(
+        abi.encodeCall(
+          RoninBridgeManagerConstructor.initialize,
+          (
+            param.roninBridgeManager.num,
+            param.roninBridgeManager.denom,
+            param.roninBridgeManager.roninChainId,
+            param.roninBridgeManager.expiryDuration,
+            param.roninBridgeManager.bridgeContract,
+            param.roninBridgeManager.callbackRegisters,
+            param.roninBridgeManager.bridgeOperators,
+            param.roninBridgeManager.governors,
+            param.roninBridgeManager.voteWeights,
+            param.roninBridgeManager.targetOptions,
+            param.roninBridgeManager.targets
+          )
         )
-      )
-    ).run());
+      ).run()
+    );
   }
 }

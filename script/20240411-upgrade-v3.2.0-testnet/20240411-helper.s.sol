@@ -26,13 +26,13 @@ contract Migration__20240409_Helper is BridgeMigration {
     address(_currRoninBridgeManager).call(
       abi.encodeWithSignature(
         "proposeProposalForCurrentNetwork(uint256,address[],uint256[],bytes[],uint256[],uint8)",
-          // proposal.chainId,
-          proposal.expiryTimestamp,
-          proposal.targets,
-          proposal.values,
-          proposal.calldatas,
-          proposal.gasAmounts,
-          Ballot.VoteType.For
+        // proposal.chainId,
+        proposal.expiryTimestamp,
+        proposal.targets,
+        proposal.values,
+        proposal.calldatas,
+        proposal.gasAmounts,
+        Ballot.VoteType.For
       )
     );
   }
@@ -42,8 +42,7 @@ contract Migration__20240409_Helper is BridgeMigration {
       vm.broadcast(_voters[i]);
       address(_currRoninBridgeManager).call(
         abi.encodeWithSignature(
-          "castProposalVoteForCurrentNetwork((uint256,uint256,uint256,address[],uint256[],bytes[],uint256[]),uint8)",
-          proposal, Ballot.VoteType.For
+          "castProposalVoteForCurrentNetwork((uint256,uint256,uint256,address[],uint256[],bytes[],uint256[]),uint8)", proposal, Ballot.VoteType.For
         )
       );
     }

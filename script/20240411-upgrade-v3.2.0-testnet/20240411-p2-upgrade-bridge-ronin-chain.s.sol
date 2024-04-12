@@ -61,7 +61,7 @@ contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_H
     gasAmounts[0] = 1_000_000;
 
     LegacyProposalDetail memory proposal;
-    proposal.nonce =  roninGA.round(block.chainid) + 1;
+    proposal.nonce = roninGA.round(block.chainid) + 1;
     proposal.chainId = block.chainid;
     proposal.expiryTimestamp = expiredTime;
     proposal.targets = targets;
@@ -73,13 +73,13 @@ contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_H
     address(roninGA).call(
       abi.encodeWithSignature(
         "proposeProposalForCurrentNetwork(uint256,address[],uint256[],bytes[],uint256[],uint8)",
-          // proposal.chainId,
-          proposal.expiryTimestamp,
-          proposal.targets,
-          proposal.values,
-          proposal.calldatas,
-          proposal.gasAmounts,
-          Ballot.VoteType.For
+        // proposal.chainId,
+        proposal.expiryTimestamp,
+        proposal.targets,
+        proposal.values,
+        proposal.calldatas,
+        proposal.gasAmounts,
+        Ballot.VoteType.For
       )
     );
 
@@ -87,8 +87,7 @@ contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_H
       vm.broadcast(_voters[i]);
       address(roninGA).call(
         abi.encodeWithSignature(
-          "castProposalVoteForCurrentNetwork((uint256,uint256,uint256,address[],uint256[],bytes[],uint256[]),uint8)",
-          proposal, Ballot.VoteType.For
+          "castProposalVoteForCurrentNetwork((uint256,uint256,uint256,address[],uint256[],bytes[],uint256[]),uint8)", proposal, Ballot.VoteType.For
         )
       );
     }
@@ -141,7 +140,7 @@ contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_H
     }
 
     LegacyProposalDetail memory proposal;
-    proposal.nonce =  _currRoninBridgeManager.round(block.chainid) + 1;
+    proposal.nonce = _currRoninBridgeManager.round(block.chainid) + 1;
     proposal.chainId = block.chainid;
     proposal.expiryTimestamp = expiredTime;
     proposal.targets = targets;

@@ -48,7 +48,6 @@ contract Migration__20240409_P3_UpgradeBridgeMainchain is BridgeMigration, Migra
 
   address PROXY_ADMIN = 0x968D0Cd7343f711216817E617d3f92a23dC91c07;
 
-
   function setUp() public override {
     super.setUp();
     CONFIG.setAddress(network(), DefaultContract.ProxyAdmin.key(), PROXY_ADMIN);
@@ -102,9 +101,7 @@ contract Migration__20240409_P3_UpgradeBridgeMainchain is BridgeMigration, Migra
     targets[3] = pauseEnforcerProxy;
 
     calldatas[0] = abi.encodeWithSignature(
-      "upgradeToAndCall(address,bytes)",
-      mainchainGatewayV3Logic,
-      abi.encodeWithSelector(MainchainGatewayV3.initializeV4.selector, wethUnwrapper)
+      "upgradeToAndCall(address,bytes)", mainchainGatewayV3Logic, abi.encodeWithSelector(MainchainGatewayV3.initializeV4.selector, wethUnwrapper)
     );
     calldatas[1] = abi.encodeWithSignature("changeAdmin(address)", address(_newMainchainBridgeManager));
     calldatas[2] = abi.encodeWithSignature("upgradeTo(address)", pauseEnforcerLogic);
@@ -115,7 +112,7 @@ contract Migration__20240409_P3_UpgradeBridgeMainchain is BridgeMigration, Migra
     }
 
     LegacyProposalDetail memory proposal;
-    proposal.nonce =  _currMainchainBridgeManager.round(block.chainid) + 1;
+    proposal.nonce = _currMainchainBridgeManager.round(block.chainid) + 1;
     proposal.chainId = block.chainid;
     proposal.expiryTimestamp = expiredTime;
     proposal.targets = targets;
@@ -129,25 +126,17 @@ contract Migration__20240409_P3_UpgradeBridgeMainchain is BridgeMigration, Migra
       supports_[i] = Ballot.VoteType.For;
     }
 
-    SignatureConsumer.Signature[] memory signatures = _generateSignaturesFor(
-      getDomain(),
-      hashLegacyProposal(proposal),
-      _loadGovernorPKs(),
-      Ballot.VoteType.For
-    );
+    SignatureConsumer.Signature[] memory signatures = _generateSignaturesFor(getDomain(), hashLegacyProposal(proposal), _loadGovernorPKs(), Ballot.VoteType.For);
 
     vm.broadcast(_governor);
     address(_currMainchainBridgeManager).call(
       abi.encodeWithSignature(
-        "relayProposal((uint256,uint256,uint256,address[],uint256[],bytes[],uint256[]),uint8[],(uint8,bytes32,bytes32)[])",
-        proposal,
-        supports_,
-        signatures
+        "relayProposal((uint256,uint256,uint256,address[],uint256[],bytes[],uint256[]),uint8[],(uint8,bytes32,bytes32)[])", proposal, supports_, signatures
       )
     );
- }
+  }
 
-  function getDomain() pure public returns (bytes32) {
+  function getDomain() public pure returns (bytes32) {
     return keccak256(
       abi.encode(
         keccak256("EIP712Domain(string name,string version,bytes32 salt)"),
@@ -179,7 +168,7 @@ contract Migration__20240409_P3_UpgradeBridgeMainchain is BridgeMigration, Migra
     sig.s = s;
   }
 
-  function hashLegacyProposal(LegacyProposalDetail memory proposal) pure public returns (bytes32 digest_) {
+  function hashLegacyProposal(LegacyProposalDetail memory proposal) public pure returns (bytes32 digest_) {
     bytes32 TYPE_HASH = 0xd051578048e6ff0bbc9fca3b65a42088dbde10f36ca841de566711087ad9b08a;
 
     uint256[] memory values = proposal.values;
@@ -245,22 +234,24 @@ contract Migration__20240409_P3_UpgradeBridgeMainchain is BridgeMigration, Migra
     param.mainchainBridgeManager.targets[0] = _config.getAddressFromCurrentNetwork(Contract.MainchainGatewayV3.key());
     param.mainchainBridgeManager.targets[1] = _config.getAddressFromCurrentNetwork(Contract.MainchainPauseEnforcer.key());
 
-    _newMainchainBridgeManager = MainchainBridgeManager(new MainchainBridgeManagerDeploy().overrideArgs(
-      abi.encodeCall(
-        _newMainchainBridgeManager.initialize,
-        (
-          param.mainchainBridgeManager.num,
-          param.mainchainBridgeManager.denom,
-          param.mainchainBridgeManager.roninChainId,
-          param.mainchainBridgeManager.bridgeContract,
-          param.mainchainBridgeManager.callbackRegisters,
-          param.mainchainBridgeManager.bridgeOperators,
-          param.mainchainBridgeManager.governors,
-          param.mainchainBridgeManager.voteWeights,
-          param.mainchainBridgeManager.targetOptions,
-          param.mainchainBridgeManager.targets
+    _newMainchainBridgeManager = MainchainBridgeManager(
+      new MainchainBridgeManagerDeploy().overrideArgs(
+        abi.encodeCall(
+          _newMainchainBridgeManager.initialize,
+          (
+            param.mainchainBridgeManager.num,
+            param.mainchainBridgeManager.denom,
+            param.mainchainBridgeManager.roninChainId,
+            param.mainchainBridgeManager.bridgeContract,
+            param.mainchainBridgeManager.callbackRegisters,
+            param.mainchainBridgeManager.bridgeOperators,
+            param.mainchainBridgeManager.governors,
+            param.mainchainBridgeManager.voteWeights,
+            param.mainchainBridgeManager.targetOptions,
+            param.mainchainBridgeManager.targets
+          )
         )
-      )
-    ).run());
+      ).run()
+    );
   }
 }
