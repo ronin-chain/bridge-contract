@@ -12,13 +12,7 @@ interface IBridgeSlash is IBridgeSlashEvents {
    * @dev Slashes the unavailability of bridge operators during a specific period.
    * @param period The period to slash the bridge operators for.
    */
-  function execSlashBridgeOperators(
-    address[] calldata operators,
-    uint256[] calldata ballots,
-    uint256 totalBallot,
-    uint256 totalVote,
-    uint256 period
-  ) external;
+  function execSlashBridgeOperators(address[] calldata operators, uint256[] calldata ballots, uint256 totalBallot, uint256 totalVote, uint256 period) external;
 
   /**
    * @dev Returns the penalize durations for the specified bridge operators.

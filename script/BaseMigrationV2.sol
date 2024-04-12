@@ -8,13 +8,10 @@ abstract contract BaseMigrationV2 is BaseMigration {
   using LibString for bytes32;
   using LibProxy for address payable;
 
-  function _deployProxy(TContract contractType, bytes memory args)
-    internal
-    virtual
-    override
-    logFn(string.concat("_deployProxy ", TContract.unwrap(contractType).unpackOne()))
-    returns (address payable deployed)
-  {
+  function _deployProxy(
+    TContract contractType,
+    bytes memory args
+  ) internal virtual override logFn(string.concat("_deployProxy ", TContract.unwrap(contractType).unpackOne())) returns (address payable deployed) {
     string memory contractName = CONFIG.getContractName(contractType);
 
     address logic = _deployLogic(contractType);
@@ -30,18 +27,10 @@ abstract contract BaseMigrationV2 is BaseMigration {
     assertEq(
       actualProxyAdmin,
       proxyAdmin,
-      string.concat(
-        "BaseMigration: Invalid proxy admin\n",
-        "Actual: ",
-        vm.toString(actualProxyAdmin),
-        "\nExpected: ",
-        vm.toString(proxyAdmin)
-      )
+      string.concat("BaseMigration: Invalid proxy admin\n", "Actual: ", vm.toString(actualProxyAdmin), "\nExpected: ", vm.toString(proxyAdmin))
     );
 
     CONFIG.setAddress(network(), contractType, deployed);
-    ARTIFACT_FACTORY.generateArtifact(
-      sender(), deployed, proxyAbsolutePath, string.concat(contractName, "Proxy"), args, proxyNonce
-    );
+    ARTIFACT_FACTORY.generateArtifact(sender(), deployed, proxyAbsolutePath, string.concat(contractName, "Proxy"), args, proxyNonce);
   }
 }

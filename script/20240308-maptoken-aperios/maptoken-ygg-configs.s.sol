@@ -6,7 +6,7 @@ import { MapTokenInfo } from "../libraries/MapTokenInfo.sol";
 contract Migration__MapToken_Ygg_Config {
   MapTokenInfo _yggInfo;
 
-  constructor () {
+  constructor() {
     _yggInfo.roninToken = address(0x1c306872bC82525d72Bf3562E8F0aA3f8F26e857);
     _yggInfo.mainchainToken = address(0x25f8087EAD173b73D6e8B84329989A8eEA16CF73);
     _yggInfo.minThreshold = 20 ether;

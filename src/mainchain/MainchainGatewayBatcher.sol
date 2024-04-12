@@ -73,19 +73,11 @@ contract MainchainGatewayBatcher is Initializable, ERC1155Holder {
     )
   {
     if (erc == TokenStandard.ERC721) {
-      return (
-        LibTokenInfoBatch.checkERC721Batch,
-        LibTokenInfoBatch.tryHandleAssetInERC721,
-        LibRequestBatch.forwardRequestToGatewayERC721
-      );
+      return (LibTokenInfoBatch.checkERC721Batch, LibTokenInfoBatch.tryHandleAssetInERC721, LibRequestBatch.forwardRequestToGatewayERC721);
     }
 
     if (erc == TokenStandard.ERC1155) {
-      return (
-        LibTokenInfoBatch.checkERC1155Batch,
-        LibTokenInfoBatch.tryHandleAssetInERC1155,
-        LibRequestBatch.forwardRequestToGatewayERC1155
-      );
+      return (LibTokenInfoBatch.checkERC1155Batch, LibTokenInfoBatch.tryHandleAssetInERC1155, LibRequestBatch.forwardRequestToGatewayERC1155);
     }
 
     revert ErrUnsupportedStandard();

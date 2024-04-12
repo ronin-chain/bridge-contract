@@ -52,7 +52,7 @@ contract BridgeRewardTest is Base_Test, IBridgeRewardEvents, BridgeManagerUtils 
     period = _bound(period, 1, type(uint64).max);
 
     // Decode the default bridge manager inputs
-    (address[] memory bridgeOperators, , ) = abi.decode(_defaultBridgeManagerInputs, (address[], address[], uint256[]));
+    (address[] memory bridgeOperators,,) = abi.decode(_defaultBridgeManagerInputs, (address[], address[], uint256[]));
 
     // Generate random numbers for slashUntils and ballots
     uint256[] memory slashUntils = _createRandomNumbers(r1, bridgeOperators.length, 0, MAX_FUZZ_INPUTS);
@@ -73,13 +73,7 @@ contract BridgeRewardTest is Base_Test, IBridgeRewardEvents, BridgeManagerUtils 
     if (shouldShareEqually) {
       _assertCalculateRewardEqually(shouldShareEqually, rewardPerPeriod, totalBallot, bridgeRewardContract, ballots);
     } else {
-      _assertCalculateRewardProportionally(
-        shouldShareEqually,
-        rewardPerPeriod,
-        totalBallot,
-        bridgeRewardContract,
-        ballots
-      );
+      _assertCalculateRewardProportionally(shouldShareEqually, rewardPerPeriod, totalBallot, bridgeRewardContract, ballots);
     }
     // Assert the slashing of bridge operators for the given period
     _assertSlashBridgeOperators(period, slashUntils, bridgeRewardContract);
@@ -95,7 +89,7 @@ contract BridgeRewardTest is Base_Test, IBridgeRewardEvents, BridgeManagerUtils 
     MockBridgeReward bridgeRewardContract = MockBridgeReward(payable(_bridgeRewardContract));
 
     // Decode the default bridge manager inputs
-    (address[] memory bridgeOperators, , ) = abi.decode(_defaultBridgeManagerInputs, (address[], address[], uint256[]));
+    (address[] memory bridgeOperators,,) = abi.decode(_defaultBridgeManagerInputs, (address[], address[], uint256[]));
     // Create an empty array for ballots
     uint256[] memory ballots = new uint256[](bridgeOperators.length);
     // Calculate the total number of ballots
@@ -132,7 +126,7 @@ contract BridgeRewardTest is Base_Test, IBridgeRewardEvents, BridgeManagerUtils 
     uint256 actual;
     uint256 expected;
 
-    for (uint256 i; i < length; ) {
+    for (uint256 i; i < length;) {
       console.log("actual", actual);
       console.log("expected", expected);
 
@@ -170,7 +164,7 @@ contract BridgeRewardTest is Base_Test, IBridgeRewardEvents, BridgeManagerUtils 
     uint256 length = ballots.length;
     uint256 expected = rewardPerPeriod / length;
 
-    for (uint256 i; i < length; ) {
+    for (uint256 i; i < length;) {
       console.log("actual", actual);
       console.log("expected", expected);
 
@@ -191,13 +185,9 @@ contract BridgeRewardTest is Base_Test, IBridgeRewardEvents, BridgeManagerUtils 
    * @param slashUntils The array of slash until periods for bridge operators.
    * @param bridgeRewardContract The mock bridge reward contract.
    */
-  function _assertSlashBridgeOperators(
-    uint256 period,
-    uint256[] memory slashUntils,
-    MockBridgeReward bridgeRewardContract
-  ) internal {
+  function _assertSlashBridgeOperators(uint256 period, uint256[] memory slashUntils, MockBridgeReward bridgeRewardContract) internal {
     uint256 length = slashUntils.length;
-    for (uint256 i; i < length; ) {
+    for (uint256 i; i < length;) {
       // Check if the bridge operator is slashed for the current period
       if (period <= slashUntils[i]) {
         // Assert that the bridge operator is slashed for the current period
@@ -215,18 +205,14 @@ contract BridgeRewardTest is Base_Test, IBridgeRewardEvents, BridgeManagerUtils 
 
     _validatorContract = address(new MockValidatorContract_OnlyTiming_ForHardhatTest(200));
 
-    (address[] memory bridgeOperators, address[] memory governors, uint96[] memory voteWeights) = getValidInputs(
-      DEFAULT_R1,
-      DEFAULT_R2,
-      DEFAULT_R3,
-      DEFAULT_NUM_BRIDGE_OPERATORS
-    );
+    (address[] memory bridgeOperators, address[] memory governors, uint96[] memory voteWeights) =
+      getValidInputs(DEFAULT_R1, DEFAULT_R2, DEFAULT_R3, DEFAULT_NUM_BRIDGE_OPERATORS);
 
     _defaultBridgeManagerInputs = abi.encode(bridgeOperators, governors, voteWeights);
 
     _bridgeManagerLogic = address(new MockBridgeManager());
     _bridgeManagerContract = address(
-        new TransparentUpgradeableProxy(_bridgeManagerLogic, _admin, abi.encodeCall(MockBridgeManager.initialize, (bridgeOperators, governors, voteWeights)))
+      new TransparentUpgradeableProxy(_bridgeManagerLogic, _admin, abi.encodeCall(MockBridgeManager.initialize, (bridgeOperators, governors, voteWeights)))
     );
 
     _bridgeTrackingLogic = address(new BridgeTracking());
@@ -235,12 +221,7 @@ contract BridgeRewardTest is Base_Test, IBridgeRewardEvents, BridgeManagerUtils 
     _bridgeSlashLogic = address(new MockBridgeSlash());
     _bridgeSlashContract = address(
       new TransparentUpgradeableProxy(
-        _bridgeSlashLogic,
-        _admin,
-        abi.encodeCall(
-          BridgeSlash.initialize,
-          (_validatorContract, _bridgeManagerContract, _bridgeTrackingContract, address(0))
-        )
+        _bridgeSlashLogic, _admin, abi.encodeCall(BridgeSlash.initialize, (_validatorContract, _bridgeManagerContract, _bridgeTrackingContract, address(0)))
       )
     );
 
@@ -251,14 +232,7 @@ contract BridgeRewardTest is Base_Test, IBridgeRewardEvents, BridgeManagerUtils 
         _admin,
         abi.encodeCall(
           BridgeReward.initialize,
-          (
-            _bridgeManagerContract,
-            _bridgeTrackingContract,
-            _bridgeSlashContract,
-            _validatorContract,
-            address(0),
-            DEFAULT_REWARD_PER_PERIOD
-          )
+          (_bridgeManagerContract, _bridgeTrackingContract, _bridgeSlashContract, _validatorContract, address(0), DEFAULT_REWARD_PER_PERIOD)
         )
       )
     );

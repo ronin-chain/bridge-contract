@@ -22,11 +22,6 @@ abstract contract GovernanceRelay is CoreGovernance, CommonGovernanceRelay {
     address _creator
   ) internal {
     _proposeProposalStruct(_proposal, _creator);
-    _relayVotesBySignatures(
-      _proposal,
-      _supports,
-      _signatures,
-     _proposal.hash()
-    );
+    _relayVotesBySignatures(_proposal, _supports, _signatures, _proposal.hash());
   }
 }

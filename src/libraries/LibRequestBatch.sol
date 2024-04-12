@@ -15,11 +15,7 @@ library LibRequestBatch {
     uint256 length = req.info.ids.length;
     for (uint256 i; i < length; i++) {
       mainchainGateway.requestDepositFor(
-        Transfer.Request({
-          recipientAddr: req.recipient,
-          tokenAddr: req.tokenAddr,
-          info: TokenInfo({ erc: req.info.erc, id: req.info.ids[i], quantity: 0 })
-        })
+        Transfer.Request({ recipientAddr: req.recipient, tokenAddr: req.tokenAddr, info: TokenInfo({ erc: req.info.erc, id: req.info.ids[i], quantity: 0 }) })
       );
     }
   }

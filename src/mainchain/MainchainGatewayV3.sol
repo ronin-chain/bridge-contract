@@ -12,7 +12,15 @@ import "../extensions/WithdrawalLimitation.sol";
 import "../libraries/Transfer.sol";
 import "../interfaces/IMainchainGatewayV3.sol";
 
-contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessControlEnumerable, ERC1155Holder, IMainchainGatewayV3, HasContracts, IBridgeManagerCallback {
+contract MainchainGatewayV3 is
+  WithdrawalLimitation,
+  Initializable,
+  AccessControlEnumerable,
+  ERC1155Holder,
+  IMainchainGatewayV3,
+  HasContracts,
+  IBridgeManagerCallback
+{
   using LibTokenInfo for TokenInfo;
   using Transfer for Transfer.Request;
   using Transfer for Transfer.Receipt;
@@ -509,11 +517,7 @@ contract MainchainGatewayV3 is WithdrawalLimitation, Initializable, AccessContro
     return IBridgeManagerCallback.onBridgeOperatorsRemoved.selector;
   }
 
-  function supportsInterface(bytes4 interfaceId)
-    public
-    view
-    override(AccessControlEnumerable, IERC165, ERC1155Receiver) returns (bool)
-  {
+  function supportsInterface(bytes4 interfaceId) public view override(AccessControlEnumerable, IERC165, ERC1155Receiver) returns (bool) {
     return interfaceId == type(IMainchainGatewayV3).interfaceId || super.supportsInterface(interfaceId);
   }
 }

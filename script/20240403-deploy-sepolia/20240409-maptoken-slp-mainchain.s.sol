@@ -70,25 +70,15 @@ contract Migration__20240409_MapTokenSlpMainchain is BridgeMigration, Migration_
     thresholds[2][0] = _unlockFeePercentages;
     thresholds[3][0] = _dailyWithdrawalLimit;
 
-    bytes memory innerData = abi.encodeCall(IMainchainGatewayV3.mapTokensAndThresholds, (
-      mainchainTokens,
-      roninTokens,
-      standards,
-      thresholds
-    ));
+    bytes memory innerData = abi.encodeCall(IMainchainGatewayV3.mapTokensAndThresholds, (mainchainTokens, roninTokens, standards, thresholds));
 
     vm.startBroadcast(0x968D0Cd7343f711216817E617d3f92a23dC91c07);
-    address(_mainchainGatewayV3).call(abi.encodeWithSignature("functionDelegateCall(bytes)",innerData));
+    address(_mainchainGatewayV3).call(abi.encodeWithSignature("functionDelegateCall(bytes)", innerData));
 
     _mainchainSlp.mint(address(_mainchainGatewayV3), 50_000_000);
     _mainchainSlp.mint(address(0xC65C6BEA96666f150BEF9b936630f6355BfFCC06), 100_000);
 
     return;
-
-
-
-
-
 
     // bytes memory proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
 

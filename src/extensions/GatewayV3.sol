@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "../interfaces/IQuorum.sol";
 import "./collections/HasProxyAdmin.sol";
 
-abstract contract GatewayV3 is HasProxyAdmin, Pausable, IQuorum  {
+abstract contract GatewayV3 is HasProxyAdmin, Pausable, IQuorum {
   uint256 internal _num;
   uint256 internal _denom;
 
@@ -77,11 +77,7 @@ abstract contract GatewayV3 is HasProxyAdmin, Pausable, IQuorum  {
    * Emits the `ThresholdUpdated` event.
    *
    */
-  function _setThreshold(uint256 _numerator, uint256 _denominator)
-    internal
-    virtual
-    returns (uint256 _previousNum, uint256 _previousDenom)
-  {
+  function _setThreshold(uint256 _numerator, uint256 _denominator) internal virtual returns (uint256 _previousNum, uint256 _previousDenom) {
     if (_numerator > _denominator) revert ErrInvalidThreshold(msg.sig);
     _previousNum = _num;
     _previousDenom = _denom;

@@ -75,27 +75,15 @@ contract Migration__20240405_MapTokenUsdcMainchain is BridgeMigration, Migration
     thresholds[2][1] = 0;
     thresholds[3][1] = 0;
 
-    bytes memory innerData = abi.encodeCall(IMainchainGatewayV3.mapTokensAndThresholds, (
-      mainchainTokens,
-      roninTokens,
-      standards,
-      thresholds
-    ));
+    bytes memory innerData = abi.encodeCall(IMainchainGatewayV3.mapTokensAndThresholds, (mainchainTokens, roninTokens, standards, thresholds));
 
-    bytes memory setEmergencyPauserInnerData = abi.encodeCall(GatewayV3.setEmergencyPauser, (
-      _mainchainPauseEnforcer
-    ));
+    bytes memory setEmergencyPauserInnerData = abi.encodeCall(GatewayV3.setEmergencyPauser, (_mainchainPauseEnforcer));
 
     vm.startBroadcast(0x968D0Cd7343f711216817E617d3f92a23dC91c07);
-    address(_mainchainGatewayV3).call(abi.encodeWithSignature("functionDelegateCall(bytes)",innerData));
-    address(_mainchainGatewayV3).call(abi.encodeWithSignature("functionDelegateCall(bytes)",setEmergencyPauserInnerData));
+    address(_mainchainGatewayV3).call(abi.encodeWithSignature("functionDelegateCall(bytes)", innerData));
+    address(_mainchainGatewayV3).call(abi.encodeWithSignature("functionDelegateCall(bytes)", setEmergencyPauserInnerData));
 
     return;
-
-
-
-
-
 
     bytes memory proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
 
@@ -106,9 +94,7 @@ contract Migration__20240405_MapTokenUsdcMainchain is BridgeMigration, Migration
 
     targets[1] = _mainchainGatewayV3;
     values[1] = 0;
-    calldatas[1] = abi.encodeWithSignature("functionDelegateCall(bytes)", abi.encodeCall(GatewayV3.setEmergencyPauser, (
-      _mainchainPauseEnforcer
-    )));
+    calldatas[1] = abi.encodeWithSignature("functionDelegateCall(bytes)", abi.encodeCall(GatewayV3.setEmergencyPauser, (_mainchainPauseEnforcer)));
     gasAmounts[1] = 1_000_000;
 
     // ================ VERIFY AND EXECUTE PROPOSAL ===============
@@ -125,9 +111,7 @@ contract Migration__20240405_MapTokenUsdcMainchain is BridgeMigration, Migration
     governors[0] = 0x087D08e3ba42e64E3948962dd1371F906D1278b9;
     governors[1] = 0x52ec2e6BBcE45AfFF8955Da6410bb13812F4289F;
 
-    _mainchainProposalUtils = new MainchainBridgeAdminUtils(
-      2021, governorPKs, MainchainBridgeManager(_mainchainBridgeManager), governors[0]
-    );
+    _mainchainProposalUtils = new MainchainBridgeAdminUtils(2021, governorPKs, MainchainBridgeManager(_mainchainBridgeManager), governors[0]);
 
     Proposal.ProposalDetail memory proposal = Proposal.ProposalDetail({
       nonce: MainchainBridgeManager(_mainchainBridgeManager).round(11155111) + 1,

@@ -126,8 +126,7 @@ library LibTokenInfo {
     bool success;
     bytes memory data;
     if (self.erc == TokenStandard.ERC20) {
-      (success, data) =
-        token.call(abi.encodeWithSelector(IERC20.transferFrom.selector, from, address(this), self.quantity));
+      (success, data) = token.call(abi.encodeWithSelector(IERC20.transferFrom.selector, from, address(this), self.quantity));
       success = success && (data.length == 0 || abi.decode(data, (bool)));
     } else if (self.erc == TokenStandard.ERC721) {
       success = _tryTransferFromERC721(token, from, address(this), self.id);
@@ -265,10 +264,7 @@ library LibTokenInfo {
    * @dev Transfers the ERC1155 token out. If the transfer failed, mints the ERC11555.
    * @return success Returns `false` if both transfer and mint are failed.
    */
-  function _tryTransferOutOrMintERC1155(address token, address to, uint256 id, uint256 amount)
-    private
-    returns (bool success)
-  {
+  function _tryTransferOutOrMintERC1155(address token, address to, uint256 id, uint256 amount) private returns (bool success) {
     success = _tryTransferFromERC1155(token, address(this), to, id, amount);
     if (!success) {
       return _tryMintERC1155(token, to, id, amount);
@@ -278,10 +274,7 @@ library LibTokenInfo {
   /**
    * @dev Transfers ERC1155 token and returns the result.
    */
-  function _tryTransferFromERC1155(address token, address from, address to, uint256 id, uint256 amount)
-    private
-    returns (bool success)
-  {
+  function _tryTransferFromERC1155(address token, address from, address to, uint256 id, uint256 amount) private returns (bool success) {
     (success,) = token.call(abi.encodeCall(IERC1155.safeTransferFrom, (from, to, id, amount, new bytes(0))));
   }
 

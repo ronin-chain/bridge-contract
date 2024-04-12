@@ -87,9 +87,7 @@ contract DeploySepolia is BridgeMigration, DeploySepolia__ChangeGV_Config {
     _mainchainMockERC721 = new MockERC721Deploy().run();
 
     _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
-    _mainchainProposalUtils = new MainchainBridgeAdminUtils(
-      2021, _param.test.governorPKs, _mainchainBridgeManager, _param.mainchainBridgeManager.governors[0]
-    );
+    _mainchainProposalUtils = new MainchainBridgeAdminUtils(2021, _param.test.governorPKs, _mainchainBridgeManager, _param.mainchainBridgeManager.governors[0]);
   }
 
   function _mainchainGatewayV3Initialize() internal {
@@ -171,8 +169,7 @@ contract DeploySepolia is BridgeMigration, DeploySepolia__ChangeGV_Config {
     Ballot.VoteType[] memory supports_ = new Ballot.VoteType[](1);
     supports_[0] = Ballot.VoteType.For;
 
-    SignatureConsumer.Signature[] memory signatures =
-      _mainchainProposalUtils.generateSignatures(proposal, _param.test.governorPKs);
+    SignatureConsumer.Signature[] memory signatures = _mainchainProposalUtils.generateSignatures(proposal, _param.test.governorPKs);
 
     vm.broadcast(_mainchainBridgeManager.getGovernors()[0]);
     _mainchainBridgeManager.relayProposal(proposal, supports_, signatures);

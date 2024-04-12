@@ -10,11 +10,7 @@ contract Migration__20240308_MapTokenAperiosRoninchain is Base__MapToken, Factor
     return Base__MapToken._initCaller();
   }
 
-  function _initTokenList()
-    internal
-    override(Base__MapToken, Factory__MapTokensRoninchain)
-    returns (uint256 totalToken, MapTokenInfo[] memory infos)
-  {
+  function _initTokenList() internal override(Base__MapToken, Factory__MapTokensRoninchain) returns (uint256 totalToken, MapTokenInfo[] memory infos) {
     return Base__MapToken._initTokenList();
   }
 

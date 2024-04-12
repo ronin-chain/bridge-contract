@@ -41,10 +41,7 @@ library LibTokenInfoBatch {
   /**
    * @dev Validates the token info.
    */
-  function validate(TokenInfoBatch memory self, function (TokenInfoBatch memory) pure returns (bool) fCheck)
-    internal
-    pure
-  {
+  function validate(TokenInfoBatch memory self, function (TokenInfoBatch memory) pure returns (bool) fCheck) internal pure {
     if (!fCheck(self)) {
       revert ErrInvalidInfoWithStandard(self.erc);
     }
@@ -60,9 +57,9 @@ library LibTokenInfoBatch {
     uint256 length = self.ids.length;
 
     if (
-      !(self.erc == TokenStandard.ERC1155 // Check ERC1155
-        && self.ids.length != 0 // Info must contain at least one id in the array
-        && length == self.quantities.length) // Info must have same length for each pair id and quantity
+      // Check ERC1155
+      // Info must contain at least one id in the array
+      !(self.erc == TokenStandard.ERC1155 && self.ids.length != 0 && length == self.quantities.length) // Info must have same length for each pair id and quantity
     ) {
       return false;
     }
@@ -126,10 +123,7 @@ library LibTokenInfoBatch {
    * If there is fail when transfer one `id`, the loop will break early to save gas.
    * Consumer of this method should revert the transaction if receive `false` success status.
    */
-  function _tryTransferFromERC721Loop(address token, address from, address to, uint256[] memory ids)
-    private
-    returns (bool success)
-  {
+  function _tryTransferFromERC721Loop(address token, address from, address to, uint256[] memory ids) private returns (bool success) {
     for (uint256 i; i < ids.length; ++i) {
       if (!_tryTransferFromERC721(token, from, to, ids[i])) {
         return false; // Break early if send fails
@@ -150,13 +144,7 @@ library LibTokenInfoBatch {
   /**
    * @dev Transfers ERC1155 token in and returns the result.
    */
-  function _tryTransferERC1155Batch(
-    address token,
-    address from,
-    address to,
-    uint256[] memory ids,
-    uint256[] memory amounts
-  ) private returns (bool success) {
+  function _tryTransferERC1155Batch(address token, address from, address to, uint256[] memory ids, uint256[] memory amounts) private returns (bool success) {
     (success,) = token.call(abi.encodeCall(IERC1155.safeBatchTransferFrom, (from, to, ids, amounts, new bytes(0))));
   }
 }

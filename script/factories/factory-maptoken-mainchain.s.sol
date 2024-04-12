@@ -26,13 +26,9 @@ abstract contract Factory__MapTokensMainchain is BridgeMigration {
     super.setUp();
 
     _roninBridgeManager = RoninBridgeManager(_config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
-    _mainchainGatewayV3 = _config.getAddress(
-      _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).key(), Contract.MainchainGatewayV3.key()
-    );
-    _mainchainBridgeManager = _config.getAddress(
-      _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).key(),
-      Contract.MainchainBridgeManager.key()
-    );
+    _mainchainGatewayV3 = _config.getAddress(_config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).key(), Contract.MainchainGatewayV3.key());
+    _mainchainBridgeManager =
+      _config.getAddress(_config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).key(), Contract.MainchainBridgeManager.key());
 
     _governor = _initCaller();
   }
@@ -77,8 +73,7 @@ abstract contract Factory__MapTokensMainchain is BridgeMigration {
     //   uint256[][4] calldata _thresholds
     // )
 
-    bytes memory innerData =
-      abi.encodeCall(IMainchainGatewayV3.mapTokensAndThresholds, (mainchainTokens, roninTokens, standards, thresholds));
+    bytes memory innerData = abi.encodeCall(IMainchainGatewayV3.mapTokensAndThresholds, (mainchainTokens, roninTokens, standards, thresholds));
 
     bytes memory proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
 

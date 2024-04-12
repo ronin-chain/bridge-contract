@@ -38,7 +38,6 @@ contract RoninBridgeManagerConstructor is BridgeManager, GovernanceProposal, Glo
     __BridgeManager_init(num, denom, roninChainId, bridgeContract, callbackRegisters, bridgeOperators, governors, voteWeights);
   }
 
-
   /**
    * @dev Internal function to get the chain type of the contract.
    * @return The chain type, indicating the type of the chain the contract operates on (e.g., RoninChain).

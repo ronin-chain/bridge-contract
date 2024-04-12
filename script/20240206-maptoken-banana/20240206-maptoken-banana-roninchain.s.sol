@@ -1,24 +1,24 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {console2} from "forge-std/console2.sol";
-import {StdStyle} from "forge-std/StdStyle.sol";
-import {BaseMigration} from "foundry-deployment-kit/BaseMigration.s.sol";
-import {DefaultNetwork} from "foundry-deployment-kit/utils/DefaultNetwork.sol";
+import { console2 } from "forge-std/console2.sol";
+import { StdStyle } from "forge-std/StdStyle.sol";
+import { BaseMigration } from "foundry-deployment-kit/BaseMigration.s.sol";
+import { DefaultNetwork } from "foundry-deployment-kit/utils/DefaultNetwork.sol";
 
-import {RoninBridgeManager} from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
-import {IRoninGatewayV3} from "@ronin/contracts/interfaces/IRoninGatewayV3.sol";
-import {MinimumWithdrawal} from "@ronin/contracts/extensions/MinimumWithdrawal.sol";
-import {LibTokenInfo, TokenStandard} from "@ronin/contracts/libraries/LibTokenInfo.sol";
-import {Ballot} from "@ronin/contracts/libraries/Ballot.sol";
-import {GlobalProposal} from "@ronin/contracts/libraries/GlobalProposal.sol";
-import {Proposal} from "@ronin/contracts/libraries/Proposal.sol";
+import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
+import { IRoninGatewayV3 } from "@ronin/contracts/interfaces/IRoninGatewayV3.sol";
+import { MinimumWithdrawal } from "@ronin/contracts/extensions/MinimumWithdrawal.sol";
+import { LibTokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
+import { Ballot } from "@ronin/contracts/libraries/Ballot.sol";
+import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
+import { Proposal } from "@ronin/contracts/libraries/Proposal.sol";
 
-import {Contract} from "../utils/Contract.sol";
-import {BridgeMigration} from "../BridgeMigration.sol";
-import {Network} from "../utils/Network.sol";
-import {Contract} from "../utils/Contract.sol";
-import {IGeneralConfigExtended} from "../IGeneralConfigExtended.sol";
+import { Contract } from "../utils/Contract.sol";
+import { BridgeMigration } from "../BridgeMigration.sol";
+import { Network } from "../utils/Network.sol";
+import { Contract } from "../utils/Contract.sol";
+import { IGeneralConfigExtended } from "../IGeneralConfigExtended.sol";
 
 import "forge-std/console2.sol";
 
@@ -95,8 +95,7 @@ contract Migration__20240206_MapTokenBananaRoninChain is
     //   uint256[] calldata chainIds,
     //   TokenStandard[] calldata _standards
     // )
-    bytes memory innerData =
-      abi.encodeCall(IRoninGatewayV3.mapTokens, (roninTokens, mainchainTokens, chainIds, standards));
+    bytes memory innerData = abi.encodeCall(IRoninGatewayV3.mapTokens, (roninTokens, mainchainTokens, chainIds, standards));
     bytes memory proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
 
     targets[0] = _roninGatewayV3;

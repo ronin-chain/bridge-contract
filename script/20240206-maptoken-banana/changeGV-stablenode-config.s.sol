@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {IBridgeManager} from "@ronin/contracts/interfaces/bridge/IBridgeManager.sol";
+import { IBridgeManager } from "@ronin/contracts/interfaces/bridge/IBridgeManager.sol";
 
 contract Migration__ChangeGV_StableNode_Config {
   address constant _stableNodeBridgeOperator = address(0x564DcB855Eb360826f27D1Eb9c57cbbe6C76F50F);

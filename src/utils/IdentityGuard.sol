@@ -92,9 +92,7 @@ abstract contract IdentityGuard {
     bytes memory supportsInterfaceParams = abi.encodeCall(IERC165.supportsInterface, (interfaceId));
     (bool success, bytes memory returnOrRevertData) = contractAddr.staticcall(supportsInterfaceParams);
     if (!success) {
-      (success, returnOrRevertData) = contractAddr.staticcall(
-        abi.encodeCall(TransparentUpgradeableProxyV2.functionDelegateCall, (supportsInterfaceParams))
-      );
+      (success, returnOrRevertData) = contractAddr.staticcall(abi.encodeCall(TransparentUpgradeableProxyV2.functionDelegateCall, (supportsInterfaceParams)));
       if (!success) revert ErrUnsupportedInterface(interfaceId, contractAddr);
     }
     if (!abi.decode(returnOrRevertData, (bool))) revert ErrUnsupportedInterface(interfaceId, contractAddr);

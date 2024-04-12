@@ -28,11 +28,6 @@ abstract contract GlobalGovernanceRelay is CommonGovernanceRelay, GlobalCoreGove
     address creator
   ) internal {
     Proposal.ProposalDetail memory _proposal = _proposeGlobalStruct(globalProposal, creator);
-    _relayVotesBySignatures(
-      _proposal,
-      supports_,
-      signatures,
-      globalProposal.hash()
-    );
+    _relayVotesBySignatures(_proposal, supports_, signatures, globalProposal.hash());
   }
 }

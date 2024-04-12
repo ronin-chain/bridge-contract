@@ -75,8 +75,7 @@ abstract contract Factory__MapTokensRoninchain is BridgeMigration {
     //   uint256[] calldata chainIds,
     //   TokenStandard[] calldata _standards
     // )
-    bytes memory innerData =
-      abi.encodeCall(IRoninGatewayV3.mapTokens, (roninTokens, mainchainTokens, chainIds, standards));
+    bytes memory innerData = abi.encodeCall(IRoninGatewayV3.mapTokens, (roninTokens, mainchainTokens, chainIds, standards));
     bytes memory proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
 
     targets[0] = _roninGatewayV3;
@@ -97,8 +96,7 @@ abstract contract Factory__MapTokensRoninchain is BridgeMigration {
       minThresholds[i] = tokenInfos[i].minThreshold;
     }
 
-    innerData =
-      abi.encodeCall(MinimumWithdrawal.setMinimumThresholds, (roninTokensToSetMinThreshold, minThresholds));
+    innerData = abi.encodeCall(MinimumWithdrawal.setMinimumThresholds, (roninTokensToSetMinThreshold, minThresholds));
     proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
 
     targets[1] = _roninGatewayV3;

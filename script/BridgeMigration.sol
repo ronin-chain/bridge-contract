@@ -5,7 +5,6 @@ import { console2 } from "forge-std/console2.sol";
 import { BaseMigration } from "foundry-deployment-kit/BaseMigration.s.sol";
 import { TNetwork } from "foundry-deployment-kit/types/Types.sol";
 
-
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import { ErrorHandler } from "@ronin/contracts/libraries/ErrorHandler.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
@@ -49,20 +48,25 @@ contract BridgeMigration is BaseMigration {
 
   function _resolveRoninTarget(GlobalProposal.TargetOption targetOption) internal returns (address) {
     _config.switchTo(DefaultNetwork.RoninMainnet.key());
-    if (targetOption == GlobalProposal.TargetOption.BridgeManager)
+    if (targetOption == GlobalProposal.TargetOption.BridgeManager) {
       return _config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key());
+    }
 
-    if (targetOption == GlobalProposal.TargetOption.GatewayContract)
+    if (targetOption == GlobalProposal.TargetOption.GatewayContract) {
       return _config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key());
+    }
 
-    if (targetOption == GlobalProposal.TargetOption.BridgeReward)
+    if (targetOption == GlobalProposal.TargetOption.BridgeReward) {
       return _config.getAddressFromCurrentNetwork(Contract.BridgeReward.key());
+    }
 
-    if (targetOption == GlobalProposal.TargetOption.BridgeSlash)
+    if (targetOption == GlobalProposal.TargetOption.BridgeSlash) {
       return _config.getAddressFromCurrentNetwork(Contract.BridgeSlash.key());
+    }
 
-    if (targetOption == GlobalProposal.TargetOption.BridgeTracking)
+    if (targetOption == GlobalProposal.TargetOption.BridgeTracking) {
       return _config.getAddressFromCurrentNetwork(Contract.BridgeTracking.key());
+    }
 
     return address(0);
   }
@@ -70,21 +74,18 @@ contract BridgeMigration is BaseMigration {
   function _resolveMainchainTarget(GlobalProposal.TargetOption targetOption) internal returns (address) {
     _config.createFork(Network.EthMainnet.key());
     _config.switchTo(Network.EthMainnet.key());
-    if (targetOption == GlobalProposal.TargetOption.BridgeManager)
+    if (targetOption == GlobalProposal.TargetOption.BridgeManager) {
       return _config.getAddressFromCurrentNetwork(Contract.MainchainBridgeManager.key());
+    }
 
-    if (targetOption == GlobalProposal.TargetOption.GatewayContract)
+    if (targetOption == GlobalProposal.TargetOption.GatewayContract) {
       return _config.getAddressFromCurrentNetwork(Contract.MainchainBridgeManager.key());
+    }
 
     return address(0);
   }
 
-  function _verifyRoninProposalGasAmount(
-    address[] memory targets,
-    uint256[] memory values,
-    bytes[] memory calldatas,
-    uint256[] memory gasAmounts
-  ) internal {
+  function _verifyRoninProposalGasAmount(address[] memory targets, uint256[] memory values, bytes[] memory calldatas, uint256[] memory gasAmounts) internal {
     _config.switchTo(DefaultNetwork.RoninMainnet.key());
 
     address roninBridgeManager = _config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key());
@@ -95,12 +96,7 @@ contract BridgeMigration is BaseMigration {
     vm.revertTo(snapshotId);
   }
 
-  function _verifyMainchainProposalGasAmount(
-    address[] memory targets,
-    uint256[] memory values,
-    bytes[] memory calldatas,
-    uint256[] memory gasAmounts
-  ) internal {
+  function _verifyMainchainProposalGasAmount(address[] memory targets, uint256[] memory values, bytes[] memory calldatas, uint256[] memory gasAmounts) internal {
     _config.createFork(Network.EthMainnet.key());
     _config.switchTo(Network.EthMainnet.key());
 

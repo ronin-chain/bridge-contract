@@ -163,12 +163,7 @@ contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernan
     Ballot.VoteType[] calldata supports_,
     Signature[] calldata signatures
   ) external onlyGovernor {
-    _proposeGlobalProposalStructAndCastVotes({
-      globalProposal: globalProposal,
-      supports_: supports_,
-      signatures: signatures,
-      creator: msg.sender
-    });
+    _proposeGlobalProposalStructAndCastVotes({ globalProposal: globalProposal, supports_: supports_, signatures: signatures, creator: msg.sender });
   }
 
   /**

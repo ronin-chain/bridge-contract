@@ -17,14 +17,7 @@ import { ErrLengthMismatch } from "../../utils/CommonErrors.sol";
  * @title BridgeSlash
  * @dev A contract that implements slashing functionality for bridge operators based on their availability.
  */
-contract BridgeSlash is
-  IBridgeSlash,
-  IBridgeManagerCallback,
-  BridgeTrackingHelper,
-  IdentityGuard,
-  Initializable,
-  HasContracts
-{
+contract BridgeSlash is IBridgeSlash, IBridgeManagerCallback, BridgeTrackingHelper, IdentityGuard, Initializable, HasContracts {
   /// @inheritdoc IBridgeSlash
   uint256 public constant TIER_1_PENALTY_DURATION = 1;
   /// @inheritdoc IBridgeSlash
@@ -66,12 +59,7 @@ contract BridgeSlash is
     _disableInitializers();
   }
 
-  function initialize(
-    address validatorContract,
-    address bridgeManagerContract,
-    address bridgeTrackingContract,
-    address dposGA
-  ) external initializer {
+  function initialize(address validatorContract, address bridgeManagerContract, address bridgeTrackingContract, address dposGA) external initializer {
     _setContract(ContractType.VALIDATOR, validatorContract);
     _setContract(ContractType.BRIDGE_MANAGER, bridgeManagerContract);
     _setContract(ContractType.BRIDGE_TRACKING, bridgeTrackingContract);
@@ -93,7 +81,7 @@ contract BridgeSlash is
    */
   function onBridgeOperatorsAdded(
     address[] calldata bridgeOperators,
-    uint96[] calldata /* weights */,
+    uint96[] calldata, /* weights */
     bool[] memory addeds
   ) external onlyContract(ContractType.BRIDGE_MANAGER) returns (bytes4) {
     uint256 length = bridgeOperators.length;
@@ -105,7 +93,7 @@ contract BridgeSlash is
     mapping(address => BridgeSlashInfo) storage _bridgeSlashInfos = _getBridgeSlashInfos();
     uint256 currentPeriod = IRoninValidatorSet(getContract(ContractType.VALIDATOR)).currentPeriod();
 
-    for (uint256 i; i < length; ) {
+    for (uint256 i; i < length;) {
       unchecked {
         if (addeds[i]) {
           _bridgeSlashInfos[bridgeOperators[i]].newlyAddedAtPeriod = uint128(currentPeriod);
@@ -146,7 +134,7 @@ contract BridgeSlash is
     address bridgeOperator;
     Tier tier;
 
-    for (uint256 i; i < operators.length; ) {
+    for (uint256 i; i < operators.length;) {
       bridgeOperator = operators[i];
       status = _bridgeSlashInfos[bridgeOperator];
 
@@ -185,10 +173,7 @@ contract BridgeSlash is
   /**
    * @inheritdoc IBridgeManagerCallback
    */
-  function onBridgeOperatorsRemoved(
-    address[] calldata,
-    bool[] calldata
-  ) external view onlyContract(ContractType.BRIDGE_MANAGER) returns (bytes4) {
+  function onBridgeOperatorsRemoved(address[] calldata, bool[] calldata) external view onlyContract(ContractType.BRIDGE_MANAGER) returns (bytes4) {
     return IBridgeManagerCallback.onBridgeOperatorsRemoved.selector;
   }
 
@@ -202,14 +187,12 @@ contract BridgeSlash is
   /**
    * @inheritdoc IBridgeSlash
    */
-  function getSlashUntilPeriodOf(
-    address[] calldata bridgeOperators
-  ) external view returns (uint256[] memory untilPeriods) {
+  function getSlashUntilPeriodOf(address[] calldata bridgeOperators) external view returns (uint256[] memory untilPeriods) {
     uint256 length = bridgeOperators.length;
     untilPeriods = new uint256[](length);
     mapping(address => BridgeSlashInfo) storage _bridgeSlashInfos = _getBridgeSlashInfos();
 
-    for (uint256 i; i < length; ) {
+    for (uint256 i; i < length;) {
       untilPeriods[i] = _bridgeSlashInfos[bridgeOperators[i]].slashUntilPeriod;
       unchecked {
         ++i;
@@ -225,7 +208,7 @@ contract BridgeSlash is
     addedPeriods = new uint256[](length);
     mapping(address => BridgeSlashInfo) storage _bridgeSlashInfos = _getBridgeSlashInfos();
 
-    for (uint256 i; i < length; ) {
+    for (uint256 i; i < length;) {
       addedPeriods[i] = _bridgeSlashInfos[bridgeOperators[i]].newlyAddedAtPeriod;
       unchecked {
         ++i;
@@ -253,10 +236,7 @@ contract BridgeSlash is
    * @param period The current period.
    * @return met A boolean indicates that the threshold for removal is met.
    */
-  function _isSlashDurationMetRemovalThreshold(
-    uint256 slashUntilPeriod,
-    uint256 period
-  ) internal pure returns (bool met) {
+  function _isSlashDurationMetRemovalThreshold(uint256 slashUntilPeriod, uint256 period) internal pure returns (bool met) {
     met = slashUntilPeriod - (period - 1) >= REMOVE_DURATION_THRESHOLD;
   }
 

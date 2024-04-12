@@ -10,11 +10,12 @@ library GlobalProposal {
   error ErrUnsupportedTarget(bytes32 proposalHash, uint256 targetNumber);
 
   enum TargetOption {
-    /* 0 */ BridgeManager,
-    /* 1 */ GatewayContract,
-    /* 2 */ BridgeReward,
-    /* 3 */ BridgeSlash,
-    /* 4 */ BridgeTracking
+    BridgeManager, // 0
+    GatewayContract, // 1
+    BridgeReward, // 2
+    BridgeSlash, // 3
+    BridgeTracking // 4
+
   }
 
   struct GlobalProposalDetail {
