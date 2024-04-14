@@ -11,16 +11,17 @@ import { LibProxy } from "@fdk/libraries/LibProxy.sol";
 import { GeneralConfig } from "./GeneralConfig.sol";
 import { ISharedArgument } from "./interfaces/ISharedArgument.sol";
 import { TNetwork, Network } from "./utils/Network.sol";
+import { IGeneralConfigExtended } from "./interfaces/IGeneralConfigExtended.sol";
 import { Utils } from "./utils/Utils.sol";
 import { LibTokenInfo, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { Contract, TContract } from "./utils/Contract.sol";
 import { GlobalProposal, Proposal, LibProposal } from "script/shared/libraries/LibProposal.sol";
 import { TransparentUpgradeableProxy, TransparentUpgradeableProxyV2 } from "@ronin/contracts/extensions/TransparentUpgradeableProxyV2.sol";
 import { LibArray } from "script/shared/libraries/LibArray.sol";
-import { PostChecker } from "./PostChecker.sol";
+import { IPostCheck } from "./interfaces/IPostCheck.sol";
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 
-contract Migration is PostChecker, Utils {
+contract Migration is BaseMigration, Utils {
   using LibProxy for *;
   using LibArray for *;
   using StdStyle for *;
@@ -30,10 +31,15 @@ contract Migration is PostChecker, Utils {
   uint256 internal constant DEFAULT_PROPOSAL_GAS = 1_000_000;
   ISharedArgument internal constant config = ISharedArgument(address(CONFIG));
 
-  bool internal _isLocalETH;
-
   function setUp() public virtual override {
     super.setUp();
+  }
+
+  function _postCheck() internal virtual override {
+    address postChecker = _deployImmutable(Contract.PostChecker.key());
+    vm.allowCheatcodes(postChecker);
+    vm.makePersistent(postChecker);
+    IPostCheck(postChecker).run();
   }
 
   function _configByteCode() internal virtual override returns (bytes memory) {
@@ -166,7 +172,6 @@ contract Migration is PostChecker, Utils {
       // Ronin Bridge Manager
       param.roninBridgeManager.num = 2;
       param.roninBridgeManager.denom = 4;
-      param.roninBridgeManager.roninChainId = 0;
       param.roninBridgeManager.roninChainId = block.chainid;
       param.roninBridgeManager.expiryDuration = 14 days;
       param.roninBridgeManager.bridgeOperators = operatorAddrs;
@@ -188,7 +193,6 @@ contract Migration is PostChecker, Utils {
       // Mainchain Bridge Manager
       param.mainchainBridgeManager.num = 2;
       param.mainchainBridgeManager.denom = 4;
-      param.mainchainBridgeManager.roninChainId = 0;
       param.mainchainBridgeManager.roninChainId = block.chainid;
       param.mainchainBridgeManager.bridgeOperators = operatorAddrs;
       param.mainchainBridgeManager.governors = governorAddrs;
@@ -211,10 +215,23 @@ contract Migration is PostChecker, Utils {
     } else if (currentNetwork == Network.Sepolia.key() || currentNetwork == Network.Goerli.key() || currentNetwork == Network.EthMainnet.key()) {
       proxyAdmin = loadContract(Contract.MainchainBridgeManager.key());
     } else if (currentNetwork == DefaultNetwork.Local.key()) {
-      TContract managerContractType = _isLocalETH ? Contract.MainchainBridgeManager.key() : Contract.RoninBridgeManager.key();
-      try config.getAddressFromCurrentNetwork(managerContractType) returns (address payable addr) {
-        proxyAdmin = addr;
-      } catch {
+      if (config.getLocalNetwork() == IGeneralConfigExtended.LocalNetwork.Ronin) {
+        try config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()) returns (address payable res) {
+          proxyAdmin = res;
+        } catch {
+          console.log("BridgeMigration(_getProxyAdmin): RoninBridgeManager not found".yellow());
+          console.log("BridgeMigration(_getProxyAdmin): Using sender as proxy admin".yellow());
+          proxyAdmin = sender();
+        }
+      } else if (config.getLocalNetwork() == IGeneralConfigExtended.LocalNetwork.Eth) {
+        try config.getAddressFromCurrentNetwork(Contract.MainchainBridgeManager.key()) returns (address payable res) {
+          proxyAdmin = res;
+        } catch {
+          console.log("BridgeMigration(_getProxyAdmin): MainchainBridgeManager not found".yellow());
+          console.log("BridgeMigration(_getProxyAdmin): Using sender as proxy admin".yellow());
+          proxyAdmin = sender();
+        }
+      } else {
         proxyAdmin = payable(config.sharedArguments().test.proxyAdmin);
       }
     } else {
@@ -231,60 +248,50 @@ contract Migration is PostChecker, Utils {
     }
 
     assertTrue(proxyAdmin != address(0x0), "BridgeMigration: Invalid {proxyAdmin} or {proxy} is not a Proxy contract");
-    address admin = _getProxyAdmin();
     TNetwork currentNetwork = network();
 
-    if (proxyAdmin == admin) {
-      // in case proxyAdmin is GovernanceAdmin
-      if (
-        currentNetwork == DefaultNetwork.RoninTestnet.key() || currentNetwork == DefaultNetwork.RoninMainnet.key()
-          || currentNetwork == Network.RoninDevnet.key() || currentNetwork == DefaultNetwork.Local.key()
-      ) {
-        // handle for ronin network
-        console.log(StdStyle.yellow("Voting on RoninBridgeManager for upgrading..."));
-
-        RoninBridgeManager manager = RoninBridgeManager(admin);
-        bytes[] memory callDatas = new bytes[](1);
-        uint256[] memory values = new uint256[](1);
-        address[] memory targets = new address[](1);
-
-        targets[0] = proxy;
-        callDatas[0] = args.length == 0
-          ? abi.encodeCall(TransparentUpgradeableProxy.upgradeTo, (logic))
-          : abi.encodeCall(TransparentUpgradeableProxy.upgradeToAndCall, (logic, args));
-
-        Proposal.ProposalDetail memory proposal = LibProposal.createProposal({
-          manager: address(manager),
-          nonce: manager.round(block.chainid) + 1,
-          expiryTimestamp: block.timestamp + 10 minutes,
-          targets: targets,
-          values: values,
-          calldatas: callDatas,
-          gasAmounts: uint256(DEFAULT_PROPOSAL_GAS).toSingletonArray()
-        });
-
-        manager.executeProposal(proposal);
-        assertEq(proxy.getProxyImplementation(), logic, "BridgeMigration: Upgrade failed");
-      } else if (currentNetwork == Network.Sepolia.key() || currentNetwork == Network.Goerli.key() || currentNetwork == Network.EthMainnet.key()) {
-        // handle for ethereum
-        revert("BridgeMigration: Unhandled case for ETH");
-      } else {
-        revert("BridgeMigration: Unhandled case");
-      }
-    } else if (proxyAdmin.code.length == 0) {
+    if (proxyAdmin.code.length == 0) {
       // in case proxyAdmin is an eoa
       console.log(StdStyle.yellow("Upgrading with EOA wallet..."));
       _prankOrBroadcast(address(proxyAdmin));
       if (args.length == 0) TransparentUpgradeableProxyV2(proxy).upgradeTo(logic);
       else TransparentUpgradeableProxyV2(proxy).upgradeToAndCall(logic, args);
+    }
+    // in case proxyAdmin is GovernanceAdmin
+    else if (
+      currentNetwork == DefaultNetwork.RoninTestnet.key() || currentNetwork == DefaultNetwork.RoninMainnet.key() || currentNetwork == Network.RoninDevnet.key()
+        || currentNetwork == DefaultNetwork.Local.key()
+    ) {
+      // handle for ronin network
+      console.log(StdStyle.yellow("Voting on RoninBridgeManager for upgrading..."));
+
+      RoninBridgeManager manager = RoninBridgeManager(proxyAdmin);
+      bytes[] memory callDatas = new bytes[](1);
+      uint256[] memory values = new uint256[](1);
+      address[] memory targets = new address[](1);
+
+      targets[0] = proxy;
+      callDatas[0] = args.length == 0
+        ? abi.encodeCall(TransparentUpgradeableProxy.upgradeTo, (logic))
+        : abi.encodeCall(TransparentUpgradeableProxy.upgradeToAndCall, (logic, args));
+
+      Proposal.ProposalDetail memory proposal = LibProposal.createProposal({
+        manager: address(manager),
+        nonce: manager.round(block.chainid) + 1,
+        expiryTimestamp: block.timestamp + 10 minutes,
+        targets: targets,
+        values: values,
+        calldatas: callDatas,
+        gasAmounts: uint256(DEFAULT_PROPOSAL_GAS).toSingletonArray()
+      });
+
+      manager.executeProposal(proposal);
+      assertEq(proxy.getProxyImplementation(), logic, "BridgeMigration: Upgrade failed");
+    } else if (currentNetwork == Network.Sepolia.key() || currentNetwork == Network.Goerli.key() || currentNetwork == Network.EthMainnet.key()) {
+      // handle for ethereum
+      revert("BridgeMigration: Unhandled case for ETH");
     } else {
-      console.log(StdStyle.yellow("Upgrading with owner of ProxyAdmin contract..."));
-      // in case proxyAdmin is a ProxyAdmin contract
-      ProxyAdmin proxyAdminContract = ProxyAdmin(proxyAdmin);
-      address authorizedWallet = proxyAdminContract.owner();
-      _prankOrBroadcast(authorizedWallet);
-      if (args.length == 0) proxyAdminContract.upgrade(TransparentUpgradeableProxy(proxy), logic);
-      else proxyAdminContract.upgradeAndCall(TransparentUpgradeableProxy(proxy), logic, args);
+      revert("BridgeMigration: Unhandled case");
     }
   }
 

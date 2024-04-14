@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { TransparentUpgradeableProxyV2 } from "@ronin/contracts/extensions/TransparentUpgradeableProxyV2.sol";
 import { Vm } from "forge-std/Vm.sol";
 import { console2 as console } from "forge-std/console2.sol";
 import { IGeneralConfigExtended } from "script/interfaces/IGeneralConfigExtended.sol";
@@ -16,12 +17,14 @@ import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeMa
 import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/SignatureConsumer.sol";
 import { CoreGovernance } from "@ronin/contracts/extensions/sequential-governance/CoreGovernance.sol";
 import { LibArray } from "./LibArray.sol";
+import { LibProxy } from "@fdk/libraries/LibProxy.sol";
 import { LibCompanionNetwork } from "./LibCompanionNetwork.sol";
 import { LibErrorHandler } from "lib/foundry-deployment-kit/lib/contract-libs/src/LibErrorHandler.sol";
 import { VoteStatusConsumer } from "@ronin/contracts/interfaces/consumers/VoteStatusConsumer.sol";
 
 library LibProposal {
   using LibArray for *;
+  using LibProxy for *;
   using ECDSA for bytes32;
   using LibErrorHandler for bool;
   using LibCompanionNetwork for *;
@@ -52,9 +55,9 @@ library LibProposal {
     return keccak256(
       abi.encode(
         keccak256("EIP712Domain(string name,string version,bytes32 salt)"),
-        keccak256("BridgeAdmin"), // name hash
-        keccak256("2"), // version hash
-        keccak256(abi.encode("BRIDGE_ADMIN", chainId)) // salt
+        keccak256("BridgeManager"), // name hash
+        keccak256("3"), // version hash
+        keccak256(abi.encode("BRIDGE_MANAGER", chainId)) // salt
       )
     );
   }
@@ -160,7 +163,7 @@ library LibProposal {
     address[] memory roninTargets = new address[](targetOptions.length);
     address[] memory mainchainTargets = new address[](targetOptions.length);
 
-    if (currentNetwork == Network.EthMainnet.key() || currentNetwork == Network.Goerli.key()) {
+    if (currentNetwork == Network.EthMainnet.key() || currentNetwork == Network.Goerli.key() || currentNetwork == Network.Sepolia.key()) {
       manager = config.getAddress(currentNetwork, Contract.MainchainBridgeManager.key());
       companionManager = config.getAddress(companionNetwork, Contract.RoninBridgeManager.key());
     } else {
@@ -199,6 +202,7 @@ library LibProposal {
 
       uint256 gasUsed = gasleft();
       (bool success, bytes memory returnOrRevertData) = mainchainTargets[i].call{ value: values[i], gas: gasAmounts[i] }(calldatas[i]);
+
       gasUsed = gasUsed - gasleft();
 
       if (success) {
@@ -228,6 +232,7 @@ library LibProposal {
       vm.prank(governance);
 
       uint256 gasUsed = gasleft();
+
       (bool success, bytes memory returnOrRevertData) = targets[i].call{ value: values[i], gas: gasAmounts[i] }(calldatas[i]);
       gasUsed = gasUsed - gasleft();
 

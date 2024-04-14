@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import { TransparentUpgradeableProxyV2 } from "@ronin/contracts/extensions/TransparentUpgradeableProxyV2.sol";
 import { IBridgeManager } from "@ronin/contracts/interfaces/bridge/IBridgeManager.sol";
 import { BasePostCheck } from "script/post-check/BasePostCheck.s.sol";
 import { LibArray } from "script/shared/libraries/LibArray.sol";
@@ -14,7 +15,7 @@ abstract contract PostCheck_BridgeManager_CRUD_RemoveBridgeOperators is BasePost
   address private any = makeAddr(string.concat("any", seedStr));
 
   function _validate_BridgeManager_CRUD_removeBridgeOperators() internal {
-    address manager = _manager[block.chainid];
+    address manager = roninBridgeManager;
     address[] memory operators = IBridgeManager(manager).getBridgeOperators();
     uint256 idx = _bound(seed, 0, operators.length - 1);
 
@@ -31,25 +32,31 @@ abstract contract PostCheck_BridgeManager_CRUD_RemoveBridgeOperators is BasePost
   function validate_RevertWhen_NotSelfCalled_removeBridgeOperators() private onPostCheck("validate_RevertWhen_NotSelfCalled_removeBridgeOperators") {
     vm.prank(any);
     vm.expectRevert();
-    IBridgeManager(_manager[block.chainid]).removeBridgeOperators(operatorToRemove.toSingletonArray());
+    TransparentUpgradeableProxyV2(payable(roninBridgeManager)).functionDelegateCall(
+      abi.encodeCall(IBridgeManager.removeBridgeOperators, (operatorToRemove.toSingletonArray()))
+    );
   }
 
   function validate_RevertWhen_SelfCalled_TheListHasDuplicate_removeBridgeOperators()
     private
     onPostCheck("validate_RevertWhen_SelfCalled_TheListHasDuplicate_removeBridgeOperators")
   {
-    vm.prank(_manager[block.chainid]);
+    vm.prank(roninBridgeManager);
     vm.expectRevert();
-    IBridgeManager(_manager[block.chainid]).removeBridgeOperators(operatorToRemove.toSingletonArray().extend(operatorToRemove.toSingletonArray()));
+    TransparentUpgradeableProxyV2(payable(roninBridgeManager)).functionDelegateCall(
+      abi.encodeCall(IBridgeManager.removeBridgeOperators, (operatorToRemove.toSingletonArray().extend(operatorToRemove.toSingletonArray())))
+    );
   }
 
   function validate_RevertWhen_SelfCalled_TheListHasNull_removeBridgeOperators()
     private
     onPostCheck("validate_RevertWhen_SelfCalled_TheListHasNull_removeBridgeOperators")
   {
-    vm.prank(_manager[block.chainid]);
+    vm.prank(roninBridgeManager);
     vm.expectRevert();
-    IBridgeManager(_manager[block.chainid]).removeBridgeOperators(address(0).toSingletonArray());
+    TransparentUpgradeableProxyV2(payable(roninBridgeManager)).functionDelegateCall(
+      abi.encodeCall(IBridgeManager.removeBridgeOperators, (address(0).toSingletonArray()))
+    );
   }
 
   function validate_RevertWhen_SelfCalled_RemovedOperatorIsNotInTheList_removeBridgeOperators()
@@ -57,18 +64,22 @@ abstract contract PostCheck_BridgeManager_CRUD_RemoveBridgeOperators is BasePost
     onPostCheck("validate_RevertWhen_SelfCalled_RemovedOperatorIsNotInTheList_removeBridgeOperators")
   {
     vm.expectRevert();
-    vm.prank(_manager[block.chainid]);
-    IBridgeManager(_manager[block.chainid]).removeBridgeOperators(any.toSingletonArray());
+    vm.prank(roninBridgeManager);
+    TransparentUpgradeableProxyV2(payable(roninBridgeManager)).functionDelegateCall(
+      abi.encodeCall(IBridgeManager.removeBridgeOperators, (any.toSingletonArray()))
+    );
   }
 
   function validate_removeBridgeOperators() private onPostCheck("validate_removeBridgeOperators") {
-    address manager = _manager[block.chainid];
+    address manager = roninBridgeManager;
     uint256 total = IBridgeManager(manager).totalBridgeOperator();
     uint256 totalWeightBefore = IBridgeManager(manager).getTotalWeight();
     uint256 expected = total - 1;
 
     vm.prank(manager);
-    IBridgeManager(manager).removeBridgeOperators(operatorToRemove.toSingletonArray());
+    TransparentUpgradeableProxyV2(payable(roninBridgeManager)).functionDelegateCall(
+      abi.encodeCall(IBridgeManager.removeBridgeOperators, (operatorToRemove.toSingletonArray()))
+    );
     uint256 actual = IBridgeManager(manager).totalBridgeOperator();
 
     assertEq(actual, expected, "Bridge operator is not removed");

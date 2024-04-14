@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import { console2 } from "forge-std/console2.sol";
+import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import { RoninBridgeManagerConstructor } from "@ronin/contracts/ronin/gateway/RoninBridgeManagerConstructor.sol";
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import { Contract } from "../utils/Contract.sol";
@@ -37,7 +39,17 @@ contract RoninBridgeManagerDeploy is Migration {
     address payable instance = _deployProxy(Contract.RoninBridgeManagerConstructor.key());
     address logic = _deployLogic(Contract.RoninBridgeManager.key());
     address proxyAdmin = instance.getProxyAdmin();
+    console2.log("Proxy admin ", proxyAdmin);
+    console2.log("Sender: ", sender());
     _upgradeRaw(proxyAdmin, instance, logic, EMPTY_ARGS);
+
+    if (proxyAdmin == sender()) {
+      vm.broadcast(proxyAdmin);
+      // change proxy admin to self
+      TransparentUpgradeableProxy(instance).changeAdmin(instance);
+    }
+    config.setAddress(network(), Contract.RoninBridgeManager.key(), instance);
+
     return RoninBridgeManager(instance);
   }
 }

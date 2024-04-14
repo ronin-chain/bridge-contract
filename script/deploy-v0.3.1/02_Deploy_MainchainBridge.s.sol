@@ -10,6 +10,7 @@ import { DefaultNetwork } from "@fdk/utils/DefaultNetwork.sol";
 import { IWETH } from "@ronin/contracts/interfaces/IWETH.sol";
 import { WETHDeploy } from "../contracts/token/WETHDeploy.s.sol";
 import { ISharedArgument } from "../interfaces/ISharedArgument.sol";
+import { IGeneralConfigExtended } from "../interfaces/IGeneralConfigExtended.sol";
 import { LibCompanionNetwork } from "script/shared/libraries/LibCompanionNetwork.sol";
 import { MainchainGatewayV3, MainchainGatewayV3Deploy } from "../contracts/MainchainGatewayV3Deploy.s.sol";
 import { WethUnwrapper, MainchainWethUnwrapperDeploy } from "../contracts/MainchainWethUnwrapperDeploy.s.sol";
@@ -29,7 +30,7 @@ contract Migration_02_Deploy_MainchainBridge is Migration {
   }
 
   function run() external {
-    _isLocalETH = true;
+    config.setLocalNetwork(IGeneralConfigExtended.LocalNetwork.Eth);
 
     _mainchainBridgeManager = new MainchainBridgeManagerDeploy().run();
     _weth = loadContractOrDeploy(Contract.WETH.key());
@@ -38,8 +39,6 @@ contract Migration_02_Deploy_MainchainBridge is Migration {
 
     _initMainchainGatewayV3();
     _initMainchainBridgeManager();
-
-    _isLocalETH = false;
   }
 
   function _initMainchainBridgeManager() internal logFn("Init RoninBridgeManager") {

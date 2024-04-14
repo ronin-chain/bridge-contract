@@ -22,7 +22,8 @@ enum Contract {
   MainchainGatewayV3,
   MainchainBridgeManager,
   MainchainWethUnwrapper,
-  MainchainGatewayBatcher
+  MainchainGatewayBatcher,
+  PostChecker
 }
 
 using { key, name } for Contract global;
@@ -53,6 +54,8 @@ function name(Contract contractEnum) pure returns (string memory) {
   if (contractEnum == Contract.MainchainGatewayBatcher) return "MainchainGatewayBatcher";
   if (contractEnum == Contract.MainchainBridgeManager) return "MainchainBridgeManager";
   if (contractEnum == Contract.MainchainWethUnwrapper) return "WethUnwrapper";
+
+  if (contractEnum == Contract.PostChecker) return "PostChecker";
 
   revert("Contract: Unknown contract");
 }

@@ -5,6 +5,12 @@ import { IGeneralConfig } from "@fdk/interfaces/IGeneralConfig.sol";
 import { TNetwork } from "@fdk/types/Types.sol";
 
 interface IGeneralConfigExtended is IGeneralConfig {
+  enum LocalNetwork {
+    Test,
+    Ronin,
+    Eth
+  }
+
   /**
    * @dev Returns the companion mainchain network of a roninchain network
    *
@@ -13,4 +19,8 @@ interface IGeneralConfigExtended is IGeneralConfig {
    *
    */
   function getCompanionNetwork(TNetwork network) external pure returns (TNetwork);
+
+  function getLocalNetwork() external view returns (LocalNetwork);
+
+  function setLocalNetwork(LocalNetwork network) external;
 }

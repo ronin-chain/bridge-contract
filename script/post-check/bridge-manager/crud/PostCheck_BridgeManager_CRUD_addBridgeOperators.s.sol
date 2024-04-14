@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import { TransparentUpgradeableProxyV2 } from "@ronin/contracts/extensions/TransparentUpgradeableProxyV2.sol";
 import { IBridgeManager } from "@ronin/contracts/interfaces/bridge/IBridgeManager.sol";
 import { BasePostCheck } from "script/post-check/BasePostCheck.s.sol";
 import { LibArray } from "script/shared/libraries/LibArray.sol";
+import { Contract } from "script/utils/Contract.sol";
 
 /**
  * @title PostCheck_BridgeManager_CRUD_AddBridgeOperators
@@ -32,7 +34,7 @@ abstract contract PostCheck_BridgeManager_CRUD_AddBridgeOperators is BasePostChe
   function validate_RevertWhen_NotSelfCalled_addBridgeOperators() private onPostCheck("validate_RevertWhen_NotSelfCalled_addBridgeOperators") {
     vm.expectRevert();
     vm.prank(any);
-    IBridgeManager(_manager[block.chainid]).addBridgeOperators(
+    IBridgeManager(roninBridgeManager).addBridgeOperators(
       voteWeight.toSingletonArray().toUint96sUnsafe(), operator.toSingletonArray(), governor.toSingletonArray()
     );
   }
@@ -45,23 +47,32 @@ abstract contract PostCheck_BridgeManager_CRUD_AddBridgeOperators is BasePostChe
     onPostCheck("validate_RevertWhen_SelfCalled_TheListHasDuplicate_addBridgeOperators")
   {
     vm.expectRevert();
-    vm.prank(_manager[block.chainid]);
-    bool[] memory addeds = IBridgeManager(_manager[block.chainid]).addBridgeOperators(
-      voteWeight.toSingletonArray().toUint96sUnsafe(), operator.toSingletonArray(), operator.toSingletonArray()
+    vm.prank(roninBridgeManager);
+    TransparentUpgradeableProxyV2(payable(roninBridgeManager)).functionDelegateCall(
+      abi.encodeCall(
+        IBridgeManager.addBridgeOperators, (voteWeight.toSingletonArray().toUint96sUnsafe(), operator.toSingletonArray(), operator.toSingletonArray())
+      )
     );
 
     vm.expectRevert();
-    vm.prank(_manager[block.chainid]);
-    addeds = IBridgeManager(_manager[block.chainid]).addBridgeOperators(
-      voteWeight.toSingletonArray().toUint96sUnsafe(), governor.toSingletonArray(), governor.toSingletonArray()
+    vm.prank(roninBridgeManager);
+    TransparentUpgradeableProxyV2(payable(roninBridgeManager)).functionDelegateCall(
+      abi.encodeCall(
+        IBridgeManager.addBridgeOperators, (voteWeight.toSingletonArray().toUint96sUnsafe(), governor.toSingletonArray(), governor.toSingletonArray())
+      )
     );
 
     vm.expectRevert();
-    vm.prank(_manager[block.chainid]);
-    addeds = IBridgeManager(_manager[block.chainid]).addBridgeOperators(
-      voteWeight.toSingletonArray().toUint96sUnsafe(),
-      governor.toSingletonArray().extend(operator.toSingletonArray()),
-      operator.toSingletonArray().extend(governor.toSingletonArray())
+    vm.prank(roninBridgeManager);
+    TransparentUpgradeableProxyV2(payable(roninBridgeManager)).functionDelegateCall(
+      abi.encodeCall(
+        IBridgeManager.addBridgeOperators,
+        (
+          voteWeight.toSingletonArray().toUint96sUnsafe(),
+          governor.toSingletonArray().extend(operator.toSingletonArray()),
+          operator.toSingletonArray().extend(governor.toSingletonArray())
+        )
+      )
     );
   }
 
@@ -72,10 +83,13 @@ abstract contract PostCheck_BridgeManager_CRUD_AddBridgeOperators is BasePostChe
     private
     onPostCheck("validate_RevertWhen_SelfCalled_InputArrayLengthMismatch_addBridgeOperators")
   {
-    vm.prank(_manager[block.chainid]);
+    vm.prank(roninBridgeManager);
     vm.expectRevert();
-    IBridgeManager(_manager[block.chainid]).addBridgeOperators(
-      voteWeight.toSingletonArray().toUint96sUnsafe(), governor.toSingletonArray(), operator.toSingletonArray().extend(governor.toSingletonArray())
+    TransparentUpgradeableProxyV2(payable(roninBridgeManager)).functionDelegateCall(
+      abi.encodeCall(
+        IBridgeManager.addBridgeOperators,
+        (voteWeight.toSingletonArray().toUint96sUnsafe(), governor.toSingletonArray(), operator.toSingletonArray().extend(governor.toSingletonArray()))
+      )
     );
   }
 
@@ -86,10 +100,13 @@ abstract contract PostCheck_BridgeManager_CRUD_AddBridgeOperators is BasePostChe
     private
     onPostCheck("validate_RevertWhen_SelfCalled_ContainsNullVoteWeight_addBridgeOperators")
   {
-    vm.prank(_manager[block.chainid]);
+    vm.prank(roninBridgeManager);
     vm.expectRevert();
-    IBridgeManager(_manager[block.chainid]).addBridgeOperators(
-      uint256(0).toSingletonArray().toUint96sUnsafe(), governor.toSingletonArray(), operator.toSingletonArray().extend(governor.toSingletonArray())
+    TransparentUpgradeableProxyV2(payable(roninBridgeManager)).functionDelegateCall(
+      abi.encodeCall(
+        IBridgeManager.addBridgeOperators,
+        (uint256(0).toSingletonArray().toUint96sUnsafe(), governor.toSingletonArray(), operator.toSingletonArray().extend(governor.toSingletonArray()))
+      )
     );
   }
 
@@ -97,15 +114,17 @@ abstract contract PostCheck_BridgeManager_CRUD_AddBridgeOperators is BasePostChe
    * @dev Validates that the function `addBridgeOperators`.
    */
   function validate_addBridgeOperators() private onPostCheck("validate_addBridgeOperators") {
-    address manager = _manager[block.chainid];
+    address manager = roninBridgeManager;
     uint256 totalWeightBefore = IBridgeManager(manager).getTotalWeight();
     uint256 totalBridgeOperatorsBefore = IBridgeManager(manager).getBridgeOperators().length;
 
     vm.prank(manager);
-    bool[] memory addeds =
-      IBridgeManager(manager).addBridgeOperators(voteWeight.toSingletonArray().toUint96sUnsafe(), governor.toSingletonArray(), operator.toSingletonArray());
+    TransparentUpgradeableProxyV2(payable(manager)).functionDelegateCall(
+      abi.encodeCall(
+        IBridgeManager.addBridgeOperators, (voteWeight.toSingletonArray().toUint96sUnsafe(), governor.toSingletonArray(), operator.toSingletonArray())
+      )
+    );
 
-    assertTrue(addeds[0], "addeds[0] == false");
     assertTrue(IBridgeManager(manager).isBridgeOperator(operator), "isBridgeOperator(operator) == false");
     assertEq(IBridgeManager(manager).getTotalWeight(), totalWeightBefore + voteWeight, "getTotalWeight() != totalWeightBefore + voteWeight");
     assertEq(

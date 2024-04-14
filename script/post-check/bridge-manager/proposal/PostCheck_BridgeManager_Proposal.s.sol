@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { console } from "forge-std/console.sol";
-import { TransparentUpgradeableProxy } from "@ronin/contracts/extensions/TransparentUpgradeableProxyV2.sol";
+import { TransparentUpgradeableProxyV2, TransparentUpgradeableProxy } from "@ronin/contracts/extensions/TransparentUpgradeableProxyV2.sol";
 import { BasePostCheck } from "../../BasePostCheck.s.sol";
 import { IBridgeManager } from "@ronin/contracts/interfaces/bridge/IBridgeManager.sol";
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
@@ -21,22 +21,9 @@ abstract contract PostCheck_BridgeManager_Proposal is BasePostCheck {
   using LibProposal for *;
   using LibCompanionNetwork for *;
 
-  address private _cheatGovernor;
-  address private _cheatOperator;
-  uint256 private _cheatGovernorPk;
-
   uint96[] private _voteWeights = [100, 100];
   address[] private _addingGovernors = [makeAddr("governor-1"), makeAddr("governor-2")];
   address[] private _addingOperators = [makeAddr("operator-1"), makeAddr("operator-2")];
-
-  modifier onlyOnRoninNetworkOrLocal() {
-    require(
-      block.chainid == DefaultNetwork.RoninMainnet.chainId() || block.chainid == DefaultNetwork.RoninTestnet.chainId()
-        || block.chainid == Network.RoninDevnet.chainId() || block.chainid == DefaultNetwork.Local.chainId(),
-      "chainid != RoninMainnet or RoninTestnet"
-    );
-    _;
-  }
 
   function _validate_BridgeManager_Proposal() internal {
     validate_ProposeGlobalProposalAndRelay_addBridgeOperator();
@@ -53,7 +40,10 @@ abstract contract PostCheck_BridgeManager_Proposal is BasePostCheck {
 
     address[] memory targets = address(manager).toSingletonArray();
     uint256[] memory values = uint256(0).toSingletonArray();
-    bytes[] memory calldatas = abi.encodeCall(IBridgeManager.addBridgeOperators, (_voteWeights, _addingGovernors, _addingOperators)).toSingletonArray();
+    bytes[] memory calldatas = abi.encodeCall(
+      TransparentUpgradeableProxyV2.functionDelegateCall,
+      (abi.encodeCall(IBridgeManager.addBridgeOperators, (_voteWeights, _addingGovernors, _addingOperators)))
+    ).toSingletonArray();
     uint256[] memory gasAmounts = uint256(1_000_000).toSingletonArray();
 
     uint256 roninChainId = block.chainid;
@@ -68,17 +58,18 @@ abstract contract PostCheck_BridgeManager_Proposal is BasePostCheck {
       nonce: manager.round(0) + 1
     });
 
-    vm.prank(_cheatGovernor);
+    vm.prank(cheatGovernor);
     manager.propose(roninChainId, block.timestamp + 20 minutes, address(0x0), targets, values, calldatas, gasAmounts);
 
     {
       TNetwork currentNetwork = CONFIG.getCurrentNetwork();
-      (uint256 companionChainId, TNetwork companionNetwork) = currentNetwork.companionNetworkData();
-      MainchainBridgeManager mainchainManager = MainchainBridgeManager(_manager[companionChainId]);
-      console.log("MainchainBridgeManager:", vm.getLabel(address(mainchainManager)));
+      (, TNetwork companionNetwork) = currentNetwork.companionNetworkData();
 
       CONFIG.createFork(companionNetwork);
       CONFIG.switchTo(companionNetwork);
+
+      MainchainBridgeManager mainchainManager = MainchainBridgeManager(loadContract(Contract.MainchainBridgeManager.key()));
+
       uint256 snapshotId = vm.snapshot();
 
       // Cheat add governor
@@ -96,15 +87,15 @@ abstract contract PostCheck_BridgeManager_Proposal is BasePostCheck {
         nonce: mainchainManager.round(block.chainid) + 1
       });
 
-      SignatureConsumer.Signature[] memory signatures = proposal.generateSignatures(_cheatGovernorPk.toSingletonArray(), Ballot.VoteType.For);
+      SignatureConsumer.Signature[] memory signatures = proposal.generateSignatures(cheatGovernorPk.toSingletonArray(), Ballot.VoteType.For);
       Ballot.VoteType[] memory _supports = new Ballot.VoteType[](signatures.length);
 
       uint256 minimumForVoteWeight = mainchainManager.minimumVoteWeight();
-      uint256 totalForVoteWeight = mainchainManager.getGovernorWeight(_cheatGovernor);
+      uint256 totalForVoteWeight = mainchainManager.getGovernorWeight(cheatGovernor);
       console.log("Total for vote weight:", totalForVoteWeight);
       console.log("Minimum for vote weight:", minimumForVoteWeight);
 
-      vm.prank(_cheatGovernor);
+      vm.prank(cheatGovernor);
       mainchainManager.relayProposal(proposal, _supports, signatures);
       for (uint256 i; i < _addingGovernors.length; ++i) {
         assertEq(mainchainManager.isBridgeOperator(_addingOperators[i]), true, "isBridgeOperator == false");
@@ -131,7 +122,10 @@ abstract contract PostCheck_BridgeManager_Proposal is BasePostCheck {
       expiryTimestamp: block.timestamp + 20 minutes,
       targetOptions: targetOptions,
       values: uint256(0).toSingletonArray(),
-      calldatas: abi.encodeCall(IBridgeManager.addBridgeOperators, (_voteWeights, _addingGovernors, _addingOperators)).toSingletonArray(),
+      calldatas: abi.encodeCall(
+        TransparentUpgradeableProxyV2.functionDelegateCall,
+        (abi.encodeCall(IBridgeManager.addBridgeOperators, (_voteWeights, _addingGovernors, _addingOperators)))
+      ).toSingletonArray(),
       gasAmounts: uint256(1_000_000).toSingletonArray(),
       nonce: manager.round(0) + 1
     });
@@ -139,31 +133,33 @@ abstract contract PostCheck_BridgeManager_Proposal is BasePostCheck {
     SignatureConsumer.Signature[] memory signatures;
     Ballot.VoteType[] memory _supports;
     {
-      signatures = globalProposal.generateSignaturesGlobal(_cheatGovernorPk.toSingletonArray(), Ballot.VoteType.For);
+      signatures = globalProposal.generateSignaturesGlobal(cheatGovernorPk.toSingletonArray(), Ballot.VoteType.For);
       _supports = new Ballot.VoteType[](signatures.length);
 
-      vm.prank(_cheatGovernor);
+      vm.prank(cheatGovernor);
       manager.proposeGlobalProposalStructAndCastVotes(globalProposal, _supports, signatures);
     }
 
     // Check if the proposal is voted
-    assertEq(manager.globalProposalVoted(globalProposal.nonce, _cheatGovernor), true);
+    assertEq(manager.globalProposalVoted(globalProposal.nonce, cheatGovernor), true);
     for (uint256 i; i < _addingGovernors.length; ++i) {
       assertEq(manager.isBridgeOperator(_addingOperators[i]), true, "isBridgeOperator == false");
     }
 
     {
       TNetwork currentNetwork = CONFIG.getCurrentNetwork();
-      (uint256 companionChainId, TNetwork companionNetwork) = currentNetwork.companionNetworkData();
-      MainchainBridgeManager mainchainManager = MainchainBridgeManager(_manager[companionChainId]);
+      (, TNetwork companionNetwork) = currentNetwork.companionNetworkData();
 
       CONFIG.createFork(companionNetwork);
       CONFIG.switchTo(companionNetwork);
+
+      MainchainBridgeManager mainchainManager = MainchainBridgeManager(loadContract(Contract.MainchainBridgeManager.key()));
+
       uint256 snapshotId = vm.snapshot();
 
       cheatAddOverWeightedGovernor(address(mainchainManager));
 
-      vm.prank(_cheatGovernor);
+      vm.prank(cheatGovernor);
       mainchainManager.relayGlobalProposal(globalProposal, _supports, signatures);
 
       for (uint256 i; i < _addingGovernors.length; ++i) {
@@ -230,16 +226,5 @@ abstract contract PostCheck_BridgeManager_Proposal is BasePostCheck {
     });
 
     manager.executeProposal(proposal);
-  }
-
-  function cheatAddOverWeightedGovernor(address manager) private {
-    uint256 cheatVoteWeight = IBridgeManager(manager).getTotalWeight() * 100;
-    _cheatOperator = makeAddr(string.concat("cheat-operator-", vm.toString(seed)));
-    (_cheatGovernor, _cheatGovernorPk) = makeAddrAndKey(string.concat("cheat-governor-", vm.toString(seed)));
-
-    vm.prank(manager);
-    bool[] memory addeds = IBridgeManager(manager).addBridgeOperators(
-      cheatVoteWeight.toSingletonArray().toUint96sUnsafe(), _cheatGovernor.toSingletonArray(), _cheatOperator.toSingletonArray()
-    );
   }
 }

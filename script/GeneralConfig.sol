@@ -6,9 +6,12 @@ import { BaseGeneralConfig } from "@fdk/BaseGeneralConfig.sol";
 import { DefaultNetwork } from "@fdk/utils/DefaultNetwork.sol";
 import { Contract } from "./utils/Contract.sol";
 import { TNetwork, Network } from "./utils/Network.sol";
+import { IGeneralConfigExtended } from "./interfaces/IGeneralConfigExtended.sol";
 import { Utils } from "./utils/Utils.sol";
 
 contract GeneralConfig is BaseGeneralConfig, Utils {
+  IGeneralConfigExtended.LocalNetwork private _localNetwork;
+
   constructor() BaseGeneralConfig("", "deployments/") { }
 
   function _setUpNetworks() internal virtual override {
@@ -48,6 +51,14 @@ contract GeneralConfig is BaseGeneralConfig, Utils {
     revert("Network: Unknown companion network");
   }
 
+  function getLocalNetwork() public view virtual returns (IGeneralConfigExtended.LocalNetwork) {
+    return _localNetwork;
+  }
+
+  function setLocalNetwork(IGeneralConfigExtended.LocalNetwork network) public virtual {
+    _localNetwork = network;
+  }
+
   function _setUpContracts() internal virtual override {
     // map contract name
     _mapContractName(Contract.BridgeSlash);
@@ -62,6 +73,7 @@ contract GeneralConfig is BaseGeneralConfig, Utils {
     _mapContractName(Contract.MockERC721);
     _mapContractName(Contract.MockERC1155);
     _mapContractName(Contract.RoninBridgeManagerConstructor);
+    _mapContractName(Contract.PostChecker);
 
     _contractNameMap[Contract.AXS.key()] = "MockERC20";
     _contractNameMap[Contract.SLP.key()] = "MockSLP";
@@ -76,6 +88,8 @@ contract GeneralConfig is BaseGeneralConfig, Utils {
     _contractAddrMap[Network.Goerli.chainId()][Contract.WETH.name()] = 0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6;
     _contractAddrMap[Network.Sepolia.chainId()][Contract.WETH.name()] = 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9;
     _contractAddrMap[Network.EthMainnet.chainId()][Contract.WETH.name()] = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+
+    _contractAddrMap[DefaultNetwork.RoninTestnet.chainId()][Contract.AXS.name()] = 0x0eD7e52944161450477ee417DE9Cd3a859b14fD0;
 
     _contractAddrMap[DefaultNetwork.RoninMainnet.chainId()][Contract.WETH.name()] = 0xc99a6A985eD2Cac1ef41640596C5A5f9F4E19Ef5;
     _contractAddrMap[DefaultNetwork.RoninMainnet.chainId()][Contract.WRON.name()] = 0xe514d9DEB7966c8BE0ca922de8a064264eA6bcd4;

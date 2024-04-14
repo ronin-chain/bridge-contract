@@ -8,14 +8,21 @@ import { TNetwork, Network } from "../utils/Network.sol";
 import { DefaultNetwork } from "@fdk/utils/DefaultNetwork.sol";
 import { TContract, Contract } from "../utils/Contract.sol";
 import { ISharedArgument } from "../interfaces/ISharedArgument.sol";
+import { IGeneralConfigExtended } from "../interfaces/IGeneralConfigExtended.sol";
 import { BridgeSlash, BridgeSlashDeploy } from "../contracts/BridgeSlashDeploy.s.sol";
 import { BridgeReward, BridgeRewardDeploy } from "../contracts/BridgeRewardDeploy.s.sol";
 import { BridgeTracking, BridgeTrackingDeploy } from "../contracts/BridgeTrackingDeploy.s.sol";
 import { RoninGatewayV3, RoninGatewayV3Deploy } from "../contracts/RoninGatewayV3Deploy.s.sol";
+import { ContractType } from "@ronin/contracts/utils/ContractType.sol";
+import { LibProxy } from "@fdk/libraries/LibProxy.sol";
+import { TransparentUpgradeableProxyV2 } from "@ronin/contracts/extensions/TransparentUpgradeableProxyV2.sol";
+import { HasContracts } from "@ronin/contracts/extensions/collections/HasContracts.sol";
 import { RoninBridgeManagerConstructor, RoninBridgeManager, RoninBridgeManagerDeploy } from "../contracts/RoninBridgeManagerDeploy.s.sol";
+import { MockValidatorContract_OnlyTiming_ForHardhatTest } from "@ronin/contracts/mocks/ronin/MockValidatorContract_OnlyTiming_ForHardhatTest.sol";
 
 contract Migration_01_Deploy_RoninBridge is Migration {
   using StdStyle for *;
+  using LibProxy for *;
 
   BridgeSlash private _bridgeSlash;
   BridgeReward private _bridgeReward;
@@ -25,15 +32,12 @@ contract Migration_01_Deploy_RoninBridge is Migration {
   address private _validatorSet;
 
   function run() external {
-    _roninGatewayV3 = new RoninGatewayV3Deploy().run();
-    _bridgeSlash = new BridgeSlashDeploy().run();
-    _bridgeReward = new BridgeRewardDeploy().run();
-    _bridgeTracking = new BridgeTrackingDeploy().run();
+    config.setLocalNetwork(IGeneralConfigExtended.LocalNetwork.Ronin);
 
     ISharedArgument.BridgeManagerParam memory param = config.sharedArguments().roninBridgeManager;
-    address[] memory callbackRegisters = new address[](1);
-    callbackRegisters[0] = address(_bridgeSlash);
-    callbackRegisters[1] = address(_roninGatewayV3);
+    // address[] memory callbackRegisters = new address[](0);
+    // callbackRegisters[0] = address(_bridgeSlash);
+    // callbackRegisters[1] = address(_roninGatewayV3);
 
     _roninBridgeManager = RoninBridgeManager(
       new RoninBridgeManagerDeploy().overrideArgs(
@@ -55,6 +59,11 @@ contract Migration_01_Deploy_RoninBridge is Migration {
         )
       ).run()
     );
+
+    _roninGatewayV3 = new RoninGatewayV3Deploy().run();
+    _bridgeSlash = new BridgeSlashDeploy().run();
+    _bridgeReward = new BridgeRewardDeploy().run();
+    _bridgeTracking = new BridgeTrackingDeploy().run();
 
     _initBridgeReward();
     _initBridgeSlash();
@@ -85,7 +94,11 @@ contract Migration_01_Deploy_RoninBridge is Migration {
   }
 
   function _initBridgeTracking() internal logFn("Init BridgeTracking") {
-    _bridgeTracking.initialize({ bridgeContract: address(_roninGatewayV3), validatorContract: _validatorSet, startedAtBlock_: 0 });
+    _bridgeTracking.initialize({
+      bridgeContract: address(_roninGatewayV3),
+      validatorContract: address(new MockValidatorContract_OnlyTiming_ForHardhatTest(200)),
+      startedAtBlock_: 0
+    });
     _bridgeTracking.initializeV3({
       bridgeManager: address(_roninBridgeManager),
       bridgeSlash: address(_bridgeSlash),
@@ -132,5 +145,12 @@ contract Migration_01_Deploy_RoninBridge is Migration {
       param.standards
     );
     _roninGatewayV3.initializeV3(address(_roninBridgeManager));
+
+    address admin = payable(address(_roninGatewayV3)).getProxyAdmin();
+    vm.startBroadcast(admin);
+    TransparentUpgradeableProxyV2(payable(address(_roninGatewayV3))).functionDelegateCall(
+      abi.encodeCall(HasContracts.setContract, (ContractType.BRIDGE_TRACKING, address(_bridgeTracking)))
+    );
+    vm.stopBroadcast();
   }
 }
