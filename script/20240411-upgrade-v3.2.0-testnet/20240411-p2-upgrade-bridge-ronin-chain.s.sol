@@ -131,10 +131,8 @@ contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_H
     calldatas[4] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
     calldatas[5] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
     calldatas[6] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
-    calldatas[7] = abi.encodeWithSignature(
-      "functionDelegateCall(bytes)",
-      (abi.encodeWithSignature("setContract(uint8,address)", 11, address(_newRoninBridgeManager)))
-    );
+    calldatas[7] =
+      abi.encodeWithSignature("functionDelegateCall(bytes)", (abi.encodeWithSignature("setContract(uint8,address)", 11, address(_newRoninBridgeManager))));
     calldatas[8] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
     calldatas[9] = abi.encodeWithSignature("upgradeTo(address)", pauseEnforcerLogic);
     calldatas[10] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));

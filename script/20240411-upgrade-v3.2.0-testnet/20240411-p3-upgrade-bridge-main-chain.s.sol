@@ -146,10 +146,8 @@ contract Migration__20240409_P3_UpgradeBridgeMainchain is Migration, Migration__
     calldatas[0] = abi.encodeWithSignature(
       "upgradeToAndCall(address,bytes)", mainchainGatewayV3Logic, abi.encodeWithSelector(MainchainGatewayV3.initializeV4.selector, wethUnwrapper)
     );
-    calldatas[1] = abi.encodeWithSignature(
-      "functionDelegateCall(bytes)",
-      (abi.encodeWithSignature("setContract(uint8,address)", 11, address(_newMainchainBridgeManager)))
-    );
+    calldatas[1] =
+      abi.encodeWithSignature("functionDelegateCall(bytes)", (abi.encodeWithSignature("setContract(uint8,address)", 11, address(_newMainchainBridgeManager))));
     calldatas[2] = abi.encodeWithSignature("changeAdmin(address)", address(_newMainchainBridgeManager));
     calldatas[3] = abi.encodeWithSignature("upgradeTo(address)", pauseEnforcerLogic);
     calldatas[4] = abi.encodeWithSignature("changeAdmin(address)", address(_newMainchainBridgeManager));

@@ -125,7 +125,7 @@ abstract contract PostCheck_BridgeManager_Proposal is BasePostCheck {
       calldatas: abi.encodeCall(
         TransparentUpgradeableProxyV2.functionDelegateCall,
         (abi.encodeCall(IBridgeManager.addBridgeOperators, (_voteWeights, _addingGovernors, _addingOperators)))
-      ).toSingletonArray(),
+        ).toSingletonArray(),
       gasAmounts: uint256(1_000_000).toSingletonArray(),
       nonce: manager.round(0) + 1
     });

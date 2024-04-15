@@ -16,7 +16,6 @@ function chainId(Network network) pure returns (uint256) {
   if (network == Network.Goerli) return 5;
   if (network == Network.Sepolia) return 11155111;
   if (network == Network.EthMainnet) return 1;
-  if (network == Network.Sepolia) return 11155111;
   if (network == Network.RoninDevnet) return 2022;
 
   revert("Network: Unknown chain id");
@@ -30,8 +29,6 @@ function explorer(Network network) pure returns (string memory link) {
   if (network == Network.Goerli) return "https://goerli.etherscan.io/";
   if (network == Network.Sepolia) return "https://sepolia.etherscan.io/";
   if (network == Network.EthMainnet) return "https://etherscan.io/";
-  if (network == Network.Goerli) return "https://goerli.etherscan.io/";
-  if (network == Network.Sepolia) return "hhttps://sepolia.etherscan.io/";
 }
 
 function name(Network network) pure returns (string memory) {
@@ -62,7 +59,6 @@ function envLabel(Network network) pure returns (string memory) {
 }
 
 function chainAlias(Network network) pure returns (string memory) {
-  if (network == Network.Sepolia) return "sepolia";
   if (network == Network.Goerli) return "goerli";
   if (network == Network.Sepolia) return "sepolia";
   if (network == Network.EthMainnet) return "ethereum";
