@@ -31,6 +31,8 @@ contract Migration__2024041_DeployRoninBridgeManagerHelper is Migration {
   RoninBridgeManager _newRoninBridgeManager;
 
   function _deployRoninBridgeManager() internal returns (RoninBridgeManager) {
+    address currRoninBridgeManager = config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key());
+
     ISharedArgument.SharedParameter memory param;
 
     param.roninBridgeManager.num = 7;
@@ -91,22 +93,9 @@ contract Migration__2024041_DeployRoninBridgeManagerHelper is Migration {
       ).run()
     );
 
-    param.roninBridgeManager.callbackRegisters = new address[](1);
-    param.roninBridgeManager.callbackRegisters[0] = config.getAddressFromCurrentNetwork(Contract.BridgeSlash.key());
-
     address proxyAdmin = LibProxy.getProxyAdmin(payable(address(_newRoninBridgeManager)));
     vm.broadcast(proxyAdmin);
-    address(_newRoninBridgeManager).call(
-      abi.encodeWithSignature("functionDelegateCall(bytes)", (
-        abi.encodeWithSignature("registerCallbacks(address[])", param.roninBridgeManager.callbackRegisters))
-      )
-    );
-
-    if (proxyAdmin != address(_newRoninBridgeManager)) {
-      vm.broadcast(proxyAdmin);
-      // change proxy admin to self
-      TransparentUpgradeableProxy(payable(address(_newRoninBridgeManager))).changeAdmin(address(_newRoninBridgeManager));
-    }
+    TransparentUpgradeableProxy(payable(address(_newRoninBridgeManager))).changeAdmin(address(currRoninBridgeManager));
 
     return _newRoninBridgeManager;
   }

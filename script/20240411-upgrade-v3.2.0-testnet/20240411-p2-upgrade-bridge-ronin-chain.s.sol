@@ -106,8 +106,11 @@ contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_H
     address pauseEnforcerProxy = config.getAddressFromCurrentNetwork(Contract.RoninPauseEnforcer.key());
     address roninGatewayV3Proxy = config.getAddressFromCurrentNetwork(Contract.RoninGatewayV3.key());
 
-    uint256 expiredTime = block.timestamp + 14 days;
-    uint N = 15;
+    ISharedArgument.SharedParameter memory param;
+    param.roninBridgeManager.callbackRegisters = new address[](1);
+    param.roninBridgeManager.callbackRegisters[0] = config.getAddressFromCurrentNetwork(Contract.BridgeSlash.key());
+
+    uint N = 17;
     address[] memory targets = new address[](N);
     uint256[] memory values = new uint256[](N);
     bytes[] memory calldatas = new bytes[](N);
@@ -127,6 +130,8 @@ contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_H
     targets[11] = bridgeTrackingProxy;
     targets[12] = roninGatewayV3Proxy;
     targets[13] = pauseEnforcerProxy;
+    targets[14] = address(_newRoninBridgeManager);
+    targets[15] = address(_newRoninBridgeManager);
 
     calldatas[0] = abi.encodeWithSignature("upgradeToAndCall(address,bytes)", bridgeRewardLogic, abi.encodeWithSelector(BridgeReward.initializeV2.selector));
     calldatas[1] = abi.encodeWithSignature("upgradeTo(address)", bridgeSlashLogic);
@@ -142,6 +147,8 @@ contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_H
     calldatas[11] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
     calldatas[12] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
     calldatas[13] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
+    calldatas[14] = abi.encodeWithSignature("functionDelegateCall(bytes)", (abi.encodeWithSignature("registerCallbacks(address[])", param.roninBridgeManager.callbackRegisters)));
+    calldatas[15] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
 
     for (uint i; i < N; ++i) {
       gasAmounts[i] = 1_000_000;
@@ -150,7 +157,7 @@ contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_H
     LegacyProposalDetail memory proposal;
     proposal.nonce = _currRoninBridgeManager.round(block.chainid) + 1;
     proposal.chainId = block.chainid;
-    proposal.expiryTimestamp = expiredTime;
+    proposal.expiryTimestamp = block.timestamp + 14 days;
     proposal.targets = targets;
     proposal.values = values;
     proposal.calldatas = calldatas;

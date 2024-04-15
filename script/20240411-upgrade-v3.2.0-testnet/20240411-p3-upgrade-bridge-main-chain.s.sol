@@ -120,22 +120,9 @@ contract Migration__20240409_P3_UpgradeBridgeMainchain is Migration, Migration__
       ).run()
     );
 
-    param.mainchainBridgeManager.callbackRegisters = new address[](1);
-    param.mainchainBridgeManager.callbackRegisters[0] = config.getAddressFromCurrentNetwork(Contract.MainchainGatewayV3.key());
-
     address proxyAdmin = LibProxy.getProxyAdmin(payable(address(_newMainchainBridgeManager)));
     vm.broadcast(proxyAdmin);
-    address(_newMainchainBridgeManager).call(
-      abi.encodeWithSignature("functionDelegateCall(bytes)", (
-        abi.encodeWithSignature("registerCallbacks(address[])", param.mainchainBridgeManager.callbackRegisters))
-      )
-    );
-
-    if (proxyAdmin != address(_newMainchainBridgeManager)) {
-      vm.broadcast(proxyAdmin);
-      // change proxy admin to self
-      TransparentUpgradeableProxy(payable(address(_newMainchainBridgeManager))).changeAdmin(address(_newMainchainBridgeManager));
-    }
+    TransparentUpgradeableProxy(payable(address(_newMainchainBridgeManager))).changeAdmin(address(_currMainchainBridgeManager));
   }
 
   function _upgradeBridgeMainchain() internal {
@@ -148,8 +135,12 @@ contract Migration__20240409_P3_UpgradeBridgeMainchain is Migration, Migration__
     address pauseEnforcerProxy = config.getAddressFromCurrentNetwork(Contract.MainchainPauseEnforcer.key());
     address mainchainGatewayV3Proxy = config.getAddressFromCurrentNetwork(Contract.MainchainGatewayV3.key());
 
+    ISharedArgument.SharedParameter memory param;
+    param.mainchainBridgeManager.callbackRegisters = new address[](1);
+    param.mainchainBridgeManager.callbackRegisters[0] = config.getAddressFromCurrentNetwork(Contract.MainchainGatewayV3.key());
+
     uint256 expiredTime = block.timestamp + 14 days;
-    uint N = 5;
+    uint N = 7;
     address[] memory targets = new address[](N);
     uint256[] memory values = new uint256[](N);
     bytes[] memory calldatas = new bytes[](N);
@@ -160,12 +151,16 @@ contract Migration__20240409_P3_UpgradeBridgeMainchain is Migration, Migration__
     targets[2] = mainchainGatewayV3Proxy;
     targets[3] = pauseEnforcerProxy;
     targets[4] = pauseEnforcerProxy;
+    targets[5] = address(_newMainchainBridgeManager);
+    targets[6] = address(_newMainchainBridgeManager);
 
     calldatas[0] = abi.encodeWithSignature("upgradeToAndCall(address,bytes)", mainchainGatewayV3Logic, abi.encodeWithSelector(MainchainGatewayV3.initializeV4.selector, wethUnwrapper));
     calldatas[1] = abi.encodeWithSignature("functionDelegateCall(bytes)", (abi.encodeWithSignature("setContract(uint8,address)", 11, address(_newMainchainBridgeManager))));
     calldatas[2] = abi.encodeWithSignature("changeAdmin(address)", address(_newMainchainBridgeManager));
     calldatas[3] = abi.encodeWithSignature("upgradeTo(address)", pauseEnforcerLogic);
     calldatas[4] = abi.encodeWithSignature("changeAdmin(address)", address(_newMainchainBridgeManager));
+    calldatas[5] = abi.encodeWithSignature("functionDelegateCall(bytes)", (abi.encodeWithSignature("registerCallbacks(address[])", param.mainchainBridgeManager.callbackRegisters)));
+    calldatas[6] = abi.encodeWithSignature("changeAdmin(address)", address(_newMainchainBridgeManager));
 
     for (uint i; i < N; ++i) {
       gasAmounts[i] = 1_000_000;
