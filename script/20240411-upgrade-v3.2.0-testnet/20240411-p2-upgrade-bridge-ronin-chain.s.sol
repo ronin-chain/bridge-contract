@@ -20,30 +20,31 @@ import { MockSLP } from "@ronin/contracts/mocks/token/MockSLP.sol";
 import { SLPDeploy } from "@ronin/script/contracts/token/SLPDeploy.s.sol";
 import { MainchainBridgeAdminUtils } from "test/helpers/MainchainBridgeAdminUtils.t.sol";
 import "@ronin/script/contracts/RoninBridgeManagerDeploy.s.sol";
-
+import { DefaultContract } from "@fdk/utils/DefaultContract.sol";
+import "./20240411-deploy-bridge-manager-helper.s.sol";
 import "./20240411-helper.s.sol";
 
-contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_Helper {
+contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_Helper, Migration__2024041_DeployRoninBridgeManagerHelper {
   ISharedArgument.SharedParameter _param;
 
-  function setUp() public override {
+  function setUp() public virtual override {
     super.setUp();
-
-    _newRoninBridgeManager = RoninBridgeManager(address(0xdeadbeef)); // TODO: fulfill here
-    _currRoninBridgeManager = RoninBridgeManager(config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
   }
 
-  function run() public onlyOn(DefaultNetwork.RoninTestnet.key()) {
+  function run() public virtual onlyOn(DefaultNetwork.RoninTestnet.key()) {
+    _currRoninBridgeManager = RoninBridgeManager(config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
+    _newRoninBridgeManager = _deployRoninBridgeManager();
+
     _governor = 0xd24D87DDc1917165435b306aAC68D99e0F49A3Fa;
     _voters.push(0xb033ba62EC622dC54D0ABFE0254e79692147CA26);
     _voters.push(0x087D08e3ba42e64E3948962dd1371F906D1278b9);
     _voters.push(0x52ec2e6BBcE45AfFF8955Da6410bb13812F4289F);
 
     _changeAdminOfEnforcer();
-    _upgradeBridge();
+    _upgradeBridgeRoninchain();
   }
 
-  function _changeAdminOfEnforcer() internal {
+  function _changeAdminOfEnforcer() private {
     RoninBridgeManager roninGA = RoninBridgeManager(0x53Ea388CB72081A3a397114a43741e7987815896);
     address pauseEnforcerProxy = config.getAddressFromCurrentNetwork(Contract.RoninPauseEnforcer.key());
 
@@ -91,7 +92,7 @@ contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_H
     }
   }
 
-  function _upgradeBridge() internal {
+  function _upgradeBridgeRoninchain() private {
     address bridgeRewardLogic = _deployLogic(Contract.BridgeReward.key());
     address bridgeSlashLogic = _deployLogic(Contract.BridgeSlash.key());
     address bridgeTrackingLogic = _deployLogic(Contract.BridgeTracking.key());
@@ -105,7 +106,7 @@ contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_H
     address roninGatewayV3Proxy = config.getAddressFromCurrentNetwork(Contract.RoninGatewayV3.key());
 
     uint256 expiredTime = block.timestamp + 14 days;
-    uint N = 10;
+    uint N = 11;
     address[] memory targets = new address[](N);
     uint256[] memory values = new uint256[](N);
     bytes[] memory calldatas = new bytes[](N);
@@ -119,8 +120,9 @@ contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_H
     targets[5] = bridgeSlashProxy;
     targets[6] = bridgeTrackingProxy;
     targets[7] = roninGatewayV3Proxy;
-    targets[8] = pauseEnforcerProxy;
+    targets[8] = roninGatewayV3Proxy;
     targets[9] = pauseEnforcerProxy;
+    targets[10] = pauseEnforcerProxy;
 
     calldatas[0] = abi.encodeWithSignature("upgradeTo(address)", bridgeRewardLogic);
     calldatas[1] = abi.encodeWithSignature("upgradeTo(address)", bridgeSlashLogic);
@@ -129,9 +131,13 @@ contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_H
     calldatas[4] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
     calldatas[5] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
     calldatas[6] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
-    calldatas[7] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
-    calldatas[8] = abi.encodeWithSignature("upgradeTo(address)", pauseEnforcerLogic);
-    calldatas[9] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
+    calldatas[7] = abi.encodeWithSignature(
+      "functionDelegateCall(bytes)",
+      (abi.encodeWithSignature("setContract(uint8,address)", 11, address(_newRoninBridgeManager)))
+    );
+    calldatas[8] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
+    calldatas[9] = abi.encodeWithSignature("upgradeTo(address)", pauseEnforcerLogic);
+    calldatas[10] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
 
     for (uint i; i < N; ++i) {
       gasAmounts[i] = 1_000_000;

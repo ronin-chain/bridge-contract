@@ -208,13 +208,19 @@ contract Migration is BaseMigration, Utils {
 
   function _getProxyAdmin() internal virtual override returns (address payable proxyAdmin) {
     TNetwork currentNetwork = network();
+    console.log("[>] _getProxyAdmin", "Network name:".yellow(), currentNetwork.networkName());
+
     if (
       currentNetwork == DefaultNetwork.RoninTestnet.key() || currentNetwork == DefaultNetwork.RoninMainnet.key() || currentNetwork == Network.RoninDevnet.key()
     ) {
-      proxyAdmin = loadContract(Contract.RoninBridgeManager.key());
-    } else if (currentNetwork == Network.Sepolia.key() || currentNetwork == Network.Goerli.key() || currentNetwork == Network.EthMainnet.key()) {
-      proxyAdmin = loadContract(Contract.MainchainBridgeManager.key());
-    } else if (currentNetwork == DefaultNetwork.Local.key()) {
+      return loadContract(Contract.RoninBridgeManager.key());
+    }
+
+    if (currentNetwork == Network.Sepolia.key() || currentNetwork == Network.Goerli.key() || currentNetwork == Network.EthMainnet.key()) {
+      return loadContract(Contract.MainchainBridgeManager.key());
+    }
+
+    if (currentNetwork == DefaultNetwork.Local.key()) {
       if (config.getLocalNetwork() == IGeneralConfigExtended.LocalNetwork.Ronin) {
         try config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()) returns (address payable res) {
           proxyAdmin = res;
@@ -234,11 +240,13 @@ contract Migration is BaseMigration, Utils {
       } else {
         proxyAdmin = payable(config.sharedArguments().test.proxyAdmin);
       }
-    } else {
-      console.log("Network not supported".yellow(), currentNetwork.networkName());
-      console.log("Chain Id".yellow(), block.chainid);
-      revert("BridgeMigration(_getProxyAdmin): Unhandled case");
+
+      return proxyAdmin;
     }
+
+    console.log("Network not supported".yellow(), currentNetwork.networkName());
+    console.log("Chain Id".yellow(), block.chainid);
+    revert("BridgeMigration(_getProxyAdmin): Unhandled case");
   }
 
   function _upgradeRaw(address proxyAdmin, address payable proxy, address logic, bytes memory args) internal virtual override {

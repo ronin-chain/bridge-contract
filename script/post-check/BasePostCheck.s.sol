@@ -61,8 +61,8 @@ abstract contract BasePostCheck is BaseMigration {
     (cheatOperator, cheatOperatorPk) = makeAddrAndKey(string.concat("cheat-operator-", vm.toString(seed)));
     (cheatGovernor, cheatGovernorPk) = makeAddrAndKey(string.concat("cheat-governor-", vm.toString(seed)));
 
-    vm.deal(cheatGovernor, 1);
-    vm.deal(cheatOperator, 1);
+    vm.deal(cheatGovernor, 1); // Check created EOA
+    vm.deal(cheatOperator, 1); // Check created EOA
 
     vm.prank(manager);
     try TransparentUpgradeableProxyV2(payable(manager)).functionDelegateCall(

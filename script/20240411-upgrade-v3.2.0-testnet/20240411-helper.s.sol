@@ -19,14 +19,12 @@ contract Migration__20240409_Helper is Migration {
   address[] internal _voters;
 
   RoninBridgeManager internal _currRoninBridgeManager;
-  RoninBridgeManager internal _newRoninBridgeManager;
 
   function _helperProposeForCurrentNetwork(LegacyProposalDetail memory proposal) internal {
     vm.broadcast(_governor);
     address(_currRoninBridgeManager).call(
       abi.encodeWithSignature(
         "proposeProposalForCurrentNetwork(uint256,address[],uint256[],bytes[],uint256[],uint8)",
-        // proposal.chainId,
         proposal.expiryTimestamp,
         proposal.targets,
         proposal.values,

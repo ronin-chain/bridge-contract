@@ -36,7 +36,7 @@ contract RoninBridgeManagerDeploy is Migration {
   }
 
   function run() public virtual returns (RoninBridgeManager) {
-    address payable instance = _deployProxy(Contract.RoninBridgeManagerConstructor.key());
+    address payable instance = _deployProxy(Contract.RoninBridgeManagerConstructor.key(), sender());
     address logic = _deployLogic(Contract.RoninBridgeManager.key());
     address proxyAdmin = instance.getProxyAdmin();
     console2.log("Proxy admin ", proxyAdmin);
