@@ -4,9 +4,10 @@ pragma solidity ^0.8.23;
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import { IQuorum } from "../../interfaces/IQuorum.sol";
 import { IdentityGuard } from "../../utils/IdentityGuard.sol";
+import { HasContracts } from "../../extensions/collections/HasContracts.sol";
 import "../../utils/CommonErrors.sol";
 
-abstract contract BridgeManagerQuorum is IQuorum, Initializable, IdentityGuard {
+abstract contract BridgeManagerQuorum is IQuorum, IdentityGuard, Initializable, HasContracts {
   struct BridgeManagerQuorumStorage {
     uint256 _nonce;
     uint256 _numerator;
@@ -32,8 +33,8 @@ abstract contract BridgeManagerQuorum is IQuorum, Initializable, IdentityGuard {
   /**
    * @inheritdoc IQuorum
    */
-  function setThreshold(uint256 numerator, uint256 denominator) external override onlySelfCall returns (uint256, uint256) {
-    return _setThreshold(numerator, denominator);
+  function setThreshold(uint256 num, uint256 denom) external override onlyProxyAdmin {
+    _setThreshold(num, denom);
   }
 
   /**
@@ -59,18 +60,18 @@ abstract contract BridgeManagerQuorum is IQuorum, Initializable, IdentityGuard {
    * Emits the `ThresholdUpdated` event.
    *
    */
-  function _setThreshold(uint256 numerator, uint256 denominator) internal virtual returns (uint256 previousNum, uint256 previousDenom) {
-    if (numerator > denominator || denominator <= 1) revert ErrInvalidThreshold(msg.sig);
+  function _setThreshold(uint256 num, uint256 denom) internal virtual {
+    if (num > denom || denom <= 1) revert ErrInvalidThreshold(msg.sig);
 
     BridgeManagerQuorumStorage storage $ = _getBridgeManagerQuorumStorage();
 
-    previousNum = $._numerator;
-    previousDenom = $._denominator;
+    uint256 prevNum = $._numerator;
+    uint256 prevDenom = $._denominator;
 
-    $._numerator = numerator;
-    $._denominator = denominator;
+    $._numerator = num;
+    $._denominator = denom;
 
-    emit ThresholdUpdated($._nonce++, numerator, denominator, previousNum, previousDenom);
+    emit ThresholdUpdated($._nonce++, num, denom, prevNum, prevDenom);
   }
 
   function _totalWeight() internal view virtual returns (uint256);

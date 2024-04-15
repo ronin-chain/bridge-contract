@@ -23,7 +23,7 @@ abstract contract GatewayV3 is HasProxyAdmin, Pausable, IQuorum {
   /**
    * @dev Grant emergency pauser role for `_addr`.
    */
-  function setEmergencyPauser(address _addr) external onlyAdmin {
+  function setEmergencyPauser(address _addr) external onlyProxyAdmin {
     emergencyPauser = _addr;
   }
 
@@ -44,7 +44,7 @@ abstract contract GatewayV3 is HasProxyAdmin, Pausable, IQuorum {
   /**
    * @inheritdoc IQuorum
    */
-  function setThreshold(uint256 _numerator, uint256 _denominator) external virtual onlyAdmin returns (uint256, uint256) {
+  function setThreshold(uint256 _numerator, uint256 _denominator) external virtual onlyProxyAdmin {
     return _setThreshold(_numerator, _denominator);
   }
 
@@ -77,14 +77,14 @@ abstract contract GatewayV3 is HasProxyAdmin, Pausable, IQuorum {
    * Emits the `ThresholdUpdated` event.
    *
    */
-  function _setThreshold(uint256 _numerator, uint256 _denominator) internal virtual returns (uint256 _previousNum, uint256 _previousDenom) {
-    if (_numerator > _denominator) revert ErrInvalidThreshold(msg.sig);
-    _previousNum = _num;
-    _previousDenom = _denom;
-    _num = _numerator;
-    _denom = _denominator;
+  function _setThreshold(uint256 num, uint256 denom) internal virtual {
+    if (num > denom) revert ErrInvalidThreshold(msg.sig);
+    uint256 prevNum = _num;
+    uint256 prevDenom = _denom;
+    _num = num;
+    _denom = denom;
     unchecked {
-      emit ThresholdUpdated(nonce++, _numerator, _denominator, _previousNum, _previousDenom);
+      emit ThresholdUpdated(nonce++, num, denom, prevNum, prevDenom);
     }
   }
 
@@ -104,7 +104,7 @@ abstract contract GatewayV3 is HasProxyAdmin, Pausable, IQuorum {
    *
    */
   function _requireAuth() private view {
-    if (!(msg.sender == _getAdmin() || msg.sender == emergencyPauser)) {
+    if (!(msg.sender == _getProxyAdmin() || msg.sender == emergencyPauser)) {
       revert ErrUnauthorized(msg.sig, RoleAccess.ADMIN);
     }
   }

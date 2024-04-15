@@ -272,7 +272,7 @@ contract RoninGatewayV3 is
     address[] calldata _mainchainTokens,
     uint256[] calldata _chainIds,
     TokenStandard[] calldata _standards
-  ) external onlyAdmin {
+  ) external onlyProxyAdmin {
     if (_roninTokens.length == 0) revert ErrLengthMismatch(msg.sig);
     _mapTokens(_roninTokens, _mainchainTokens, _chainIds, _standards);
   }
@@ -458,7 +458,7 @@ contract RoninGatewayV3 is
     }
   }
 
-  function setTrustedThreshold(uint256 _trustedNumerator, uint256 _trustedDenominator) external virtual onlyAdmin returns (uint256, uint256) {
+  function setTrustedThreshold(uint256 _trustedNumerator, uint256 _trustedDenominator) external virtual onlyProxyAdmin returns (uint256, uint256) {
     return _setTrustedThreshold(_trustedNumerator, _trustedDenominator);
   }
 

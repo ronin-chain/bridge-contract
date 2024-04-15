@@ -119,56 +119,14 @@ interface IBridgeManager is IBridgeManagerEvents {
    * @dev Adds multiple bridge operators.
    * @param governors An array of addresses of hot/cold wallets for bridge operator to update their node address.
    * @param bridgeOperators An array of addresses representing the bridge operators to add.
-   * @return addeds An array of booleans indicating whether each bridge operator was added successfully.
-   *
-   * Note: return boolean array `addeds` indicates whether a group (voteWeight, governor, operator) are recorded.
-   * It is expected that FE/BE staticcall to the function first to get the return values and handle it correctly.
-   * Governors are expected to see the outcome of this function and decide if they want to vote for the proposal or not.
-   *
-   * Example Usage:
-   * Making an `eth_call` in ethers.js
-   * ```
-   * const {addeds} = await bridgeManagerContract.callStatic.addBridgeOperators(
-   *  voteWeights,
-   *  governors,
-   *  bridgeOperators,
-   *  // overriding the caller to the contract itself since we use `onlySelfCall` guard
-   *  {from: bridgeManagerContract.address}
-   * )
-   * const filteredOperators = bridgeOperators.filter((_, index) => addeds[index]);
-   * const filteredWeights = weights.filter((_, index) => addeds[index]);
-   * const filteredGovernors = governors.filter((_, index) => addeds[index]);
-   * // ... (Process or use the information as required) ...
-   * ```
    */
-  function addBridgeOperators(
-    uint96[] calldata voteWeights,
-    address[] calldata governors,
-    address[] calldata bridgeOperators
-  ) external returns (bool[] memory addeds);
+  function addBridgeOperators(uint96[] calldata voteWeights, address[] calldata governors, address[] calldata bridgeOperators) external;
 
   /**
    * @dev Removes multiple bridge operators.
    * @param bridgeOperators An array of addresses representing the bridge operators to remove.
-   * @return removeds An array of booleans indicating whether each bridge operator was removed successfully.
-   *
-   * * Note: return boolean array `removeds` indicates whether a group (voteWeight, governor, operator) are recorded.
-   * It is expected that FE/BE staticcall to the function first to get the return values and handle it correctly.
-   * Governors are expected to see the outcome of this function and decide if they want to vote for the proposal or not.
-   *
-   * Example Usage:
-   * Making an `eth_call` in ethers.js
-   * ```
-   * const {removeds} = await bridgeManagerContract.callStatic.removeBridgeOperators(
-   *  bridgeOperators,
-   *  // overriding the caller to the contract itself since we use `onlySelfCall` guard
-   *  {from: bridgeManagerContract.address}
-   * )
-   * const filteredOperators = bridgeOperators.filter((_, index) => removeds[index]);
-   * // ... (Process or use the information as required) ...
-   * ```
    */
-  function removeBridgeOperators(address[] calldata bridgeOperators) external returns (bool[] memory removeds);
+  function removeBridgeOperators(address[] calldata bridgeOperators) external;
 
   /**
    * @dev Self-call to update the minimum required governor.
