@@ -16,6 +16,7 @@ import "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
 import "@ronin/contracts/libraries/Proposal.sol";
 import "@ronin/contracts/libraries/Ballot.sol";
 
+import { LibProxy } from "@fdk/libraries/LibProxy.sol";
 import { DefaultContract } from "@fdk/utils/DefaultContract.sol";
 import { MockSLP } from "@ronin/contracts/mocks/token/MockSLP.sol";
 import { SLPDeploy } from "@ronin/script/contracts/token/SLPDeploy.s.sol";
@@ -108,7 +109,7 @@ contract Migration__20240409_P3_UpgradeBridgeMainchain is Migration, Migration__
             param.mainchainBridgeManager.denom,
             param.mainchainBridgeManager.roninChainId,
             param.mainchainBridgeManager.bridgeContract,
-            param.mainchainBridgeManager.callbackRegisters,
+            new address[](0),
             param.mainchainBridgeManager.bridgeOperators,
             param.mainchainBridgeManager.governors,
             param.mainchainBridgeManager.voteWeights,
@@ -118,6 +119,23 @@ contract Migration__20240409_P3_UpgradeBridgeMainchain is Migration, Migration__
         )
       ).run()
     );
+
+    param.mainchainBridgeManager.callbackRegisters = new address[](1);
+    param.mainchainBridgeManager.callbackRegisters[0] = config.getAddressFromCurrentNetwork(Contract.MainchainGatewayV3.key());
+
+    address proxyAdmin = LibProxy.getProxyAdmin(payable(address(_newMainchainBridgeManager)));
+    vm.broadcast(proxyAdmin);
+    address(_newMainchainBridgeManager).call(
+      abi.encodeWithSignature("functionDelegateCall(bytes)", (
+        abi.encodeWithSignature("registerCallbacks(address[])", param.mainchainBridgeManager.callbackRegisters))
+      )
+    );
+
+    if (proxyAdmin != address(_newMainchainBridgeManager)) {
+      vm.broadcast(proxyAdmin);
+      // change proxy admin to self
+      TransparentUpgradeableProxy(payable(address(_newMainchainBridgeManager))).changeAdmin(address(_newMainchainBridgeManager));
+    }
   }
 
   function _upgradeBridgeMainchain() internal {
@@ -143,11 +161,8 @@ contract Migration__20240409_P3_UpgradeBridgeMainchain is Migration, Migration__
     targets[3] = pauseEnforcerProxy;
     targets[4] = pauseEnforcerProxy;
 
-    calldatas[0] = abi.encodeWithSignature(
-      "upgradeToAndCall(address,bytes)", mainchainGatewayV3Logic, abi.encodeWithSelector(MainchainGatewayV3.initializeV4.selector, wethUnwrapper)
-    );
-    calldatas[1] =
-      abi.encodeWithSignature("functionDelegateCall(bytes)", (abi.encodeWithSignature("setContract(uint8,address)", 11, address(_newMainchainBridgeManager))));
+    calldatas[0] = abi.encodeWithSignature("upgradeToAndCall(address,bytes)", mainchainGatewayV3Logic, abi.encodeWithSelector(MainchainGatewayV3.initializeV4.selector, wethUnwrapper));
+    calldatas[1] = abi.encodeWithSignature("functionDelegateCall(bytes)", (abi.encodeWithSignature("setContract(uint8,address)", 11, address(_newMainchainBridgeManager))));
     calldatas[2] = abi.encodeWithSignature("changeAdmin(address)", address(_newMainchainBridgeManager));
     calldatas[3] = abi.encodeWithSignature("upgradeTo(address)", pauseEnforcerLogic);
     calldatas[4] = abi.encodeWithSignature("changeAdmin(address)", address(_newMainchainBridgeManager));
@@ -180,6 +195,7 @@ contract Migration__20240409_P3_UpgradeBridgeMainchain is Migration, Migration__
       )
     );
   }
+
 
   function getDomain() public pure returns (bytes32) {
     return keccak256(

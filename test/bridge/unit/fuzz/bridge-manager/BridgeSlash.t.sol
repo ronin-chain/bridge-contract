@@ -169,8 +169,8 @@ contract BridgeSlashTest is IBridgeSlashEvents, BridgeManagerUtils {
         vm.prank(_bridgeManagerContract, _bridgeManagerContract);
 
         bool[] memory expectedAddeds = new bool[](newlyAddedGovernors.length);
-        for (uint i; i < newlyAddedGovernors.length; ++i) {
-          expectedAddeds[i] = true;
+        for (uint j; j < newlyAddedGovernors.length; ++j) {
+          expectedAddeds[j] = true;
         }
         vm.expectEmit(true, false, false, false);
         emit BridgeOperatorsAdded(expectedAddeds, new uint96[](0), new address[](0), new address[](0));

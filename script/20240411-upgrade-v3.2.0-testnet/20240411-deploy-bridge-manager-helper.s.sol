@@ -10,6 +10,7 @@ import { LibTokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibToken
 import { Contract } from "../utils/Contract.sol";
 import { Network } from "../utils/Network.sol";
 import { Contract } from "../utils/Contract.sol";
+import { LibProxy } from "@fdk/libraries/LibProxy.sol";
 import { IGeneralConfigExtended } from "../interfaces/IGeneralConfigExtended.sol";
 import { ISharedArgument } from "../interfaces/ISharedArgument.sol";
 import "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
@@ -25,6 +26,8 @@ import "@ronin/script/contracts/RoninBridgeManagerDeploy.s.sol";
 import "../Migration.s.sol";
 
 contract Migration__2024041_DeployRoninBridgeManagerHelper is Migration {
+  using LibProxy for *;
+
   RoninBridgeManager _newRoninBridgeManager;
 
   function _deployRoninBridgeManager() internal returns (RoninBridgeManager) {
@@ -77,7 +80,7 @@ contract Migration__2024041_DeployRoninBridgeManagerHelper is Migration {
             param.roninBridgeManager.roninChainId,
             param.roninBridgeManager.expiryDuration,
             param.roninBridgeManager.bridgeContract,
-            param.roninBridgeManager.callbackRegisters,
+            new address[](0),
             param.roninBridgeManager.bridgeOperators,
             param.roninBridgeManager.governors,
             param.roninBridgeManager.voteWeights,
@@ -87,6 +90,23 @@ contract Migration__2024041_DeployRoninBridgeManagerHelper is Migration {
         )
       ).run()
     );
+
+    param.roninBridgeManager.callbackRegisters = new address[](1);
+    param.roninBridgeManager.callbackRegisters[0] = config.getAddressFromCurrentNetwork(Contract.BridgeSlash.key());
+
+    address proxyAdmin = LibProxy.getProxyAdmin(payable(address(_newRoninBridgeManager)));
+    vm.broadcast(proxyAdmin);
+    address(_newRoninBridgeManager).call(
+      abi.encodeWithSignature("functionDelegateCall(bytes)", (
+        abi.encodeWithSignature("registerCallbacks(address[])", param.roninBridgeManager.callbackRegisters))
+      )
+    );
+
+    if (proxyAdmin != address(_newRoninBridgeManager)) {
+      vm.broadcast(proxyAdmin);
+      // change proxy admin to self
+      TransparentUpgradeableProxy(payable(address(_newRoninBridgeManager))).changeAdmin(address(_newRoninBridgeManager));
+    }
 
     return _newRoninBridgeManager;
   }

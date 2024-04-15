@@ -17,10 +17,10 @@ contract MainchainBridgeManagerDeploy is Migration {
     instance = MainchainBridgeManager(_deployProxy(Contract.MainchainBridgeManager.key(), sender()));
     address proxyAdmin = payable(address(instance)).getProxyAdmin();
 
-    if (proxyAdmin == sender()) {
-      vm.broadcast(proxyAdmin);
-      // change proxy admin to self
-      TransparentUpgradeableProxy(payable(address(instance))).changeAdmin(address(instance));
-    }
+    // if (proxyAdmin != address(instance)) {
+    //   vm.broadcast(proxyAdmin);
+    //   // change proxy admin to self
+    //   TransparentUpgradeableProxy(payable(address(instance))).changeAdmin(address(instance));
+    // }
   }
 }

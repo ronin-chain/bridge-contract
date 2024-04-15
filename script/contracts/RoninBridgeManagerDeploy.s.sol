@@ -43,11 +43,11 @@ contract RoninBridgeManagerDeploy is Migration {
     console2.log("Sender: ", sender());
     _upgradeRaw(proxyAdmin, instance, logic, EMPTY_ARGS);
 
-    if (proxyAdmin == sender()) {
-      vm.broadcast(proxyAdmin);
-      // change proxy admin to self
-      TransparentUpgradeableProxy(instance).changeAdmin(instance);
-    }
+    // if (proxyAdmin != instance) {
+    //   vm.broadcast(proxyAdmin);
+    //   // change proxy admin to self
+    //   TransparentUpgradeableProxy(instance).changeAdmin(instance);
+    // }
     config.setAddress(network(), Contract.RoninBridgeManager.key(), instance);
 
     return RoninBridgeManager(instance);
