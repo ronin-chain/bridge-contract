@@ -11,6 +11,7 @@ import { Contract } from "../utils/Contract.sol";
 import { Network } from "../utils/Network.sol";
 import { Contract } from "../utils/Contract.sol";
 import { ISharedArgument } from "../interfaces/ISharedArgument.sol";
+import "@ronin/contracts/ronin/gateway/BridgeReward.sol";
 import "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
 import "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
 import "@ronin/contracts/libraries/Proposal.sol";
@@ -106,7 +107,7 @@ contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_H
     address roninGatewayV3Proxy = config.getAddressFromCurrentNetwork(Contract.RoninGatewayV3.key());
 
     uint256 expiredTime = block.timestamp + 14 days;
-    uint N = 11;
+    uint N = 14;
     address[] memory targets = new address[](N);
     uint256[] memory values = new uint256[](N);
     bytes[] memory calldatas = new bytes[](N);
@@ -120,22 +121,32 @@ contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_H
     targets[5] = bridgeSlashProxy;
     targets[6] = bridgeTrackingProxy;
     targets[7] = roninGatewayV3Proxy;
-    targets[8] = roninGatewayV3Proxy;
-    targets[9] = pauseEnforcerProxy;
-    targets[10] = pauseEnforcerProxy;
+    targets[8] = bridgeRewardProxy;
+    targets[9] = bridgeSlashProxy;
+    targets[10] = bridgeTrackingProxy;
+    targets[11] = roninGatewayV3Proxy;
+    targets[12] = pauseEnforcerProxy;
+    targets[13] = pauseEnforcerProxy;
 
-    calldatas[0] = abi.encodeWithSignature("upgradeTo(address)", bridgeRewardLogic);
+    calldatas[0] = abi.encodeWithSignature("upgradeToAndCall(address,bytes)", bridgeRewardLogic, abi.encodeWithSelector(BridgeReward.initializeV2.selector));
     calldatas[1] = abi.encodeWithSignature("upgradeTo(address)", bridgeSlashLogic);
     calldatas[2] = abi.encodeWithSignature("upgradeTo(address)", bridgeTrackingLogic);
     calldatas[3] = abi.encodeWithSignature("upgradeTo(address)", roninGatewayV3Logic);
-    calldatas[4] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
-    calldatas[5] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
-    calldatas[6] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
+    calldatas[4] =
+      abi.encodeWithSignature("functionDelegateCall(bytes)", (abi.encodeWithSignature("setContract(uint8,address)", 11, address(_newRoninBridgeManager))));
+    calldatas[5] =
+      abi.encodeWithSignature("functionDelegateCall(bytes)", (abi.encodeWithSignature("setContract(uint8,address)", 11, address(_newRoninBridgeManager))));
+    calldatas[6] =
+      abi.encodeWithSignature("functionDelegateCall(bytes)", (abi.encodeWithSignature("setContract(uint8,address)", 11, address(_newRoninBridgeManager))));
     calldatas[7] =
       abi.encodeWithSignature("functionDelegateCall(bytes)", (abi.encodeWithSignature("setContract(uint8,address)", 11, address(_newRoninBridgeManager))));
     calldatas[8] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
-    calldatas[9] = abi.encodeWithSignature("upgradeTo(address)", pauseEnforcerLogic);
+    calldatas[9] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
     calldatas[10] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
+    calldatas[11] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
+
+    calldatas[12] = abi.encodeWithSignature("upgradeTo(address)", pauseEnforcerLogic);
+    calldatas[13] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
 
     for (uint i; i < N; ++i) {
       gasAmounts[i] = 1_000_000;
