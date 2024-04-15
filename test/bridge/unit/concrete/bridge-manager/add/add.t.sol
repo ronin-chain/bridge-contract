@@ -11,6 +11,8 @@ import { IBridgeManager } from "@ronin/contracts/interfaces/bridge/IBridgeManage
 
 import { BridgeManager_Unit_Concrete_Test } from "../BridgeManager.t.sol";
 
+event BridgeOperatorsAdded(bool[] statuses, uint96[] voteWeights, address[] governors, address[] bridgeOperators);
+
 contract Add_Unit_Concrete_Test is BridgeManager_Unit_Concrete_Test {
   function setUp() public virtual override {
     BridgeManager_Unit_Concrete_Test.setUp();
@@ -87,40 +89,52 @@ contract Add_Unit_Concrete_Test is BridgeManager_Unit_Concrete_Test {
     (address[] memory addingOperators, address[] memory addingGovernors, uint96[] memory addingWeights) = _generateNewOperators();
 
     addingGovernors[0] = _governors[0];
-    bool[] memory addeds = _bridgeManager.addBridgeOperators(addingWeights, addingGovernors, addingOperators);
+
     bool[] memory expectedAddeds = new bool[](1);
     expectedAddeds[0] = false;
-    assertEq(addeds, expectedAddeds);
+    vm.expectEmit(true, false, false, false);
+    emit BridgeOperatorsAdded(expectedAddeds, new uint96[](0), new address[](0), new address[](0));
+
+    _bridgeManager.addBridgeOperators(addingWeights, addingGovernors, addingOperators);
   }
 
   function test_AddOperators_DuplicatedBridgeOperator() external assertStateNotChange {
     (address[] memory addingOperators, address[] memory addingGovernors, uint96[] memory addingWeights) = _generateNewOperators();
 
     addingOperators[0] = _bridgeOperators[0];
-    bool[] memory addeds = _bridgeManager.addBridgeOperators(addingWeights, addingGovernors, addingOperators);
+
     bool[] memory expectedAddeds = new bool[](1);
     expectedAddeds[0] = false;
-    assertEq(addeds, expectedAddeds);
+    vm.expectEmit(true, false, false, false);
+    emit BridgeOperatorsAdded(expectedAddeds, new uint96[](0), new address[](0), new address[](0));
+
+    _bridgeManager.addBridgeOperators(addingWeights, addingGovernors, addingOperators);
   }
 
   function test_AddOperators_DuplicatedGovernorWithExistedBridgeOperator() external assertStateNotChange {
     (address[] memory addingOperators, address[] memory addingGovernors, uint96[] memory addingWeights) = _generateNewOperators();
 
     addingGovernors[0] = _bridgeOperators[0];
-    bool[] memory addeds = _bridgeManager.addBridgeOperators(addingWeights, addingGovernors, addingOperators);
+
     bool[] memory expectedAddeds = new bool[](1);
     expectedAddeds[0] = false;
-    assertEq(addeds, expectedAddeds);
+    vm.expectEmit(true, false, false, false);
+    emit BridgeOperatorsAdded(expectedAddeds, new uint96[](0), new address[](0), new address[](0));
+
+    _bridgeManager.addBridgeOperators(addingWeights, addingGovernors, addingOperators);
   }
 
   function test_AddOperators_DuplicatedBridgeOperatorWithExistedGovernor() external assertStateNotChange {
     (address[] memory addingOperators, address[] memory addingGovernors, uint96[] memory addingWeights) = _generateNewOperators();
 
     addingOperators[0] = _governors[0];
-    bool[] memory addeds = _bridgeManager.addBridgeOperators(addingWeights, addingGovernors, addingOperators);
+
     bool[] memory expectedAddeds = new bool[](1);
     expectedAddeds[0] = false;
-    assertEq(addeds, expectedAddeds);
+    vm.expectEmit(true, false, false, false);
+    emit BridgeOperatorsAdded(expectedAddeds, new uint96[](0), new address[](0), new address[](0));
+
+    _bridgeManager.addBridgeOperators(addingWeights, addingGovernors, addingOperators);
   }
 
   function test_AddOperators_AllInfoIsValid() external {
@@ -128,10 +142,12 @@ contract Add_Unit_Concrete_Test is BridgeManager_Unit_Concrete_Test {
     (address[] memory beforeBridgeOperators, address[] memory beforeGovernors, uint96[] memory beforeVoteWeights) = _getBridgeMembers();
     (address[] memory addingOperators, address[] memory addingGovernors, uint96[] memory addingWeights) = _generateNewOperators();
 
-    bool[] memory addeds = _bridgeManager.addBridgeOperators(addingWeights, addingGovernors, addingOperators);
     bool[] memory expectedAddeds = new bool[](1);
     expectedAddeds[0] = true;
-    assertEq(addeds, expectedAddeds);
+    vm.expectEmit(true, false, false, false);
+    emit BridgeOperatorsAdded(expectedAddeds, new uint96[](0), new address[](0), new address[](0));
+
+    _bridgeManager.addBridgeOperators(addingWeights, addingGovernors, addingOperators);
 
     // Compare after and before state
     (address[] memory afterBridgeOperators, address[] memory afterGovernors, uint96[] memory afterVoteWeights) = _getBridgeMembers();

@@ -167,8 +167,15 @@ contract BridgeSlashTest is IBridgeSlashEvents, BridgeManagerUtils {
 
         // Add the newly added operators using the bridge manager contract
         vm.prank(_bridgeManagerContract, _bridgeManagerContract);
-        bool[] memory addeds = IBridgeManager(_bridgeManagerContract).addBridgeOperators(newlyAddedWeights, newlyAddedGovernors, newlyAddedOperators);
-        vm.assume(addeds.sum() == addeds.length);
+
+        bool[] memory expectedAddeds = new bool[](newlyAddedGovernors.length);
+        for (uint i; i < newlyAddedGovernors.length; ++i) {
+          expectedAddeds[i] = true;
+        }
+        vm.expectEmit(true, false, false, false);
+        emit BridgeOperatorsAdded(expectedAddeds, new uint96[](0), new address[](0), new address[](0));
+
+        IBridgeManager(_bridgeManagerContract).addBridgeOperators(newlyAddedWeights, newlyAddedGovernors, newlyAddedOperators);
         // Retrieve the added periods for the newly added operators
         newlyAddedAtPeriods = IBridgeSlash(_bridgeSlashContract).getAddedPeriodOf(newlyAddedOperators);
       }
