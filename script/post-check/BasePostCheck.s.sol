@@ -32,7 +32,7 @@ abstract contract BasePostCheck is BaseMigration {
   uint256 internal cheatGovernorPk;
   uint256 internal cheatOperatorPk;
 
-  bytes32 internal domainSeparator;
+  bytes32 internal gwDomainSeparator;
 
   modifier onPostCheck(string memory postCheckLabel) {
     uint256 snapshotId = _beforePostCheck(postCheckLabel);

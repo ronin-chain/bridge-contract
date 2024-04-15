@@ -121,7 +121,7 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck, Signatu
     CONFIG.switchTo(companionNetwork);
 
     mainchainChainId = block.chainid;
-    domainSeparator = MainchainBridgeManager(mainchainBridgeManager).DOMAIN_SEPARATOR();
+    gwDomainSeparator = MainchainGatewayV3(payable(mainchainGateway)).DOMAIN_SEPARATOR();
 
     cheatAddOverWeightedGovernor(address(mainchainBridgeManager));
 
@@ -197,7 +197,7 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck, Signatu
       }
     }
 
-    bytes32 receiptDigest = LibTransfer.receiptDigest(domainSeparator, receiptHash);
+    bytes32 receiptDigest = LibTransfer.receiptDigest(gwDomainSeparator, receiptHash);
 
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(cheatOperatorPk, receiptDigest);
 
