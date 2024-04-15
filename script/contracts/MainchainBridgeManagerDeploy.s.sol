@@ -14,7 +14,7 @@ contract MainchainBridgeManagerDeploy is Migration {
   using LibProxy for *;
 
   function run() public virtual returns (MainchainBridgeManager instance) {
-    instance = MainchainBridgeManager(_deployProxy(Contract.MainchainBridgeManager.key()));
+    instance = MainchainBridgeManager(_deployProxy(Contract.MainchainBridgeManager.key(), sender()));
     address proxyAdmin = payable(address(instance)).getProxyAdmin();
 
     if (proxyAdmin == sender()) {
