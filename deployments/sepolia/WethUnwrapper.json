@@ -1,0 +1,134 @@
+{
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "weth_",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "fallback",
+      "stateMutability": "payable"
+    },
+    {
+      "type": "receive",
+      "stateMutability": "payable"
+    },
+    {
+      "type": "function",
+      "name": "unwrap",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "unwrapTo",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "internalType": "address payable"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "weth",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IWETH"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "error",
+      "name": "ErrCannotTransferFrom",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ErrExternalCallFailed",
+      "inputs": [
+        {
+          "name": "sender",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "sig",
+          "type": "bytes4",
+          "internalType": "bytes4"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "ErrNotWrappedContract",
+      "inputs": []
+    }
+  ],
+  "address": "0x1050f2E63177b5eD18f3E88D000DB3a600d664e3",
+  "args": "0x0000000000000000000000001aa1bc6baefcf09d6fd0139b828b5e764d050f08",
+  "ast": "",
+  "blockNumber": 5709352,
+  "bytecode": "0x60a060405234801561001057600080fd5b5060405161059138038061059183398101604081905261002f91610071565b600160009081556001600160a01b0382163b90036100605760405163155634d360e31b815260040160405180910390fd5b6001600160a01b03166080526100a1565b60006020828403121561008357600080fd5b81516001600160a01b038116811461009a57600080fd5b9392505050565b6080516104c26100cf6000396000818160610152818160ea01528181610237015261030a01526104c26000f3fe6080604052600436106100385760003560e01c80633fc8cef31461004f5780635dbd60591461009f578063de0e9a3e146100bf57610047565b36610047576100456100df565b005b6100456100df565b34801561005b57600080fd5b506100837f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b03909116815260200160405180910390f35b3480156100ab57600080fd5b506100456100ba366004610408565b61012a565b3480156100cb57600080fd5b506100456100da366004610444565b6101a2565b336001600160a01b037f000000000000000000000000000000000000000000000000000000000000000016146101285760405163155634d360e31b815260040160405180910390fd5b565b6002600054036101815760405162461bcd60e51b815260206004820152601f60248201527f5265656e7472616e637947756172643a207265656e7472616e742063616c6c0060448201526064015b60405180910390fd5b600260005561018f82610214565b6101998183610372565b50506001600055565b6002600054036101f45760405162461bcd60e51b815260206004820152601f60248201527f5265656e7472616e637947756172643a207265656e7472616e742063616c6c006044820152606401610178565b600260005561020281610214565b61020c3382610372565b506001600055565b604051336024820152306044820152606481018290526000906001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000169060840160408051601f198184030181529181526020820180516001600160e01b03166323b872dd60e01b17905251610290919061045d565b6000604051808303816000865af19150503d80600081146102cd576040519150601f19603f3d011682016040523d82523d6000602084013e6102d2565b606091505b50509050806102f4576040516302805e0360e11b815260040160405180910390fd5b604051632e1a7d4d60e01b8152600481018390527f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031690632e1a7d4d90602401600060405180830381600087803b15801561035657600080fd5b505af115801561036a573d6000803e3d6000fd5b505050505050565b6000826001600160a01b03168260405160006040518083038185875af1925050503d80600081146103bf576040519150601f19603f3d011682016040523d82523d6000602084013e6103c4565b606091505b50509050806104035760405163094b984760e21b81526001600160a01b03841660048201526001600160e01b0319600035166024820152604401610178565b505050565b6000806040838503121561041b57600080fd5b8235915060208301356001600160a01b038116811461043957600080fd5b809150509250929050565b60006020828403121561045657600080fd5b5035919050565b6000825160005b8181101561047e5760208186018101518583015201610464565b50600092019182525091905056fea2646970667358221220aaebf21164f6d2f08d44be8bf09fb75965583264b715eb60df75d1b1d0f7cb9e64736f6c63430008170033",
+  "chainId": 11155111,
+  "contractAbsolutePath": "WethUnwrapper.sol",
+  "deployedBytecode": "0x6080604052600436106100385760003560e01c80633fc8cef31461004f5780635dbd60591461009f578063de0e9a3e146100bf57610047565b36610047576100456100df565b005b6100456100df565b34801561005b57600080fd5b506100837f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b03909116815260200160405180910390f35b3480156100ab57600080fd5b506100456100ba366004610408565b61012a565b3480156100cb57600080fd5b506100456100da366004610444565b6101a2565b336001600160a01b037f000000000000000000000000000000000000000000000000000000000000000016146101285760405163155634d360e31b815260040160405180910390fd5b565b6002600054036101815760405162461bcd60e51b815260206004820152601f60248201527f5265656e7472616e637947756172643a207265656e7472616e742063616c6c0060448201526064015b60405180910390fd5b600260005561018f82610214565b6101998183610372565b50506001600055565b6002600054036101f45760405162461bcd60e51b815260206004820152601f60248201527f5265656e7472616e637947756172643a207265656e7472616e742063616c6c006044820152606401610178565b600260005561020281610214565b61020c3382610372565b506001600055565b604051336024820152306044820152606481018290526000906001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000169060840160408051601f198184030181529181526020820180516001600160e01b03166323b872dd60e01b17905251610290919061045d565b6000604051808303816000865af19150503d80600081146102cd576040519150601f19603f3d011682016040523d82523d6000602084013e6102d2565b606091505b50509050806102f4576040516302805e0360e11b815260040160405180910390fd5b604051632e1a7d4d60e01b8152600481018390527f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031690632e1a7d4d90602401600060405180830381600087803b15801561035657600080fd5b505af115801561036a573d6000803e3d6000fd5b505050505050565b6000826001600160a01b03168260405160006040518083038185875af1925050503d80600081146103bf576040519150601f19603f3d011682016040523d82523d6000602084013e6103c4565b606091505b50509050806104035760405163094b984760e21b81526001600160a01b03841660048201526001600160e01b0319600035166024820152604401610178565b505050565b6000806040838503121561041b57600080fd5b8235915060208301356001600160a01b038116811461043957600080fd5b809150509250929050565b60006020828403121561045657600080fd5b5035919050565b6000825160005b8181101561047e5760208186018101518583015201610464565b50600092019182525091905056fea2646970667358221220aaebf21164f6d2f08d44be8bf09fb75965583264b715eb60df75d1b1d0f7cb9e64736f6c63430008170033",
+  "deployer": "0x968D0Cd7343f711216817E617d3f92a23dC91c07",
+  "devdoc": {
+    "version": 1,
+    "kind": "dev"
+  },
+  "isFoundry": true,
+  "metadata": "{\"compiler\":{\"version\":\"0.8.23+commit.f704f362\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"weth_\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"ErrCannotTransferFrom\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"bytes4\",\"name\":\"sig\",\"type\":\"bytes4\"}],\"name\":\"ErrExternalCallFailed\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ErrNotWrappedContract\",\"type\":\"error\"},{\"stateMutability\":\"payable\",\"type\":\"fallback\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"unwrap\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"address payable\",\"name\":\"to\",\"type\":\"address\"}],\"name\":\"unwrapTo\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"weth\",\"outputs\":[{\"internalType\":\"contract IWETH\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"stateMutability\":\"payable\",\"type\":\"receive\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/extensions/WethUnwrapper.sol\":\"WethUnwrapper\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@fdk/=lib/foundry-deployment-kit/script/\",\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@prb/math/=lib/prb-math/\",\":@prb/test/=lib/prb-test/src/\",\":@ronin/contracts/=src/\",\":@ronin/script/=script/\",\":@ronin/test/=test/\",\":contract-libs/=lib/foundry-deployment-kit/lib/contract-libs/src/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":erc4626-tests/=lib/foundry-deployment-kit/lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/foundry-deployment-kit/lib/forge-std/src/\",\":foundry-deployment-kit/=lib/foundry-deployment-kit/\",\":hardhat/=node_modules/hardhat/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/foundry-deployment-kit/lib/openzeppelin-contracts/contracts/\",\":prb-math/=lib/prb-math/src/\",\":prb-test/=lib/prb-test/src/\",\":solady/=lib/solady/src/\"]},\"sources\":{\"lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts v4.4.1 (security/ReentrancyGuard.sol)\\n\\npragma solidity ^0.8.0;\\n\\n/**\\n * @dev Contract module that helps prevent reentrant calls to a function.\\n *\\n * Inheriting from `ReentrancyGuard` will make the {nonReentrant} modifier\\n * available, which can be applied to functions to make sure there are no nested\\n * (reentrant) calls to them.\\n *\\n * Note that because there is a single `nonReentrant` guard, functions marked as\\n * `nonReentrant` may not call one another. This can be worked around by making\\n * those functions `private`, and then adding `external` `nonReentrant` entry\\n * points to them.\\n *\\n * TIP: If you would like to learn more about reentrancy and alternative ways\\n * to protect against it, check out our blog post\\n * https://blog.openzeppelin.com/reentrancy-after-istanbul/[Reentrancy After Istanbul].\\n */\\nabstract contract ReentrancyGuard {\\n    // Booleans are more expensive than uint256 or any type that takes up a full\\n    // word because each write operation emits an extra SLOAD to first read the\\n    // slot's contents, replace the bits taken up by the boolean, and then write\\n    // back. This is the compiler's defense against contract upgrades and\\n    // pointer aliasing, and it cannot be disabled.\\n\\n    // The values being non-zero value makes deployment a bit more expensive,\\n    // but in exchange the refund on every call to nonReentrant will be lower in\\n    // amount. Since refunds are capped to a percentage of the total\\n    // transaction's gas, it is best to keep them low in cases like this one, to\\n    // increase the likelihood of the full refund coming into effect.\\n    uint256 private constant _NOT_ENTERED = 1;\\n    uint256 private constant _ENTERED = 2;\\n\\n    uint256 private _status;\\n\\n    constructor() {\\n        _status = _NOT_ENTERED;\\n    }\\n\\n    /**\\n     * @dev Prevents a contract from calling itself, directly or indirectly.\\n     * Calling a `nonReentrant` function from another `nonReentrant`\\n     * function is not supported. It is possible to prevent this from happening\\n     * by making the `nonReentrant` function external, and making it call a\\n     * `private` function that does the actual work.\\n     */\\n    modifier nonReentrant() {\\n        // On the first call to nonReentrant, _notEntered will be true\\n        require(_status != _ENTERED, \\\"ReentrancyGuard: reentrant call\\\");\\n\\n        // Any calls to nonReentrant after this point will fail\\n        _status = _ENTERED;\\n\\n        _;\\n\\n        // By storing the original value once again, a refund is triggered (see\\n        // https://eips.ethereum.org/EIPS/eip-2200)\\n        _status = _NOT_ENTERED;\\n    }\\n}\\n\",\"keccak256\":\"0x0e9621f60b2faabe65549f7ed0f24e8853a45c1b7990d47e8160e523683f3935\",\"license\":\"MIT\"},\"src/extensions/WethUnwrapper.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\nimport \\\"@openzeppelin/contracts/security/ReentrancyGuard.sol\\\";\\nimport \\\"../interfaces/IWETH.sol\\\";\\n\\ncontract WethUnwrapper is ReentrancyGuard {\\n  IWETH public immutable weth;\\n\\n  error ErrCannotTransferFrom();\\n  error ErrNotWrappedContract();\\n  error ErrExternalCallFailed(address sender, bytes4 sig);\\n\\n  constructor(address weth_) {\\n    if (address(weth_).code.length == 0) revert ErrNotWrappedContract();\\n    weth = IWETH(weth_);\\n  }\\n\\n  fallback() external payable {\\n    _fallback();\\n  }\\n\\n  receive() external payable {\\n    _fallback();\\n  }\\n\\n  function unwrap(uint256 amount) external nonReentrant {\\n    _deductWrappedAndWithdraw(amount);\\n    _sendNativeTo(payable(msg.sender), amount);\\n  }\\n\\n  function unwrapTo(uint256 amount, address payable to) external nonReentrant {\\n    _deductWrappedAndWithdraw(amount);\\n    _sendNativeTo(payable(to), amount);\\n  }\\n\\n  function _deductWrappedAndWithdraw(uint256 amount) internal {\\n    (bool success,) = address(weth).call(abi.encodeCall(IWETH.transferFrom, (msg.sender, address(this), amount)));\\n    if (!success) revert ErrCannotTransferFrom();\\n\\n    weth.withdraw(amount);\\n  }\\n\\n  function _sendNativeTo(address payable to, uint256 val) internal {\\n    (bool success,) = to.call{ value: val }(\\\"\\\");\\n    if (!success) {\\n      revert ErrExternalCallFailed(to, msg.sig);\\n    }\\n  }\\n\\n  function _fallback() internal view {\\n    if (msg.sender != address(weth)) revert ErrNotWrappedContract();\\n  }\\n}\\n\",\"keccak256\":\"0x5f7b72d9ed8944724d2f228358d565a61ea345cba1883e5424fb801bebc758ff\",\"license\":\"MIT\"},\"src/interfaces/IWETH.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\ninterface IWETH {\\n  event Transfer(address indexed src, address indexed dst, uint wad);\\n\\n  function deposit() external payable;\\n\\n  function transfer(address dst, uint wad) external returns (bool);\\n\\n  function approve(address guy, uint wad) external returns (bool);\\n\\n  function transferFrom(address src, address dst, uint wad) external returns (bool);\\n\\n  function withdraw(uint256 _wad) external;\\n\\n  function balanceOf(address) external view returns (uint256);\\n}\\n\",\"keccak256\":\"0x000700e2b9c1985d53bb1cdba435f0f3d7b48e76e596e7dbbdfec1da47131415\",\"license\":\"MIT\"}},\"version\":1}",
+  "nonce": 26,
+  "numDeployments": 1,
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 58453,
+        "contract": "src/extensions/WethUnwrapper.sol:WethUnwrapper",
+        "label": "_status",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_uint256"
+      }
+    ],
+    "types": {
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      }
+    }
+  },
+  "timestamp": 1713254676,
+  "userdoc": {
+    "version": 1,
+    "kind": "user"
+  }
+}
