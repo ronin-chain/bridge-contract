@@ -53,6 +53,7 @@ contract PostChecker is Migration, PostCheck_BridgeManager, PostCheck_Gateway {
       bridgeSlash = loadContract(Contract.BridgeSlash.key());
       bridgeReward = loadContract(Contract.BridgeReward.key());
       roninGateway = loadContract(Contract.RoninGatewayV3.key());
+      bridgeTracking = loadContract(Contract.BridgeTracking.key());
       roninBridgeManager = loadContract(Contract.RoninBridgeManager.key());
 
       (, TNetwork companionNetwork) = currentNetwork.companionNetworkData();

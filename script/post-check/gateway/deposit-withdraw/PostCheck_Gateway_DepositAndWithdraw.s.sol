@@ -154,7 +154,7 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck, Signatu
     CONFIG.createFork(companionNetwork);
     CONFIG.switchTo(companionNetwork);
 
-    assertEq(mainchainBridgeManager.getProxyAdmin(), mainchainBridgeManager, "Invalid MainchainBridgeManager in mainchainBridgeManager");
+    assertEq(mainchainBridgeManager.getProxyAdmin(), mainchainBridgeManager, "Invalid ProxyAdmin in MainchainBridgeManager, expected self");
     assertEq(
       HasContracts(mainchainGateway).getContract(ContractType.BRIDGE_MANAGER), mainchainBridgeManager, "Invalid MainchainBridgeManager in mainchainGateway"
     );
