@@ -64,14 +64,18 @@ abstract contract BasePostCheck is BaseMigration {
     vm.deal(cheatGovernor, 1); // Check created EOA
     vm.deal(cheatOperator, 1); // Check created EOA
 
-    vm.prank(manager);
+    address proxyAdmin = payable(manager).getProxyAdmin();
+    if (proxyAdmin != manager) {
+      console.log(unicode"⚠ WARNING: ProxyAdmin is not the manager!".yellow());
+    }
+    vm.prank(proxyAdmin);
     try TransparentUpgradeableProxyV2(payable(manager)).functionDelegateCall(
       abi.encodeCall(
         IBridgeManager.addBridgeOperators,
         (cheatVoteWeight.toSingletonArray().toUint96sUnsafe(), cheatGovernor.toSingletonArray(), cheatOperator.toSingletonArray())
       )
     ) { } catch {
-      vm.prank(manager);
+      vm.prank(proxyAdmin);
       IBridgeManager(manager).addBridgeOperators(
         cheatVoteWeight.toSingletonArray().toUint96sUnsafe(), cheatGovernor.toSingletonArray(), cheatOperator.toSingletonArray()
       );
