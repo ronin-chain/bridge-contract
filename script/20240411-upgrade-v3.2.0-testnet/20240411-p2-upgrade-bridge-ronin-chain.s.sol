@@ -100,23 +100,23 @@ contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_H
     //   );
     // }
 
-      // ((45, 2021, 1714451658 [1.714e9], [0x1aD54D61F47acBcBA99fb6540A1694EB2F47AB95], [0], [0x8f283970000000000000000000000000b0507f2f22697022ecb25963a00d3d076dac5753], [1000000 [1e6]]), 0)
+    // ((45, 2021, 1714451658 [1.714e9], [0x1aD54D61F47acBcBA99fb6540A1694EB2F47AB95], [0], [0x8f283970000000000000000000000000b0507f2f22697022ecb25963a00d3d076dac5753], [1000000 [1e6]]), 0)
 
-      LegacyProposalDetail memory proposal;
-      proposal.nonce = 45;
-      proposal.chainId = 2021;
-      proposal.expiryTimestamp = 1714451658;
-      proposal.targets = targets;
-      proposal.values = values;
-      proposal.calldatas = calldatas;
-      proposal.gasAmounts = gasAmounts;
+    LegacyProposalDetail memory proposal;
+    proposal.nonce = 45;
+    proposal.chainId = 2021;
+    proposal.expiryTimestamp = 1714451658;
+    proposal.targets = targets;
+    proposal.values = values;
+    proposal.calldatas = calldatas;
+    proposal.gasAmounts = gasAmounts;
 
-      vm.broadcast(gaVoters[2]);
-      address(roninGA).call{gas: 10_000_000}(
-        abi.encodeWithSignature(
-          "castProposalVoteForCurrentNetwork((uint256,uint256,uint256,address[],uint256[],bytes[],uint256[]),uint8)", proposal, Ballot.VoteType.For
-        )
-      );
+    vm.broadcast(gaVoters[2]);
+    address(roninGA).call{ gas: 10_000_000 }(
+      abi.encodeWithSignature(
+        "castProposalVoteForCurrentNetwork((uint256,uint256,uint256,address[],uint256[],bytes[],uint256[]),uint8)", proposal, Ballot.VoteType.For
+      )
+    );
   }
 
   function _upgradeBridgeRoninchain() private {
