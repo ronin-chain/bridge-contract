@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { LibString, TNetwork } from "foundry-deployment-kit/types/Types.sol";
+import { LibString, TNetwork } from "@fdk/types/Types.sol";
 
 enum Network {
   Goerli,

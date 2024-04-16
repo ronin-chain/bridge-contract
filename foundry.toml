@@ -22,9 +22,11 @@ evm_version = 'istanbul'
 [profile.ethereum]
 evm_version = 'shanghai'
 
-[profile.ronin.ronin_bridge_manager]
+[profile.ronin_bridge_manager]
 evm_version = 'istanbul'
+optimizer = true
 optimizer_runs = 1
+ffi = true
 
 [fmt]
 line_length = 160
@@ -58,8 +60,9 @@ runs = 1_000
 sepolia = { key = "${ETHERSCAN_API_KEY}", chain = 11155111, url = "https://api-sepolia.etherscan.io/api" }
 
 [rpc_endpoints]
+localhost = "http://localhost:8545"
 ethereum = "https://eth.llamarpc.com"
-goerli = "https://ethereum-goerli.publicnode.com"
 sepolia = "https://sepolia.infura.io/v3/${INFURA_API_KEY}"
+goerli = "https://ethereum-goerli.publicnode.com"
 ronin-mainnet = "https://api-partner.roninchain.com/rpc"
 ronin-testnet = "https://saigon-archive.roninchain.com/rpc"

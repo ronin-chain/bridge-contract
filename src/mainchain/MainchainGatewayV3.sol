@@ -145,7 +145,7 @@ contract MainchainGatewayV3 is
   /**
    * @inheritdoc IMainchainGatewayV3
    */
-  function setWrappedNativeTokenContract(IWETH _wrappedToken) external virtual onlyAdmin {
+  function setWrappedNativeTokenContract(IWETH _wrappedToken) external virtual onlyProxyAdmin {
     _setWrappedNativeTokenContract(_wrappedToken);
   }
 
@@ -196,7 +196,7 @@ contract MainchainGatewayV3 is
   /**
    * @inheritdoc IMainchainGatewayV3
    */
-  function mapTokens(address[] calldata _mainchainTokens, address[] calldata _roninTokens, TokenStandard[] calldata _standards) external virtual onlyAdmin {
+  function mapTokens(address[] calldata _mainchainTokens, address[] calldata _roninTokens, TokenStandard[] calldata _standards) external virtual onlyProxyAdmin {
     if (_mainchainTokens.length == 0) revert ErrEmptyArray();
     _mapTokens(_mainchainTokens, _roninTokens, _standards);
   }
@@ -213,7 +213,7 @@ contract MainchainGatewayV3 is
     // _thresholds[2]: unlockFeePercentages
     // _thresholds[3]: dailyWithdrawalLimit
     uint256[][4] calldata _thresholds
-  ) external virtual onlyAdmin {
+  ) external virtual onlyProxyAdmin {
     if (_mainchainTokens.length == 0) revert ErrEmptyArray();
     _mapTokens(_mainchainTokens, _roninTokens, _standards);
     _setHighTierThresholds(_mainchainTokens, _thresholds[0]);
@@ -518,6 +518,6 @@ contract MainchainGatewayV3 is
   }
 
   function supportsInterface(bytes4 interfaceId) public view override(AccessControlEnumerable, IERC165, ERC1155Receiver) returns (bool) {
-    return interfaceId == type(IMainchainGatewayV3).interfaceId || super.supportsInterface(interfaceId);
+    return interfaceId == type(IMainchainGatewayV3).interfaceId || interfaceId == type(IBridgeManagerCallback).interfaceId || super.supportsInterface(interfaceId);
   }
 }

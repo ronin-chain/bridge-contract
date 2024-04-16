@@ -30,7 +30,7 @@ abstract contract MinimumWithdrawal is HasProxyAdmin {
    * Emits the `MinimumThresholdsUpdated` event.
    *
    */
-  function setMinimumThresholds(address[] calldata _tokens, uint256[] calldata _thresholds) external virtual onlyAdmin {
+  function setMinimumThresholds(address[] calldata _tokens, uint256[] calldata _thresholds) external virtual onlyProxyAdmin {
     if (_tokens.length == 0) revert ErrEmptyArray();
     _setMinimumThresholds(_tokens, _thresholds);
   }

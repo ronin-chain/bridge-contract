@@ -52,8 +52,8 @@ abstract contract WithdrawalLimitation is GatewayV3 {
    * - The high-tier vote weight threshold must equal to or larger than the normal threshold.
    *
    */
-  function setThreshold(uint256 _numerator, uint256 _denominator) external virtual override onlyAdmin returns (uint256 _previousNum, uint256 _previousDenom) {
-    (_previousNum, _previousDenom) = _setThreshold(_numerator, _denominator);
+  function setThreshold(uint256 num, uint256 denom) external virtual override onlyProxyAdmin {
+    _setThreshold(num, denom);
     _verifyThresholds();
   }
 
@@ -84,7 +84,7 @@ abstract contract WithdrawalLimitation is GatewayV3 {
   function setHighTierVoteWeightThreshold(
     uint256 _numerator,
     uint256 _denominator
-  ) external virtual onlyAdmin returns (uint256 _previousNum, uint256 _previousDenom) {
+  ) external virtual onlyProxyAdmin returns (uint256 _previousNum, uint256 _previousDenom) {
     (_previousNum, _previousDenom) = _setHighTierVoteWeightThreshold(_numerator, _denominator);
     _verifyThresholds();
   }
@@ -99,7 +99,7 @@ abstract contract WithdrawalLimitation is GatewayV3 {
    * Emits the `HighTierThresholdsUpdated` event.
    *
    */
-  function setHighTierThresholds(address[] calldata _tokens, uint256[] calldata _thresholds) external virtual onlyAdmin {
+  function setHighTierThresholds(address[] calldata _tokens, uint256[] calldata _thresholds) external virtual onlyProxyAdmin {
     if (_tokens.length == 0) revert ErrEmptyArray();
     _setHighTierThresholds(_tokens, _thresholds);
   }
@@ -114,7 +114,7 @@ abstract contract WithdrawalLimitation is GatewayV3 {
    * Emits the `LockedThresholdsUpdated` event.
    *
    */
-  function setLockedThresholds(address[] calldata _tokens, uint256[] calldata _thresholds) external virtual onlyAdmin {
+  function setLockedThresholds(address[] calldata _tokens, uint256[] calldata _thresholds) external virtual onlyProxyAdmin {
     if (_tokens.length == 0) revert ErrEmptyArray();
     _setLockedThresholds(_tokens, _thresholds);
   }
@@ -129,7 +129,7 @@ abstract contract WithdrawalLimitation is GatewayV3 {
    * Emits the `UnlockFeePercentagesUpdated` event.
    *
    */
-  function setUnlockFeePercentages(address[] calldata _tokens, uint256[] calldata _percentages) external virtual onlyAdmin {
+  function setUnlockFeePercentages(address[] calldata _tokens, uint256[] calldata _percentages) external virtual onlyProxyAdmin {
     if (_tokens.length == 0) revert ErrEmptyArray();
     _setUnlockFeePercentages(_tokens, _percentages);
   }
@@ -144,7 +144,7 @@ abstract contract WithdrawalLimitation is GatewayV3 {
    * Emits the `DailyWithdrawalLimitsUpdated` event.
    *
    */
-  function setDailyWithdrawalLimits(address[] calldata _tokens, uint256[] calldata _limits) external virtual onlyAdmin {
+  function setDailyWithdrawalLimits(address[] calldata _tokens, uint256[] calldata _limits) external virtual onlyProxyAdmin {
     if (_tokens.length == 0) revert ErrEmptyArray();
     _setDailyWithdrawalLimits(_tokens, _limits);
   }

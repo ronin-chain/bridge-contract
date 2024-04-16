@@ -3,18 +3,23 @@ pragma solidity ^0.8.19;
 
 import { console2 } from "forge-std/console2.sol";
 import { StdStyle } from "forge-std/StdStyle.sol";
-import { BaseMigration } from "foundry-deployment-kit/BaseMigration.s.sol";
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
 import { LibTokenInfo, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { Contract } from "../utils/Contract.sol";
-import { BridgeMigration } from "../BridgeMigration.sol";
-import { Network } from "../utils/Network.sol";
+import { Migration } from "../Migration.s.sol";
+import { TNetwork, Network } from "../utils/Network.sol";
 import { Contract } from "../utils/Contract.sol";
-import { IGeneralConfigExtended } from "../IGeneralConfigExtended.sol";
+import { LibArray } from "script/shared/libraries/LibArray.sol";
+import { LibProposal } from "script/shared/libraries/LibProposal.sol";
+import { LibCompanionNetwork } from "script/shared/libraries/LibCompanionNetwork.sol";
 
-contract Migration__20231215_MapTokenMainchain is BridgeMigration {
+contract Migration__20231215_MapTokenMainchain is Migration {
+  using LibArray for *;
+  using LibProposal for *;
+  using LibCompanionNetwork for *;
+
   RoninBridgeManager internal _roninBridgeManager;
   address constant _aggRoninToken = address(0x294311a8C37F0744F99EB152c419D4D3D6FEC1C7);
   address constant _aggMainchainToken = address(0xFB0489e9753B045DdB35e39c6B0Cc02EC6b99AC5);
@@ -30,8 +35,8 @@ contract Migration__20231215_MapTokenMainchain is BridgeMigration {
   function setUp() public override {
     super.setUp();
 
-    _roninBridgeManager = RoninBridgeManager(_config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
-    _mainchainGatewayV3 = _config.getAddress(_config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).key(), Contract.MainchainGatewayV3.key());
+    _roninBridgeManager = RoninBridgeManager(loadContract(Contract.RoninBridgeManager.key()));
+    _mainchainGatewayV3 = config.getAddress(network().companionNetwork(), Contract.MainchainGatewayV3.key());
   }
 
   function run() public {
@@ -66,20 +71,16 @@ contract Migration__20231215_MapTokenMainchain is BridgeMigration {
     bytes memory proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
 
     uint256 expiredTime = block.timestamp + 10 days;
-    address[] memory targets = new address[](1);
-    targets[0] = _mainchainGatewayV3;
+    address[] memory targets = _mainchainGatewayV3.toSingletonArray();
     uint256[] memory values = new uint256[](1);
-    values[0] = 0;
-    bytes[] memory calldatas = new bytes[](1);
-    calldatas[0] = proxyData;
-    uint256[] memory gasAmounts = new uint256[](1);
-    gasAmounts[0] = 1_000_000;
+    bytes[] memory calldatas = proxyData.toSingletonArray();
+    uint256[] memory gasAmounts = uint256(1_000_000).toSingletonArray();
 
-    _verifyMainchainProposalGasAmount(targets, values, calldatas, gasAmounts);
-
-    uint256 chainId = _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).chainId();
+    (uint256 companionChainId, TNetwork companionNetwork) = network().companionNetworkData();
+    address companionManager = config.getAddress(companionNetwork, Contract.MainchainBridgeManager.key());
+    LibProposal.verifyMainchainProposalGasAmount(companionNetwork, companionManager, targets, values, calldatas, gasAmounts);
 
     vm.broadcast(sender());
-    _roninBridgeManager.propose(chainId, expiredTime, address(0), targets, values, calldatas, gasAmounts);
+    _roninBridgeManager.propose(companionChainId, expiredTime, address(0), targets, values, calldatas, gasAmounts);
   }
 }

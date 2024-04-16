@@ -29,13 +29,12 @@ contract MockBridgeManager is IBridgeManager {
     }
   }
 
-  function addBridgeOperators(uint96[] calldata weights, address[] calldata governors, address[] calldata operators) external returns (bool[] memory addeds) {
+  function addBridgeOperators(uint96[] calldata weights, address[] calldata governors, address[] calldata operators) external {
     for (uint i; i < weights.length; i++) {
       _governors[governors[i]] = true;
       _operators[operators[i]] = true;
       _weights[governors[i]] = weights[i];
       _weights[operators[i]] = weights[i];
-      addeds[i] = true;
     }
   }
 
@@ -76,7 +75,7 @@ contract MockBridgeManager is IBridgeManager {
     return _weights[addr] > 0;
   }
 
-  function removeBridgeOperators(address[] calldata bridgeOperators) external returns (bool[] memory removeds) { }
+  function removeBridgeOperators(address[] calldata bridgeOperators) external { }
 
   function sumGovernorsWeight(address[] calldata governors) external view returns (uint256 sum) { }
 

@@ -13,7 +13,7 @@ import { TUint256Slot } from "../../types/Types.sol";
 import "../../utils/CommonErrors.sol";
 import "./BridgeManagerQuorum.sol";
 
-abstract contract BridgeManager is IBridgeManager, Initializable, HasContracts, BridgeManagerQuorum, BridgeManagerCallbackRegister {
+abstract contract BridgeManager is IBridgeManager, BridgeManagerQuorum, BridgeManagerCallbackRegister {
   using AddressArrayUtils for address[];
 
   struct BridgeManagerStorage {
@@ -96,7 +96,7 @@ abstract contract BridgeManager is IBridgeManager, Initializable, HasContracts, 
   /**
    * @inheritdoc IHasContracts
    */
-  function setContract(ContractType contractType, address addr) external override onlySelfCall {
+  function setContract(ContractType contractType, address addr) external override onlyProxyAdmin {
     _requireHasCode(addr);
     _setContract(contractType, addr);
   }
@@ -104,7 +104,7 @@ abstract contract BridgeManager is IBridgeManager, Initializable, HasContracts, 
   /**
    * @inheritdoc IBridgeManager
    */
-  function setMinRequiredGovernor(uint min) external override onlySelfCall {
+  function setMinRequiredGovernor(uint min) external override onlyProxyAdmin {
     _setMinRequiredGovernor(min);
   }
 
@@ -134,8 +134,7 @@ abstract contract BridgeManager is IBridgeManager, Initializable, HasContracts, 
   }
 
   function _totalWeight() internal view override returns (uint256) {
-    BridgeManagerStorage storage $ = _getBridgeManagerStorage();
-    return $._totalWeight;
+    return _getBridgeManagerStorage()._totalWeight;
   }
 
   /**
@@ -168,8 +167,7 @@ abstract contract BridgeManager is IBridgeManager, Initializable, HasContracts, 
    * @dev Internal function to retrieve the vote weight of a specific governor.
    */
   function _getGovernorWeight(address governor) internal view returns (uint96) {
-    BridgeManagerStorage storage $ = _getBridgeManagerStorage();
-    return $._governorWeight[governor];
+    return _getBridgeManagerStorage()._governorWeight[governor];
   }
 
   /**
@@ -215,19 +213,15 @@ abstract contract BridgeManager is IBridgeManager, Initializable, HasContracts, 
   /**
    * @inheritdoc IBridgeManager
    */
-  function addBridgeOperators(
-    uint96[] calldata voteWeights,
-    address[] calldata governors,
-    address[] calldata bridgeOperators
-  ) external onlySelfCall returns (bool[] memory addeds) {
-    addeds = _addBridgeOperators(voteWeights, governors, bridgeOperators);
+  function addBridgeOperators(uint96[] calldata voteWeights, address[] calldata governors, address[] calldata bridgeOperators) external onlyProxyAdmin {
+    _addBridgeOperators(voteWeights, governors, bridgeOperators);
   }
 
   /**
    * @inheritdoc IBridgeManager
    */
-  function removeBridgeOperators(address[] calldata bridgeOperators) external onlySelfCall returns (bool[] memory removeds) {
-    removeds = _removeBridgeOperators(bridgeOperators);
+  function removeBridgeOperators(address[] calldata bridgeOperators) external onlyProxyAdmin {
+    _removeBridgeOperators(bridgeOperators);
   }
 
   /**

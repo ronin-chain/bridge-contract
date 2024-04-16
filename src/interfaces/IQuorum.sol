@@ -29,5 +29,5 @@ interface IQuorum {
    * Emits the `ThresholdUpdated` event.
    *
    */
-  function setThreshold(uint256 _numerator, uint256 _denominator) external returns (uint256 _previousNum, uint256 _previousDenom);
+  function setThreshold(uint256 numerator, uint256 denominator) external;
 }

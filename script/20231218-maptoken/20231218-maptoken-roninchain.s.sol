@@ -3,17 +3,20 @@ pragma solidity ^0.8.19;
 
 import { console2 } from "forge-std/console2.sol";
 import { StdStyle } from "forge-std/StdStyle.sol";
-import { BaseMigration } from "foundry-deployment-kit/BaseMigration.s.sol";
+import { BaseMigration } from "@fdk/BaseMigration.s.sol";
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import { IRoninGatewayV3 } from "@ronin/contracts/interfaces/IRoninGatewayV3.sol";
 import { LibTokenInfo, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { Contract } from "../utils/Contract.sol";
-import { BridgeMigration } from "../BridgeMigration.sol";
+import { TNetwork, Network } from "../utils/Network.sol";
+import { LibProposal } from "script/shared/libraries/LibProposal.sol";
+import { Migration } from "../Migration.s.sol";
 import { Network } from "../utils/Network.sol";
 import { Contract } from "../utils/Contract.sol";
-import { IGeneralConfigExtended } from "../IGeneralConfigExtended.sol";
 
-contract Migration__20231215_MapTokenRoninchain is BridgeMigration {
+contract Migration__20231215_MapTokenRoninchain is Migration {
+  using LibProposal for *;
+
   RoninBridgeManager internal _roninBridgeManager;
   address constant _aggRoninToken = address(0x294311a8C37F0744F99EB152c419D4D3D6FEC1C7);
   address constant _aggMainchainToken = address(0xFB0489e9753B045DdB35e39c6B0Cc02EC6b99AC5);
@@ -21,8 +24,8 @@ contract Migration__20231215_MapTokenRoninchain is BridgeMigration {
 
   function setUp() public override {
     super.setUp();
-    _roninBridgeManager = RoninBridgeManager(_config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
-    _roninGatewayV3 = _config.getAddressFromCurrentNetwork(Contract.RoninGatewayV3.key());
+    _roninBridgeManager = RoninBridgeManager(loadContract(Contract.RoninBridgeManager.key()));
+    _roninGatewayV3 = loadContract(Contract.RoninGatewayV3.key());
   }
 
   function run() public {
@@ -31,7 +34,7 @@ contract Migration__20231215_MapTokenRoninchain is BridgeMigration {
     address[] memory mainchainTokens = new address[](1);
     mainchainTokens[0] = _aggMainchainToken;
     uint256[] memory chainIds = new uint256[](1);
-    chainIds[0] = _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).chainId();
+    chainIds[0] = config.getNetworkData(config.getCompanionNetwork(network())).chainId;
     TokenStandard[] memory standards = new TokenStandard[](1);
     standards[0] = TokenStandard.ERC20;
 
@@ -54,7 +57,7 @@ contract Migration__20231215_MapTokenRoninchain is BridgeMigration {
     uint256[] memory gasAmounts = new uint256[](1);
     gasAmounts[0] = 1_000_000;
 
-    _verifyRoninProposalGasAmount(targets, values, calldatas, gasAmounts);
+    LibProposal.verifyProposalGasAmount(address(_roninBridgeManager), targets, values, calldatas, gasAmounts);
 
     vm.broadcast(sender());
     _roninBridgeManager.propose(block.chainid, expiredTime, address(0), targets, values, calldatas, gasAmounts);

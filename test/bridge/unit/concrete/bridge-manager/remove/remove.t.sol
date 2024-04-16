@@ -12,6 +12,8 @@ import { IBridgeManager } from "@ronin/contracts/interfaces/bridge/IBridgeManage
 
 import { BridgeManager_Unit_Concrete_Test } from "../BridgeManager.t.sol";
 
+event BridgeOperatorsRemoved(bool[] statuses, address[] bridgeOperators);
+
 contract Remove_Unit_Concrete_Test is BridgeManager_Unit_Concrete_Test {
   function setUp() public virtual override {
     BridgeManager_Unit_Concrete_Test.setUp();
@@ -47,10 +49,12 @@ contract Remove_Unit_Concrete_Test is BridgeManager_Unit_Concrete_Test {
       uint96[] memory remainingWeights
     ) = _generateRemovingOperators(1);
 
-    bool[] memory removeds = _bridgeManager.removeBridgeOperators(removingOperators);
-    bool[] memory expectedRemoved = new bool[](1);
-    expectedRemoved[0] = true;
-    assertEq(removeds, expectedRemoved);
+    bool[] memory expectedRemoveds = new bool[](1);
+    expectedRemoveds[0] = true;
+    vm.expectEmit(true, false, false, false);
+    emit BridgeOperatorsRemoved(expectedRemoveds, new address[](0));
+
+    _bridgeManager.removeBridgeOperators(removingOperators);
 
     assertEq(_bridgeManager.totalBridgeOperator(), _bridgeOperators.length - 1, "wrong total bridge operator");
     assertEq(_bridgeManager.getTotalWeight(), _totalWeight - removingWeights[0], "wrong total total weight");
@@ -99,11 +103,13 @@ contract Remove_Unit_Concrete_Test is BridgeManager_Unit_Concrete_Test {
       uint96[] memory remainingWeights
     ) = _generateRemovingOperators(TO_REMOVE_NUM);
 
-    bool[] memory removeds = _bridgeManager.removeBridgeOperators(removingOperators);
-    bool[] memory expectedRemoved = new bool[](TO_REMOVE_NUM);
-    expectedRemoved[0] = true;
-    expectedRemoved[1] = true;
-    assertEq(removeds, expectedRemoved);
+    bool[] memory expectedRemoveds = new bool[](TO_REMOVE_NUM);
+    expectedRemoveds[0] = true;
+    expectedRemoveds[1] = true;
+    vm.expectEmit(true, false, false, false);
+    emit BridgeOperatorsRemoved(expectedRemoveds, new address[](0));
+
+    _bridgeManager.removeBridgeOperators(removingOperators);
 
     address[] memory zeroAddressArrays = new address[](TO_REMOVE_NUM);
     zeroAddressArrays[0] = address(0);

@@ -26,7 +26,7 @@ abstract contract HasContracts is HasProxyAdmin, IHasContracts, IdentityGuard {
   /**
    * @inheritdoc IHasContracts
    */
-  function setContract(ContractType contractType, address addr) external virtual onlyAdmin {
+  function setContract(ContractType contractType, address addr) external virtual onlyProxyAdmin {
     _requireHasCode(addr);
     _setContract(contractType, addr);
   }
