@@ -158,6 +158,8 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck, Signatu
     assertEq(
       HasContracts(mainchainGateway).getContract(ContractType.BRIDGE_MANAGER), mainchainBridgeManager, "Invalid MainchainBridgeManager in mainchainGateway"
     );
+
+    CONFIG.switchTo(currentNetwork);
   }
 
   function validate_Gateway_depositERC20() private onPostCheck("validate_Gateway_depositERC20") {
