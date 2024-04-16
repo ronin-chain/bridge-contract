@@ -38,7 +38,7 @@ contract Migration__20240409_Helper is Migration {
   function _helperVoteForCurrentNetwork(LegacyProposalDetail memory proposal) internal {
     for (uint i; i < _voters.length - 1; ++i) {
       vm.broadcast(_voters[i]);
-      address(_currRoninBridgeManager).call(
+      address(_currRoninBridgeManager).call{gas: (proposal.targets.length + 1) * 1_000_000 }(
         abi.encodeWithSignature(
           "castProposalVoteForCurrentNetwork((uint256,uint256,uint256,address[],uint256[],bytes[],uint256[]),uint8)", proposal, Ballot.VoteType.For
         )
