@@ -22,6 +22,8 @@ import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeMa
 import { MainchainBridgeManager } from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
 import { IMainchainGatewayV3, MainchainGatewayV3 } from "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
 import { TransparentUpgradeableProxyV2 } from "@ronin/contracts/extensions/TransparentUpgradeableProxyV2.sol";
+import { HasContracts } from "@ronin/contracts/extensions/collections/HasContracts.sol";
+import { ContractType } from "@ronin/contracts/utils/ContractType.sol";
 
 abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck, SignatureConsumer {
   using LibProxy for *;
@@ -137,8 +139,25 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck, Signatu
 
   function _validate_Gateway_DepositAndWithdraw() internal onlyOnRoninNetworkOrLocal {
     _setUp();
+    validate_HasBridgeManager();
     validate_Gateway_depositERC20();
     validate_Gateway_withdrawERC20();
+  }
+
+  function validate_HasBridgeManager() internal onPostCheck("validate_HasBridgeManager") {
+    assertEq(roninBridgeManager.getProxyAdmin(), roninBridgeManager, "Invalid ProxyAdmin in RoninBridgeManager, expected self");
+    assertEq(HasContracts(roninGateway).getContract(ContractType.BRIDGE_MANAGER), roninBridgeManager, "Invalid RoninBridgeManager in roninGateway");
+    assertEq(HasContracts(bridgeTracking).getContract(ContractType.BRIDGE_MANAGER), roninBridgeManager, "Invalid RoninBridgeManager in bridgeTracking");
+    assertEq(HasContracts(bridgeReward).getContract(ContractType.BRIDGE_MANAGER), roninBridgeManager, "Invalid RoninBridgeManager in bridgeReward");
+    assertEq(HasContracts(bridgeSlash).getContract(ContractType.BRIDGE_MANAGER), roninBridgeManager, "Invalid RoninBridgeManager in bridgeSlash");
+
+    CONFIG.createFork(companionNetwork);
+    CONFIG.switchTo(companionNetwork);
+
+    assertEq(mainchainBridgeManager.getProxyAdmin(), mainchainBridgeManager, "Invalid MainchainBridgeManager in mainchainBridgeManager");
+    assertEq(
+      HasContracts(mainchainGateway).getContract(ContractType.BRIDGE_MANAGER), mainchainBridgeManager, "Invalid MainchainBridgeManager in mainchainGateway"
+    );
   }
 
   function validate_Gateway_depositERC20() private onPostCheck("validate_Gateway_depositERC20") {
