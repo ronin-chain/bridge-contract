@@ -24,6 +24,7 @@ import "@ronin/script/contracts/RoninBridgeManagerDeploy.s.sol";
 import "./20240411-deploy-bridge-manager-helper.s.sol";
 import "../Migration.s.sol";
 
+// Run this script with `optimizer_runs = 1`.
 contract Migration__20240409_P1_DeployRoninBridgeManager is Migration, Migration__2024041_DeployRoninBridgeManagerHelper {
   ISharedArgument.SharedParameter _param;
 

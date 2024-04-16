@@ -20,7 +20,7 @@ contract PostChecker is Migration, PostCheck_BridgeManager, PostCheck_Gateway {
 
   function run() external {
     _loadSysContract();
-    //  _validate_BridgeManager();
+    _validate_BridgeManager();
     _validate_Gateway();
   }
 

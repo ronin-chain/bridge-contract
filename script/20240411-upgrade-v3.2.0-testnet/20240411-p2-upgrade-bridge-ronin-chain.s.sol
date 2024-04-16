@@ -34,7 +34,7 @@ contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_H
 
   function run() public virtual onlyOn(DefaultNetwork.RoninTestnet.key()) {
     _currRoninBridgeManager = RoninBridgeManager(config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
-    _newRoninBridgeManager = _deployRoninBridgeManager();
+    _newRoninBridgeManager = RoninBridgeManager(0x8AaAD4782890eb879A0fC132A6AdF9E5eE708faF);
 
     _governor = 0xd24D87DDc1917165435b306aAC68D99e0F49A3Fa;
     _voters.push(0xb033ba62EC622dC54D0ABFE0254e79692147CA26);
@@ -43,6 +43,8 @@ contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_H
 
     _changeAdminOfEnforcer();
     _upgradeBridgeRoninchain();
+
+    config.setAddress(network(), Contract.RoninBridgeManager.key(), address(_newRoninBridgeManager));
   }
 
   function _changeAdminOfEnforcer() private {
@@ -69,7 +71,13 @@ contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_H
     proposal.calldatas = calldatas;
     proposal.gasAmounts = gasAmounts;
 
-    vm.broadcast(_governor);
+    address gaGovernor = 0x52ec2e6BBcE45AfFF8955Da6410bb13812F4289F;
+    address[] memory gaVoters = new address[](3);
+    gaVoters[0] = 0x087D08e3ba42e64E3948962dd1371F906D1278b9;
+    gaVoters[1] = 0x06f8Af58F656B507918d91B0B6F8B89bfCC556f9;
+    gaVoters[2] = 0xe1100401454B5f850b09f3b92cE7f071C5F1CEF4;
+
+    vm.broadcast(gaGovernor);
     address(roninGA).call(
       abi.encodeWithSignature(
         "proposeProposalForCurrentNetwork(uint256,address[],uint256[],bytes[],uint256[],uint8)",
@@ -83,8 +91,8 @@ contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_H
       )
     );
 
-    for (uint i; i < _voters.length; ++i) {
-      vm.broadcast(_voters[i]);
+    for (uint i; i < gaVoters.length; ++i) {
+      vm.broadcast(gaVoters[i]);
       address(roninGA).call(
         abi.encodeWithSignature(
           "castProposalVoteForCurrentNetwork((uint256,uint256,uint256,address[],uint256[],bytes[],uint256[]),uint8)", proposal, Ballot.VoteType.For
@@ -138,16 +146,22 @@ contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_H
     calldatas[2] = abi.encodeWithSignature("upgradeTo(address)", bridgeTrackingLogic);
     calldatas[3] = abi.encodeWithSignature("upgradeTo(address)", roninGatewayV3Logic);
     calldatas[4] = abi.encodeWithSignature("upgradeTo(address)", pauseEnforcerLogic);
-    calldatas[5] = abi.encodeWithSignature("functionDelegateCall(bytes)", (abi.encodeWithSignature("setContract(uint8,address)", 11, address(_newRoninBridgeManager))));
-    calldatas[6] = abi.encodeWithSignature("functionDelegateCall(bytes)", (abi.encodeWithSignature("setContract(uint8,address)", 11, address(_newRoninBridgeManager))));
-    calldatas[7] = abi.encodeWithSignature("functionDelegateCall(bytes)", (abi.encodeWithSignature("setContract(uint8,address)", 11, address(_newRoninBridgeManager))));
-    calldatas[8] = abi.encodeWithSignature("functionDelegateCall(bytes)", (abi.encodeWithSignature("setContract(uint8,address)", 11, address(_newRoninBridgeManager))));
+    calldatas[5] =
+      abi.encodeWithSignature("functionDelegateCall(bytes)", (abi.encodeWithSignature("setContract(uint8,address)", 11, address(_newRoninBridgeManager))));
+    calldatas[6] =
+      abi.encodeWithSignature("functionDelegateCall(bytes)", (abi.encodeWithSignature("setContract(uint8,address)", 11, address(_newRoninBridgeManager))));
+    calldatas[7] =
+      abi.encodeWithSignature("functionDelegateCall(bytes)", (abi.encodeWithSignature("setContract(uint8,address)", 11, address(_newRoninBridgeManager))));
+    calldatas[8] =
+      abi.encodeWithSignature("functionDelegateCall(bytes)", (abi.encodeWithSignature("setContract(uint8,address)", 11, address(_newRoninBridgeManager))));
     calldatas[9] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
     calldatas[10] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
     calldatas[11] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
     calldatas[12] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
     calldatas[13] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
-    calldatas[14] = abi.encodeWithSignature("functionDelegateCall(bytes)", (abi.encodeWithSignature("registerCallbacks(address[])", param.roninBridgeManager.callbackRegisters)));
+    calldatas[14] = abi.encodeWithSignature(
+      "functionDelegateCall(bytes)", (abi.encodeWithSignature("registerCallbacks(address[])", param.roninBridgeManager.callbackRegisters))
+    );
     calldatas[15] = abi.encodeWithSignature("changeAdmin(address)", address(_newRoninBridgeManager));
 
     for (uint i; i < N; ++i) {
