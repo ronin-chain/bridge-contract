@@ -189,7 +189,7 @@ contract Migration__20240409_P3_UpgradeBridgeMainchain is Migration, Migration__
     SignatureConsumer.Signature[] memory signatures = _generateSignaturesFor(getDomain(), hashLegacyProposal(proposal), _loadGovernorPKs(), Ballot.VoteType.For);
 
     vm.broadcast(_governor);
-    address(_currMainchainBridgeManager).call(
+    address(_currMainchainBridgeManager).call{ gas: (proposal.targets.length + 1) * 1_000_000 }(
       abi.encodeWithSignature(
         "relayProposal((uint256,uint256,uint256,address[],uint256[],bytes[],uint256[]),uint8[],(uint8,bytes32,bytes32)[])", proposal, supports_, signatures
       )

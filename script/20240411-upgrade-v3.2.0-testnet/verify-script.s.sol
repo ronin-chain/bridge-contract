@@ -12,7 +12,7 @@ contract Verify_Script_20240411 is Migration__20240409_P2_UpgradeBridgeRoninchai
   function run() public override(Migration__20240409_P2_UpgradeBridgeRoninchain, Migration__20240409_P3_UpgradeBridgeMainchain) {
     TNetwork currentNetwork = network();
     TNetwork companionNetwork = config.getCompanionNetwork(currentNetwork);
-    Migration__20240409_P2_UpgradeBridgeRoninchain.run();
+    // Migration__20240409_P2_UpgradeBridgeRoninchain.run();
 
     CONFIG.createFork(companionNetwork);
     CONFIG.switchTo(companionNetwork);

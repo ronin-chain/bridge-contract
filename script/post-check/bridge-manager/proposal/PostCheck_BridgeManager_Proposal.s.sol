@@ -123,23 +123,27 @@ abstract contract PostCheck_BridgeManager_Proposal is BasePostCheck {
     {
       cheatAddOverWeightedGovernor(address(mainchainManager));
 
-      address[] memory targets = new address[](2);
-      uint256[] memory values = new uint256[](2);
-      uint256[] memory gasAmounts = new uint256[](2);
-      bytes[] memory calldatas = new bytes[](2);
-      address[] memory logics = new address[](2);
+      address[] memory targets = new address[](3);
+      uint256[] memory values = new uint256[](3);
+      uint256[] memory gasAmounts = new uint256[](3);
+      bytes[] memory calldatas = new bytes[](3);
+      address[] memory logics = new address[](3);
 
       targets[0] = address(mainchainManager);
       targets[1] = loadContract(Contract.MainchainGatewayV3.key());
+      targets[2] = loadContract(Contract.MainchainPauseEnforcer.key());
 
       logics[0] = _deployLogic(Contract.MainchainBridgeManager.key());
       logics[1] = _deployLogic(Contract.MainchainGatewayV3.key());
+      logics[2] = _deployLogic(Contract.MainchainPauseEnforcer.key());
 
       calldatas[0] = abi.encodeCall(TransparentUpgradeableProxy.upgradeTo, (logics[0]));
       calldatas[1] = abi.encodeCall(TransparentUpgradeableProxy.upgradeTo, (logics[1]));
+      calldatas[2] = abi.encodeCall(TransparentUpgradeableProxy.upgradeTo, (logics[2]));
 
       gasAmounts[0] = 1_000_000;
       gasAmounts[1] = 1_000_000;
+      gasAmounts[2] = 1_000_000;
 
       Proposal.ProposalDetail memory proposal = LibProposal.createProposal({
         manager: address(mainchainManager),
@@ -164,6 +168,7 @@ abstract contract PostCheck_BridgeManager_Proposal is BasePostCheck {
 
       assertEq(payable(address(mainchainManager)).getProxyImplementation(), logics[0], "MainchainBridgeManager logic is not upgraded");
       assertEq(loadContract(Contract.MainchainGatewayV3.key()).getProxyImplementation(), logics[1], "MainchainGatewayV3 logic is not upgraded");
+      assertEq(loadContract(Contract.MainchainPauseEnforcer.key()).getProxyImplementation(), logics[2], "MainchainPauseEnforcer logic is not upgraded");
     }
 
     bool reverted = vm.revertTo(snapshotId);
@@ -189,7 +194,7 @@ abstract contract PostCheck_BridgeManager_Proposal is BasePostCheck {
       calldatas: abi.encodeCall(
         TransparentUpgradeableProxyV2.functionDelegateCall,
         (abi.encodeCall(IBridgeManager.addBridgeOperators, (_voteWeights, _addingGovernors, _addingOperators)))
-      ).toSingletonArray(),
+        ).toSingletonArray(),
       gasAmounts: uint256(1_000_000).toSingletonArray(),
       nonce: manager.round(0) + 1
     });
@@ -256,11 +261,12 @@ abstract contract PostCheck_BridgeManager_Proposal is BasePostCheck {
 
   function validate_canExcuteUpgradeAllOneProposal() private onlyOnRoninNetworkOrLocal onPostCheck("validate_canExcuteUpgradeAllOneProposal") {
     RoninBridgeManager manager = RoninBridgeManager(loadContract(Contract.RoninBridgeManager.key()));
-    TContract[] memory contractTypes = new TContract[](4);
+    TContract[] memory contractTypes = new TContract[](5);
     contractTypes[0] = Contract.BridgeSlash.key();
     contractTypes[1] = Contract.BridgeReward.key();
     contractTypes[2] = Contract.BridgeTracking.key();
     contractTypes[3] = Contract.RoninGatewayV3.key();
+    contractTypes[4] = Contract.RoninPauseEnforcer.key();
 
     address[] memory targets = new address[](contractTypes.length);
     for (uint256 i; i < contractTypes.length; ++i) {
