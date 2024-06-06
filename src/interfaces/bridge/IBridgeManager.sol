@@ -8,6 +8,17 @@ import { IBridgeManagerEvents } from "./events/IBridgeManagerEvents.sol";
  * @dev The interface for managing bridge operators.
  */
 interface IBridgeManager is IBridgeManagerEvents {
+  /// @notice Error indicating that cannot find the querying operator
+  error ErrOperatorNotFound(address operator);
+  /// @notice Error indicating that cannot find the querying governor
+  error ErrGovernorNotFound(address governor);
+  /// @notice Error indicating that the msg.sender is not match the required governor
+  error ErrGovernorNotMatch(address required, address sender);
+  /// @notice Error indicating that the governors list will go below minimum number of required governor.
+  error ErrBelowMinRequiredGovernors();
+  /// @notice Common invalid input error
+  error ErrInvalidInput();
+
   /**
    * @dev The domain separator used for computing hash digests in the contract.
    */
@@ -51,10 +62,7 @@ interface IBridgeManager is IBridgeManagerEvents {
    * ```
    *
    */
-  function getFullBridgeOperatorInfos()
-    external
-    view
-    returns (address[] memory governors, address[] memory bridgeOperators, uint96[] memory weights);
+  function getFullBridgeOperatorInfos() external view returns (address[] memory governors, address[] memory bridgeOperators, uint96[] memory weights);
 
   /**
    * @dev Returns total weights of the governor list.
@@ -73,19 +81,14 @@ interface IBridgeManager is IBridgeManagerEvents {
   function getBridgeOperators() external view returns (address[] memory);
 
   /**
-   * @dev Returns an array of bridge operators correspoding to governor addresses.
-   * @return bridgeOperators_ An array containing the addresses of all bridge operators.
+   * @dev Returns the corresponding `operator` of a `governor`.
    */
-  function getBridgeOperatorOf(address[] calldata gorvernors) external view returns (address[] memory bridgeOperators_);
+  function getOperatorOf(address governor) external view returns (address operator);
 
   /**
-   * @dev Retrieves the governors corresponding to a given array of bridge operators.
-   * This external function allows external callers to obtain the governors associated with a given array of bridge operators.
-   * The function takes an input array `bridgeOperators` containing bridge operator addresses and returns an array of corresponding governors.
-   * @param bridgeOperators An array of bridge operator addresses for which governors are to be retrieved.
-   * @return governors An array of addresses representing the governors corresponding to the provided bridge operators.
+   * @dev Returns the corresponding `governor` of a `operator`.
    */
-  function getGovernorsOf(address[] calldata bridgeOperators) external view returns (address[] memory governors);
+  function getGovernorOf(address operator) external view returns (address governor);
 
   /**
    * @dev External function to retrieve the vote weight of a specific governor.
@@ -116,62 +119,18 @@ interface IBridgeManager is IBridgeManagerEvents {
    * @dev Adds multiple bridge operators.
    * @param governors An array of addresses of hot/cold wallets for bridge operator to update their node address.
    * @param bridgeOperators An array of addresses representing the bridge operators to add.
-   * @return addeds An array of booleans indicating whether each bridge operator was added successfully.
-   *
-   * Note: return boolean array `addeds` indicates whether a group (voteWeight, governor, operator) are recorded.
-   * It is expected that FE/BE staticcall to the function first to get the return values and handle it correctly.
-   * Governors are expected to see the outcome of this function and decide if they want to vote for the proposal or not.
-   *
-   * Example Usage:
-   * Making an `eth_call` in ethers.js
-   * ```
-   * const {addeds} = await bridgeManagerContract.callStatic.addBridgeOperators(
-   *  voteWeights,
-   *  governors,
-   *  bridgeOperators,
-   *  // overriding the caller to the contract itself since we use `onlySelfCall` guard
-   *  {from: bridgeManagerContract.address}
-   * )
-   * const filteredOperators = bridgeOperators.filter((_, index) => addeds[index]);
-   * const filteredWeights = weights.filter((_, index) => addeds[index]);
-   * const filteredGovernors = governors.filter((_, index) => addeds[index]);
-   * // ... (Process or use the information as required) ...
-   * ```
    */
-  function addBridgeOperators(
-    uint96[] calldata voteWeights,
-    address[] calldata governors,
-    address[] calldata bridgeOperators
-  ) external returns (bool[] memory addeds);
+  function addBridgeOperators(uint96[] calldata voteWeights, address[] calldata governors, address[] calldata bridgeOperators) external;
 
   /**
    * @dev Removes multiple bridge operators.
    * @param bridgeOperators An array of addresses representing the bridge operators to remove.
-   * @return removeds An array of booleans indicating whether each bridge operator was removed successfully.
-   *
-   * * Note: return boolean array `removeds` indicates whether a group (voteWeight, governor, operator) are recorded.
-   * It is expected that FE/BE staticcall to the function first to get the return values and handle it correctly.
-   * Governors are expected to see the outcome of this function and decide if they want to vote for the proposal or not.
-   *
-   * Example Usage:
-   * Making an `eth_call` in ethers.js
-   * ```
-   * const {removeds} = await bridgeManagerContract.callStatic.removeBridgeOperators(
-   *  bridgeOperators,
-   *  // overriding the caller to the contract itself since we use `onlySelfCall` guard
-   *  {from: bridgeManagerContract.address}
-   * )
-   * const filteredOperators = bridgeOperators.filter((_, index) => removeds[index]);
-   * // ... (Process or use the information as required) ...
-   * ```
    */
-  function removeBridgeOperators(address[] calldata bridgeOperators) external returns (bool[] memory removeds);
+  function removeBridgeOperators(address[] calldata bridgeOperators) external;
 
   /**
-   * @dev Governor updates their corresponding governor and/or operator address.
-   * Requirements:
-   * - The caller must the governor of the operator that is requested changes.
-   * @param bridgeOperator The address of the bridge operator to update.
+   * @dev Self-call to update the minimum required governor.
+   * @param min The minimum number, this must not less than 3.
    */
-  function updateBridgeOperator(address bridgeOperator) external;
+  function setMinRequiredGovernor(uint min) external;
 }

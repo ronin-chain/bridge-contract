@@ -32,7 +32,7 @@ interface IMainchainGatewayV3 is SignatureConsumer, MappedTokenConsumer {
   /// @dev Emitted when the assets are withdrawn
   event Withdrew(bytes32 receiptHash, Transfer.Receipt receipt);
   /// @dev Emitted when the tokens are mapped
-  event TokenMapped(address[] mainchainTokens, address[] roninTokens, Token.Standard[] standards);
+  event TokenMapped(address[] mainchainTokens, address[] roninTokens, TokenStandard[] standards);
   /// @dev Emitted when the wrapped native token contract is updated
   event WrappedNativeTokenContractUpdated(IWETH weth);
   /// @dev Emitted when the withdrawal is locked
@@ -83,10 +83,7 @@ interface IMainchainGatewayV3 is SignatureConsumer, MappedTokenConsumer {
    * Emits the `Withdrew` once the assets are released.
    *
    */
-  function submitWithdrawal(
-    Transfer.Receipt memory _receipt,
-    Signature[] memory _signatures
-  ) external returns (bool _locked);
+  function submitWithdrawal(Transfer.Receipt memory _receipt, Signature[] memory _signatures) external returns (bool _locked);
 
   /**
    * @dev Approves a specific withdrawal.
@@ -109,11 +106,7 @@ interface IMainchainGatewayV3 is SignatureConsumer, MappedTokenConsumer {
    * Emits the `TokenMapped` event.
    *
    */
-  function mapTokens(
-    address[] calldata _mainchainTokens,
-    address[] calldata _roninTokens,
-    Token.Standard[] calldata _standards
-  ) external;
+  function mapTokens(address[] calldata _mainchainTokens, address[] calldata _roninTokens, TokenStandard[] calldata _standards) external;
 
   /**
    * @dev Maps mainchain tokens to Ronin network and sets thresholds.
@@ -128,7 +121,7 @@ interface IMainchainGatewayV3 is SignatureConsumer, MappedTokenConsumer {
   function mapTokensAndThresholds(
     address[] calldata _mainchainTokens,
     address[] calldata _roninTokens,
-    Token.Standard[] calldata _standards,
+    TokenStandard[] calldata _standards,
     uint256[][4] calldata _thresholds
   ) external;
 

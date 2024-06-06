@@ -3,9 +3,9 @@ pragma solidity ^0.8.19;
 
 import { console2 as console } from "forge-std/console2.sol";
 import { Base_Test } from "../../Base.t.sol";
-import { LibSharedAddress } from "foundry-deployment-kit/libraries/LibSharedAddress.sol";
+import { LibSharedAddress } from "@fdk/libraries/LibSharedAddress.sol";
 import { ISharedArgument } from "@ronin/script/interfaces/ISharedArgument.sol";
-import { IGeneralConfig } from "foundry-deployment-kit/interfaces/IGeneralConfig.sol";
+import { IGeneralConfig } from "@fdk/interfaces/IGeneralConfig.sol";
 import { GeneralConfig } from "@ronin/script/GeneralConfig.sol";
 import { Network } from "@ronin/script/utils/Network.sol";
 
@@ -15,25 +15,30 @@ import { BridgeTracking } from "@ronin/contracts/ronin/gateway/BridgeTracking.so
 import { BridgeSlash } from "@ronin/contracts/ronin/gateway/BridgeSlash.sol";
 import { BridgeReward } from "@ronin/contracts/ronin/gateway/BridgeReward.sol";
 import { MainchainGatewayV3 } from "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
+import { MainchainGatewayBatcher } from "@ronin/contracts/mainchain/MainchainGatewayBatcher.sol";
 import { MainchainBridgeManager } from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
+import { WethUnwrapper } from "@ronin/contracts/extensions/WethUnwrapper.sol";
 import { MockSLP } from "@ronin/contracts/mocks/token/MockSLP.sol";
 import { MockUSDC } from "@ronin/contracts/mocks/token/MockUSDC.sol";
 import { MockERC20 } from "@ronin/contracts/mocks/token/MockERC20.sol";
 import { MockERC721 } from "@ronin/contracts/mocks/token/MockERC721.sol";
+import { MockERC1155 } from "@ronin/contracts/mocks/token/MockERC1155.sol";
 
 import { MockWrappedToken } from "@ronin/contracts/mocks/token/MockWrappedToken.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
 import { Proposal } from "@ronin/contracts/libraries/Proposal.sol";
-import { Token } from "@ronin/contracts/libraries/Token.sol";
+import { LibTokenInfo, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { IWETH } from "@ronin/contracts/interfaces/IWETH.sol";
 import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/SignatureConsumer.sol";
 import { Ballot } from "@ronin/contracts/libraries/Ballot.sol";
+import { Transfer as LibTransfer } from "@ronin/contracts/libraries/Transfer.sol";
 import { GlobalCoreGovernance } from "@ronin/contracts/extensions/sequential-governance/GlobalCoreGovernance.sol";
+import { IBridgeManager } from "@ronin/contracts/interfaces/bridge/IBridgeManager.sol";
 import { IHasContracts } from "@ronin/contracts/interfaces/collections/IHasContracts.sol";
+import { IBridgeManagerCallbackRegister } from "@ronin/contracts/interfaces/bridge/IBridgeManagerCallbackRegister.sol";
 import { ContractType } from "@ronin/contracts/utils/ContractType.sol";
 import { TransparentUpgradeableProxyV2 } from "@ronin/contracts/extensions/TransparentUpgradeableProxyV2.sol";
-import { MockValidatorContract_OnlyTiming_ForHardhatTest } from
-  "@ronin/contracts/mocks/ronin/MockValidatorContract_OnlyTiming_ForHardhatTest.sol";
+import { MockValidatorContract_OnlyTiming_ForHardhatTest } from "@ronin/contracts/mocks/ronin/MockValidatorContract_OnlyTiming_ForHardhatTest.sol";
 import { PauseEnforcer } from "@ronin/contracts/ronin/gateway/PauseEnforcer.sol";
 import { IPauseTarget } from "@ronin/contracts/interfaces/IPauseTarget.sol";
 import { GatewayV3 } from "@ronin/contracts/extensions/GatewayV3.sol";
@@ -47,19 +52,36 @@ import { BridgeRewardDeploy } from "@ronin/script/contracts/BridgeRewardDeploy.s
 import { RoninPauseEnforcerDeploy } from "@ronin/script/contracts/RoninPauseEnforcerDeploy.s.sol";
 
 import { MainchainGatewayV3Deploy } from "@ronin/script/contracts/MainchainGatewayV3Deploy.s.sol";
+import { MainchainGatewayBatcherDeploy } from "@ronin/script/contracts/MainchainGatewayBatcherDeploy.s.sol";
 import { MainchainBridgeManagerDeploy } from "@ronin/script/contracts/MainchainBridgeManagerDeploy.s.sol";
 import { MainchainPauseEnforcerDeploy } from "@ronin/script/contracts/MainchainPauseEnforcerDeploy.s.sol";
+import { MainchainWethUnwrapperDeploy } from "@ronin/script/contracts/MainchainWethUnwrapperDeploy.s.sol";
 import { WETHDeploy } from "@ronin/script/contracts/token/WETHDeploy.s.sol";
 import { WRONDeploy } from "@ronin/script/contracts/token/WRONDeploy.s.sol";
 import { AXSDeploy } from "@ronin/script/contracts/token/AXSDeploy.s.sol";
 import { SLPDeploy } from "@ronin/script/contracts/token/SLPDeploy.s.sol";
 import { USDCDeploy } from "@ronin/script/contracts/token/USDCDeploy.s.sol";
 import { MockERC721Deploy } from "@ronin/script/contracts/token/MockERC721Deploy.s.sol";
+import { MockERC1155Deploy } from "@ronin/script/contracts/token/MockERC1155Deploy.s.sol";
 
 import { RoninBridgeAdminUtils } from "test/helpers/RoninBridgeAdminUtils.t.sol";
 import { MainchainBridgeAdminUtils } from "test/helpers/MainchainBridgeAdminUtils.t.sol";
 
+contract MockPoisonERC20 is MockERC20 {
+  constructor(string memory name_, string memory symbol_) MockERC20(name_, symbol_) { }
+
+  function setApprovalForAll(address spender, bool approved) public {
+    _approve(msg.sender, spender, approved ? type(uint256).max : 0);
+
+    emit Approval(msg.sender, spender, type(uint256).max);
+  }
+}
+
 contract BaseIntegration_Test is Base_Test {
+  using LibTransfer for LibTransfer.Receipt;
+
+  address sender;
+
   IGeneralConfig _config;
   ISharedArgument.SharedParameter _param;
 
@@ -72,7 +94,9 @@ contract BaseIntegration_Test is Base_Test {
 
   PauseEnforcer _mainchainPauseEnforcer;
   MainchainGatewayV3 _mainchainGatewayV3;
+  MainchainGatewayBatcher _mainchainGatewayBatcher;
   MainchainBridgeManager _mainchainBridgeManager;
+  WethUnwrapper _mainchainWethUnwrapper;
 
   MockWrappedToken _roninWeth;
   MockWrappedToken _roninWron;
@@ -80,17 +104,24 @@ contract BaseIntegration_Test is Base_Test {
   MockSLP _roninSlp;
   MockUSDC _roninUsdc;
   MockERC721 _roninMockERC721;
+  MockERC1155 _roninMockERC1155;
 
   MockWrappedToken _mainchainWeth;
   MockERC20 _mainchainAxs;
   MockSLP _mainchainSlp;
   MockUSDC _mainchainUsdc;
   MockERC721 _mainchainMockERC721;
+  MockERC1155 _mainchainMockERC1155;
 
   MockValidatorContract_OnlyTiming_ForHardhatTest _validatorSet;
 
   RoninBridgeAdminUtils _roninProposalUtils;
   MainchainBridgeAdminUtils _mainchainProposalUtils;
+
+  MockERC20 _mainchainMockERC20;
+  MockPoisonERC20 _mainchainMockPoisonERC20;
+  MockERC20 _roninMockERC20;
+  MockPoisonERC20 _roninMockPoisonERC20;
 
   function setUp() public virtual {
     _deployGeneralConfig();
@@ -108,6 +139,8 @@ contract BaseIntegration_Test is Base_Test {
     _configEmergencyPauserForMainchainGateway();
 
     _configBridgeTrackingForRoninGateway();
+
+    sender = makeAddr("sender");
   }
 
   function _deployContractsOnRonin() internal {
@@ -124,11 +157,12 @@ contract BaseIntegration_Test is Base_Test {
     _roninSlp = new SLPDeploy().run();
     _roninUsdc = new USDCDeploy().run();
     _roninMockERC721 = new MockERC721Deploy().run();
+    _roninMockERC1155 = new MockERC1155Deploy().run();
+    _roninMockERC20 = new MockERC20("MockERC20", "ME2");
+    _roninMockPoisonERC20 = new MockPoisonERC20("MockPoisonERC20", "MPE2");
 
     _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
-    _roninProposalUtils = new RoninBridgeAdminUtils(
-      block.chainid, _param.test.governorPKs, _roninBridgeManager, _param.roninBridgeManager.governors[0]
-    );
+    _roninProposalUtils = new RoninBridgeAdminUtils(block.chainid, _param.test.governorPKs, _roninBridgeManager, _param.roninBridgeManager.governors[0]);
     _validatorSet = new MockValidatorContract_OnlyTiming_ForHardhatTest(_param.test.numberOfBlocksInEpoch);
   }
 
@@ -142,11 +176,18 @@ contract BaseIntegration_Test is Base_Test {
     _mainchainSlp = new SLPDeploy().run();
     _mainchainUsdc = new USDCDeploy().run();
     _mainchainMockERC721 = new MockERC721Deploy().run();
+    _mainchainMockERC1155 = new MockERC1155Deploy().run();
+    _mainchainMockERC20 = new MockERC20("MockERC20", "ME2");
+    _mainchainMockPoisonERC20 = new MockPoisonERC20("MockPoisonERC20", "MPE2");
+
+    bytes memory args = abi.encode(_mainchainWeth);
+    _mainchainWethUnwrapper = new MainchainWethUnwrapperDeploy().runWithArgs(args);
 
     _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
-    _mainchainProposalUtils = new MainchainBridgeAdminUtils(
-      block.chainid, _param.test.governorPKs, _mainchainBridgeManager, _param.mainchainBridgeManager.governors[0]
-    );
+    _mainchainProposalUtils =
+      new MainchainBridgeAdminUtils(block.chainid, _param.test.governorPKs, _mainchainBridgeManager, _param.mainchainBridgeManager.governors[0]);
+
+    _mainchainGatewayBatcher = new MainchainGatewayBatcherDeploy().runWithArgs(abi.encodeCall(MainchainGatewayBatcher.initialize, (_mainchainGatewayV3)));
   }
 
   function _initializeRonin() internal {
@@ -178,12 +219,7 @@ contract BaseIntegration_Test is Base_Test {
     ISharedArgument.BridgeRewardParam memory param = _param.bridgeReward;
 
     _bridgeReward.initialize(
-      param.bridgeManagerContract,
-      param.bridgeTrackingContract,
-      param.bridgeSlashContract,
-      param.validatorSetContract,
-      param.dposGA,
-      param.rewardPerPeriod
+      param.bridgeManagerContract, param.bridgeTrackingContract, param.bridgeSlashContract, param.validatorSetContract, param.dposGA, param.rewardPerPeriod
     );
 
     vm.prank(_param.test.dposGA);
@@ -199,11 +235,11 @@ contract BaseIntegration_Test is Base_Test {
 
     _bridgeTracking.initialize(param.bridgeContract, param.validatorContract, param.startedAtBlock);
     // _bridgeTracking.initializeV2(); NOT INITIALIZE V2
-    _bridgeTracking.initializeV3(
-      address(_roninBridgeManager), address(_bridgeSlash), address(_bridgeReward), _param.test.dposGA
-    );
+    _bridgeTracking.initializeV3(address(_roninBridgeManager), address(_bridgeSlash), address(_bridgeReward), _param.test.dposGA);
     vm.prank(_param.test.dposGA);
     _bridgeTracking.initializeREP2();
+    // _bridgeTracking.initializeV2();
+    // _bridgeTracking.initializeV3(address(_roninBridgeManager), address(_bridgeSlash), address(_bridgeReward), _param.test.dposGA);
   }
 
   function _bridgeSlashInitialize() internal {
@@ -214,9 +250,7 @@ contract BaseIntegration_Test is Base_Test {
 
     ISharedArgument.BridgeSlashParam memory param = _param.bridgeSlash;
 
-    _bridgeSlash.initialize(
-      param.validatorContract, param.bridgeManagerContract, param.bridgeTrackingContract, param.dposGA
-    );
+    _bridgeSlash.initialize(param.validatorContract, param.bridgeManagerContract, param.bridgeTrackingContract, param.dposGA);
 
     vm.prank(_param.test.dposGA);
     _bridgeSlash.initializeREP2();
@@ -231,17 +265,14 @@ contract BaseIntegration_Test is Base_Test {
   }
 
   function _roninGatewayV3Initialize() internal {
-    (address[] memory mainchainTokens, address[] memory roninTokens) = _getMainchainAndRoninTokens();
+    (address[] memory mainchainTokens, address[] memory roninTokens, TokenStandard[] memory standards) = _getMainchainAndRoninTokens();
     uint256 tokenNum = mainchainTokens.length; // reserve slot for ERC721Tokens
     uint256[] memory minimumThreshold = new uint256[](tokenNum);
     uint256[] memory chainIds = new uint256[](tokenNum);
-    Token.Standard[] memory standards = new Token.Standard[](tokenNum);
-    for (uint256 i; i < tokenNum; i++) {
-      bool isERC721 = i == mainchainTokens.length - 1; // last item is ERC721
 
+    for (uint256 i; i < tokenNum; i++) {
       minimumThreshold[i] = 20;
       chainIds[i] = block.chainid;
-      standards[i] = isERC721 ? Token.Standard.ERC721 : Token.Standard.ERC20;
     }
 
     // Ronin Gateway V3
@@ -290,6 +321,7 @@ contract BaseIntegration_Test is Base_Test {
     _param.roninBridgeManager.callbackRegisters = wrapAddress(address(_bridgeSlash));
     _param.roninBridgeManager.targetOptions = options;
     _param.roninBridgeManager.targets = targets;
+    _param.roninBridgeManager.minRequiredGovernor = 3;
 
     ISharedArgument.BridgeManagerParam memory param = _param.roninBridgeManager;
     uint256 length = param.governors.length;
@@ -301,6 +333,7 @@ contract BaseIntegration_Test is Base_Test {
       // set targets
       GlobalProposal.GlobalProposalDetail memory globalProposal = _roninProposalUtils.createGlobalProposal({
         expiryTimestamp: block.timestamp + 10,
+        executor: address(0),
         targetOption: GlobalProposal.TargetOption.BridgeManager,
         value: 0,
         calldata_: abi.encodeCall(GlobalCoreGovernance.updateManyTargetOption, (param.targetOptions, param.targets)),
@@ -308,8 +341,7 @@ contract BaseIntegration_Test is Base_Test {
         nonce: _roninBridgeManager.round(0) + 1
       });
 
-      SignatureConsumer.Signature[] memory signatures =
-        _roninProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
+      SignatureConsumer.Signature[] memory signatures = _roninProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
 
       vm.prank(_param.roninBridgeManager.governors[0]);
       _roninBridgeManager.proposeGlobalProposalStructAndCastVotes(globalProposal, supports_, signatures);
@@ -318,6 +350,7 @@ contract BaseIntegration_Test is Base_Test {
       // set bridge contract
       GlobalProposal.GlobalProposalDetail memory globalProposal = _roninProposalUtils.createGlobalProposal({
         expiryTimestamp: block.timestamp + 10,
+        executor: address(0),
         targetOption: GlobalProposal.TargetOption.BridgeManager,
         value: 0,
         calldata_: abi.encodeCall(IHasContracts.setContract, (ContractType.BRIDGE, param.bridgeContract)),
@@ -325,8 +358,7 @@ contract BaseIntegration_Test is Base_Test {
         nonce: _roninBridgeManager.round(0) + 1
       });
 
-      SignatureConsumer.Signature[] memory signatures =
-        _roninProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
+      SignatureConsumer.Signature[] memory signatures = _roninProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
 
       vm.prank(_param.roninBridgeManager.governors[0]);
       _roninBridgeManager.proposeGlobalProposalStructAndCastVotes(globalProposal, supports_, signatures);
@@ -334,10 +366,10 @@ contract BaseIntegration_Test is Base_Test {
 
     {
       // set callback register
-      bytes memory calldata_ =
-        abi.encodeCall(IBridgeManagerCallbackRegister.registerCallbacks, (param.callbackRegisters));
+      bytes memory calldata_ = abi.encodeCall(IBridgeManagerCallbackRegister.registerCallbacks, (param.callbackRegisters));
       GlobalProposal.GlobalProposalDetail memory globalProposal = _roninProposalUtils.createGlobalProposal({
         expiryTimestamp: block.timestamp + 10,
+        executor: address(0),
         targetOption: GlobalProposal.TargetOption.BridgeManager,
         value: 0,
         calldata_: calldata_,
@@ -345,8 +377,25 @@ contract BaseIntegration_Test is Base_Test {
         nonce: _roninBridgeManager.round(0) + 1
       });
 
-      SignatureConsumer.Signature[] memory signatures =
-        _roninProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
+      SignatureConsumer.Signature[] memory signatures = _roninProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
+
+      vm.prank(_param.roninBridgeManager.governors[0]);
+      _roninBridgeManager.proposeGlobalProposalStructAndCastVotes(globalProposal, supports_, signatures);
+    }
+
+    {
+      // set min governors
+      GlobalProposal.GlobalProposalDetail memory globalProposal = _roninProposalUtils.createGlobalProposal({
+        expiryTimestamp: block.timestamp + 10,
+        executor: address(0),
+        targetOption: GlobalProposal.TargetOption.BridgeManager,
+        value: 0,
+        calldata_: abi.encodeCall(IBridgeManager.setMinRequiredGovernor, (_param.roninBridgeManager.minRequiredGovernor)),
+        gasAmount: 500_000,
+        nonce: _roninBridgeManager.round(0) + 1
+      });
+
+      SignatureConsumer.Signature[] memory signatures = _roninProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
 
       vm.prank(_param.roninBridgeManager.governors[0]);
       _roninBridgeManager.proposeGlobalProposalStructAndCastVotes(globalProposal, supports_, signatures);
@@ -365,6 +414,7 @@ contract BaseIntegration_Test is Base_Test {
     _param.mainchainBridgeManager.callbackRegisters = getEmptyAddressArray();
     _param.mainchainBridgeManager.targetOptions = options;
     _param.mainchainBridgeManager.targets = targets;
+    _param.mainchainBridgeManager.minRequiredGovernor = 3;
 
     ISharedArgument.BridgeManagerParam memory param = _param.mainchainBridgeManager;
     uint256 length = param.governors.length;
@@ -376,6 +426,7 @@ contract BaseIntegration_Test is Base_Test {
       // set targets
       GlobalProposal.GlobalProposalDetail memory globalProposal = _mainchainProposalUtils.createGlobalProposal({
         expiryTimestamp: block.timestamp + 10,
+        executor: address(0),
         targetOption: GlobalProposal.TargetOption.BridgeManager,
         value: 0,
         calldata_: abi.encodeCall(GlobalCoreGovernance.updateManyTargetOption, (param.targetOptions, param.targets)),
@@ -383,8 +434,7 @@ contract BaseIntegration_Test is Base_Test {
         nonce: _mainchainBridgeManager.round(0) + 1
       });
 
-      SignatureConsumer.Signature[] memory signatures =
-        _mainchainProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
+      SignatureConsumer.Signature[] memory signatures = _mainchainProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
 
       vm.prank(_param.roninBridgeManager.governors[0]);
       _mainchainBridgeManager.relayGlobalProposal(globalProposal, supports_, signatures);
@@ -393,6 +443,7 @@ contract BaseIntegration_Test is Base_Test {
       // set bridge contract
       GlobalProposal.GlobalProposalDetail memory globalProposal = _mainchainProposalUtils.createGlobalProposal({
         expiryTimestamp: block.timestamp + 10,
+        executor: address(0),
         targetOption: GlobalProposal.TargetOption.BridgeManager,
         value: 0,
         calldata_: abi.encodeCall(IHasContracts.setContract, (ContractType.BRIDGE, param.bridgeContract)),
@@ -400,8 +451,7 @@ contract BaseIntegration_Test is Base_Test {
         nonce: _mainchainBridgeManager.round(0) + 1
       });
 
-      SignatureConsumer.Signature[] memory signatures =
-        _mainchainProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
+      SignatureConsumer.Signature[] memory signatures = _mainchainProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
 
       vm.prank(_param.roninBridgeManager.governors[0]);
       _mainchainBridgeManager.relayGlobalProposal(globalProposal, supports_, signatures);
@@ -409,10 +459,10 @@ contract BaseIntegration_Test is Base_Test {
 
     {
       // set callback register
-      bytes memory calldata_ =
-        abi.encodeCall(IBridgeManagerCallbackRegister.registerCallbacks, (param.callbackRegisters));
+      bytes memory calldata_ = abi.encodeCall(IBridgeManagerCallbackRegister.registerCallbacks, (param.callbackRegisters));
       GlobalProposal.GlobalProposalDetail memory globalProposal = _mainchainProposalUtils.createGlobalProposal({
         expiryTimestamp: block.timestamp + 10,
+        executor: address(0),
         targetOption: GlobalProposal.TargetOption.BridgeManager,
         value: 0,
         calldata_: calldata_,
@@ -420,43 +470,77 @@ contract BaseIntegration_Test is Base_Test {
         nonce: _mainchainBridgeManager.round(0) + 1
       });
 
-      SignatureConsumer.Signature[] memory signatures =
-        _mainchainProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
+      SignatureConsumer.Signature[] memory signatures = _mainchainProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
+
+      vm.prank(_param.roninBridgeManager.governors[0]);
+      _mainchainBridgeManager.relayGlobalProposal(globalProposal, supports_, signatures);
+    }
+
+    {
+      // set min governors
+      GlobalProposal.GlobalProposalDetail memory globalProposal = _roninProposalUtils.createGlobalProposal({
+        expiryTimestamp: block.timestamp + 10,
+        executor: address(0),
+        targetOption: GlobalProposal.TargetOption.BridgeManager,
+        value: 0,
+        calldata_: abi.encodeCall(IBridgeManager.setMinRequiredGovernor, (_param.roninBridgeManager.minRequiredGovernor)),
+        gasAmount: 500_000,
+        nonce: _mainchainBridgeManager.round(0) + 1
+      });
+
+      SignatureConsumer.Signature[] memory signatures = _mainchainProposalUtils.generateSignaturesGlobal(globalProposal, _param.test.governorPKs);
 
       vm.prank(_param.roninBridgeManager.governors[0]);
       _mainchainBridgeManager.relayGlobalProposal(globalProposal, supports_, signatures);
     }
   }
 
+  function _mainchainBridgeManagerInitialize() internal {
+    ISharedArgument.BridgeManagerParam memory param = _param.mainchainBridgeManager;
+
+    _mainchainBridgeManager.initialize(
+      param.num,
+      param.denom,
+      param.roninChainId,
+      param.bridgeContract,
+      param.callbackRegisters,
+      param.bridgeOperators,
+      param.governors,
+      param.voteWeights,
+      param.targetOptions,
+      param.targets
+    );
+  }
+
   function _mainchainGatewayV3Initialize() internal {
-    (address[] memory mainchainTokens, address[] memory roninTokens) = _getMainchainAndRoninTokens();
+    (address[] memory mainchainTokens, address[] memory roninTokens, TokenStandard[] memory standards) = _getMainchainAndRoninTokens();
     uint256 tokenNum = mainchainTokens.length;
     uint256[] memory highTierThreshold = new uint256[](tokenNum);
     uint256[] memory lockedThreshold = new uint256[](tokenNum);
     uint256[] memory unlockFeePercentages = new uint256[](tokenNum);
     uint256[] memory dailyWithdrawalLimits = new uint256[](tokenNum);
-    Token.Standard[] memory standards = new Token.Standard[](tokenNum);
 
-    for (uint256 i; i < tokenNum; i++) {
-      bool isERC721 = i == mainchainTokens.length - 1; // last item is ERC721
+    highTierThreshold[0] = 10 ether;
+    lockedThreshold[0] = 20 ether;
+    unlockFeePercentages[0] = 10_0000; // 10%
+    dailyWithdrawalLimits[0] = 12 ether;
 
-      highTierThreshold[i] = 10;
-      lockedThreshold[i] = 20;
-      unlockFeePercentages[i] = 100_000;
-      dailyWithdrawalLimits[i] = 12;
-      standards[i] = isERC721 ? Token.Standard.ERC721 : Token.Standard.ERC20;
-    }
+    highTierThreshold[1] = highTierThreshold[2] = highTierThreshold[3] = 100_000_000;
+    lockedThreshold[1] = lockedThreshold[2] = lockedThreshold[3] = 200_000_000;
+    unlockFeePercentages[1] = unlockFeePercentages[2] = unlockFeePercentages[3] = 10_0000; // 10%
+    dailyWithdrawalLimits[1] = dailyWithdrawalLimits[2] = dailyWithdrawalLimits[3] = 120_000_000;
 
     // Mainchain Gateway V3
     _param.mainchainGatewayV3.wrappedToken = address(_mainchainWeth);
-    _param.mainchainGatewayV3.addresses[0] = mainchainTokens; // (ERC20 + ERC721)
-    _param.mainchainGatewayV3.addresses[1] = roninTokens; // (ERC20 + ERC721)
+    _param.mainchainGatewayV3.addresses[0] = mainchainTokens; // (ERC20 + ERC721 + ERC1155)
+    _param.mainchainGatewayV3.addresses[1] = roninTokens; // (ERC20 + ERC721 + ERC1155)
     _param.mainchainGatewayV3.addresses[2] = getEmptyAddressArray();
     _param.mainchainGatewayV3.thresholds[0] = highTierThreshold;
     _param.mainchainGatewayV3.thresholds[1] = lockedThreshold;
     _param.mainchainGatewayV3.thresholds[2] = unlockFeePercentages;
     _param.mainchainGatewayV3.thresholds[3] = dailyWithdrawalLimits;
     _param.mainchainGatewayV3.standards = standards;
+    _param.mainchainGatewayV3.wrappedToken = address(_mainchainWeth);
 
     ISharedArgument.MainchainGatewayV3Param memory param = _param.mainchainGatewayV3;
 
@@ -473,36 +557,52 @@ contract BaseIntegration_Test is Base_Test {
     );
 
     _mainchainGatewayV3.initializeV2(address(_mainchainBridgeManager));
+    _mainchainGatewayV3.initializeV3();
+    _mainchainGatewayV3.initializeV4(payable(address(_mainchainWethUnwrapper)));
   }
 
   function _mainchainPauseEnforcerInitialize() internal {
     _param.mainchainPauseEnforcer.target = address(_mainchainGatewayV3);
 
     ISharedArgument.PauseEnforcerParam memory param = _param.mainchainPauseEnforcer;
-
     _mainchainPauseEnforcer.initialize(IPauseTarget(param.target), param.admin, param.sentries);
   }
 
   function _getMainchainAndRoninTokens()
     internal
     view
-    returns (address[] memory mainchainTokens, address[] memory roninTokens)
+    returns (address[] memory mainchainTokens, address[] memory roninTokens, TokenStandard[] memory standards)
   {
-    uint256 tokenNum = 5;
+    uint256 tokenNum = 8;
     mainchainTokens = new address[](tokenNum);
     roninTokens = new address[](tokenNum);
+    standards = new TokenStandard[](tokenNum);
 
     mainchainTokens[0] = address(_mainchainWeth);
     mainchainTokens[1] = address(_mainchainAxs);
     mainchainTokens[2] = address(_mainchainSlp);
     mainchainTokens[3] = address(_mainchainUsdc);
     mainchainTokens[4] = address(_mainchainMockERC721);
+    mainchainTokens[5] = address(_mainchainMockERC1155);
+    mainchainTokens[6] = address(_mainchainMockERC20);
+    mainchainTokens[7] = address(_mainchainMockPoisonERC20);
 
     roninTokens[0] = address(_roninWeth);
     roninTokens[1] = address(_roninAxs);
     roninTokens[2] = address(_roninSlp);
     roninTokens[3] = address(_roninUsdc);
     roninTokens[4] = address(_roninMockERC721);
+    roninTokens[5] = address(_roninMockERC1155);
+    roninTokens[6] = address(_roninMockERC20);
+    roninTokens[7] = address(_roninMockPoisonERC20);
+
+    standards[0] = TokenStandard.ERC20;
+    standards[1] = TokenStandard.ERC20;
+    standards[2] = TokenStandard.ERC20;
+    standards[3] = TokenStandard.ERC20;
+    standards[4] = TokenStandard.ERC721;
+    standards[5] = TokenStandard.ERC1155;
+    standards[6] = TokenStandard.ERC20;
   }
 
   function _changeAdminOnRonin() internal {
@@ -531,8 +631,7 @@ contract BaseIntegration_Test is Base_Test {
   }
 
   function _configBridgeTrackingForRoninGateway() internal {
-    bytes memory calldata_ =
-      abi.encodeCall(IHasContracts.setContract, (ContractType.BRIDGE_TRACKING, address(_bridgeTracking)));
+    bytes memory calldata_ = abi.encodeCall(IHasContracts.setContract, (ContractType.BRIDGE_TRACKING, address(_bridgeTracking)));
     _roninProposalUtils.functionDelegateCall(address(_roninGatewayV3), calldata_);
   }
 
@@ -557,9 +656,7 @@ contract BaseIntegration_Test is Base_Test {
     _wrapUpEpoch();
     uint256 afterPeriod = _validatorSet.currentPeriod();
 
-    console.log(
-      " -> period changes: ", string(abi.encodePacked(vm.toString(prevPeriod), " => ", vm.toString(afterPeriod)))
-    );
+    console.log(" -> period changes: ", string(abi.encodePacked(vm.toString(prevPeriod), " => ", vm.toString(afterPeriod))));
   }
 
   function _wrapUpEpoch() internal {
@@ -570,9 +667,7 @@ contract BaseIntegration_Test is Base_Test {
     vm.roll(block.number + _validatorSet.numberOfBlocksInEpoch());
 
     uint256 afterEpoch = _validatorSet.epochOf(block.number);
-    console.log(
-      " -> epoch changes: ", string(abi.encodePacked(vm.toString(prevEpoch), " => ", vm.toString(afterEpoch)))
-    );
+    console.log(" -> epoch changes: ", string(abi.encodePacked(vm.toString(prevEpoch), " => ", vm.toString(afterEpoch))));
   }
 
   function _fastForwardToNextDay() internal {
@@ -584,5 +679,56 @@ contract BaseIntegration_Test is Base_Test {
     // fast forward to next day
     vm.warp(nextDayTimestamp);
     vm.roll(epochEndingBlockNumber);
+  }
+
+  function _generateSignaturesFor(
+    LibTransfer.Receipt memory receipt,
+    uint256[] memory signerPKs,
+    bytes32 domainSeparator
+  ) internal pure returns (SignatureConsumer.Signature[] memory sigs) {
+    sigs = new SignatureConsumer.Signature[](signerPKs.length);
+
+    for (uint256 i; i < signerPKs.length; i++) {
+      bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, receipt.hash()));
+
+      sigs[i] = _sign(signerPKs[i], digest);
+    }
+  }
+
+  function _sign(uint256 pk, bytes32 digest) internal pure returns (SignatureConsumer.Signature memory sig) {
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk, digest);
+    sig.v = v;
+    sig.r = r;
+    sig.s = s;
+  }
+
+  function logBridgeTracking() public view {
+    console.log(">> logBridgeTracking ....");
+    uint256 currentPeriod = _validatorSet.currentPeriod();
+    uint256 lastSyncedPeriod = uint256(vm.load(address(_bridgeTracking), bytes32(uint256(11))));
+    console.log(" -> current period:", currentPeriod);
+    console.log("  -> total votes:", _bridgeTracking.totalVote(currentPeriod));
+    console.log("  -> total ballot:", _bridgeTracking.totalBallot(currentPeriod));
+    for (uint256 i; i < _param.roninBridgeManager.bridgeOperators.length; i++) {
+      address operator = _param.roninBridgeManager.bridgeOperators[i];
+      console.log("  -> total ballot of:", operator, _bridgeTracking.totalBallotOf(currentPeriod, operator));
+    }
+
+    console.log(" -> lastSynced period:", lastSyncedPeriod);
+    console.log("  -> total votes:", _bridgeTracking.totalVote(lastSyncedPeriod));
+    console.log("  -> total ballot:", _bridgeTracking.totalBallot(lastSyncedPeriod));
+    for (uint256 i; i < _param.roninBridgeManager.bridgeOperators.length; i++) {
+      address operator = _param.roninBridgeManager.bridgeOperators[i];
+      console.log("  -> total ballot of:", operator, _bridgeTracking.totalBallotOf(lastSyncedPeriod, operator));
+    }
+  }
+
+  function logBridgeSlash() public view {
+    console.log(">> logBridgeSlash ....");
+
+    uint256[] memory periods = _bridgeSlash.getSlashUntilPeriodOf(_param.roninBridgeManager.bridgeOperators);
+    for (uint256 i; i < _param.roninBridgeManager.bridgeOperators.length; i++) {
+      console.log(" -> slash operator until:", _param.roninBridgeManager.bridgeOperators[i], periods[i]);
+    }
   }
 }

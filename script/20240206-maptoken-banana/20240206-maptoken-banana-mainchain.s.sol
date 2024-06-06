@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {console2} from "forge-std/console2.sol";
-import {StdStyle} from "forge-std/StdStyle.sol";
-import {BaseMigration} from "foundry-deployment-kit/BaseMigration.s.sol";
-import {RoninBridgeManager} from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
-import {IMainchainGatewayV3} from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
-import {GlobalProposal} from "@ronin/contracts/libraries/GlobalProposal.sol";
-import {Token} from "@ronin/contracts/libraries/Token.sol";
-import {Contract} from "../utils/Contract.sol";
-import {BridgeMigration} from "../BridgeMigration.sol";
-import {Network} from "../utils/Network.sol";
-import {DefaultNetwork} from "foundry-deployment-kit/utils/DefaultNetwork.sol";
-import {Contract} from "../utils/Contract.sol";
-import {IGeneralConfigExtended} from "../IGeneralConfigExtended.sol";
+import { console2 } from "forge-std/console2.sol";
+import { StdStyle } from "forge-std/StdStyle.sol";
+import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
+import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
+import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
+import { LibTokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
+import { Contract } from "../utils/Contract.sol";
+import { Migration } from "../Migration.s.sol";
+import { TNetwork, Network } from "../utils/Network.sol";
+import { LibProposal } from "script/shared/libraries/LibProposal.sol";
+import { LibCompanionNetwork } from "script/shared/libraries/LibCompanionNetwork.sol";
+import { DefaultNetwork } from "@fdk/utils/DefaultNetwork.sol";
+import { Contract } from "../utils/Contract.sol";
 
 import "./maptoken-banana-configs.s.sol";
 import "./maptoken-genkai-configs.s.sol";
@@ -21,29 +21,30 @@ import "./maptoken-vx-configs.s.sol";
 import "./changeGV-stablenode-config.s.sol";
 
 contract Migration__20240206_MapTokenBananaMainchain is
-  BridgeMigration,
+  Migration,
   Migration__MapToken_Banana_Config,
   Migration__MapToken_Vx_Config,
   Migration__MapToken_Genkai_Config,
   Migration__ChangeGV_StableNode_Config
 {
+  using LibCompanionNetwork for *;
+
   RoninBridgeManager internal _roninBridgeManager;
   address internal _mainchainGatewayV3;
   address internal _mainchainBridgeManager;
 
-  function setUp() public override {
+  function setUp() public virtual override {
     super.setUp();
 
-    _roninBridgeManager = RoninBridgeManager(_config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
-    _mainchainGatewayV3 = _config.getAddress(_config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).key(), Contract.MainchainGatewayV3.key());
-    _mainchainBridgeManager =
-      _config.getAddress(_config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).key(), Contract.MainchainBridgeManager.key());
+    _roninBridgeManager = RoninBridgeManager(config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
+    _mainchainGatewayV3 = config.getAddress(config.getCompanionNetwork(network()), Contract.MainchainGatewayV3.key());
+    _mainchainBridgeManager = config.getAddress(config.getCompanionNetwork(network()), Contract.MainchainBridgeManager.key());
   }
 
   function run() public onlyOn(DefaultNetwork.RoninMainnet.key()) {
     address[] memory mainchainTokens = new address[](1);
     address[] memory roninTokens = new address[](1);
-    Token.Standard[] memory standards = new Token.Standard[](1);
+    TokenStandard[] memory standards = new TokenStandard[](1);
     uint256[][4] memory thresholds;
 
     uint256 expiredTime = block.timestamp + 10 days;
@@ -56,7 +57,7 @@ contract Migration__20240206_MapTokenBananaMainchain is
 
     mainchainTokens[0] = _bananaMainchainToken;
     roninTokens[0] = _bananaRoninToken;
-    standards[0] = Token.Standard.ERC20;
+    standards[0] = TokenStandard.ERC20;
     // highTierThreshold
     thresholds[0] = new uint256[](1);
     thresholds[0][0] = _highTierThreshold;
@@ -73,7 +74,7 @@ contract Migration__20240206_MapTokenBananaMainchain is
     // function mapTokens(
     //   address[] calldata _mainchainTokens,
     //   address[] calldata _roninTokens,
-    //   Token.Standard[] calldata _standards
+    //   TokenStandard[] calldata _standards
     // )
 
     bytes memory innerData = abi.encodeCall(IMainchainGatewayV3.mapTokensAndThresholds, (mainchainTokens, roninTokens, standards, thresholds));
@@ -89,12 +90,12 @@ contract Migration__20240206_MapTokenBananaMainchain is
 
     mainchainTokens[0] = _genkaiMainchainToken;
     roninTokens[0] = _genkaiRoninToken;
-    standards[0] = Token.Standard.ERC721;
+    standards[0] = TokenStandard.ERC721;
 
     // function mapTokens(
     //   address[] calldata _mainchainTokens,
     //   address[] calldata _roninTokens,
-    //   Token.Standard[] calldata _standards
+    //   TokenStandard[] calldata _standards
     // ) external;
 
     innerData = abi.encodeCall(IMainchainGatewayV3.mapTokens, (mainchainTokens, roninTokens, standards));
@@ -110,12 +111,12 @@ contract Migration__20240206_MapTokenBananaMainchain is
 
     mainchainTokens[0] = _VxMainchainToken;
     roninTokens[0] = _VxRoninToken;
-    standards[0] = Token.Standard.ERC721;
+    standards[0] = TokenStandard.ERC721;
 
     // function mapTokens(
     //   address[] calldata _mainchainTokens,
     //   address[] calldata _roninTokens,
-    //   Token.Standard[] calldata _standards
+    //   TokenStandard[] calldata _standards
     // ) external;
 
     innerData = abi.encodeCall(IMainchainGatewayV3.mapTokens, (mainchainTokens, roninTokens, standards));
@@ -140,13 +141,13 @@ contract Migration__20240206_MapTokenBananaMainchain is
 
     // ================ VERIFY AND EXECUTE PROPOSAL ===============
 
-    _verifyMainchainProposalGasAmount(targets, values, calldatas, gasAmounts);
-
-    uint256 chainId = _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).chainId();
+    (uint256 companionChainId, TNetwork companionNetwork) = network().companionNetworkData();
+    address companionManager = config.getAddress(companionNetwork, Contract.MainchainBridgeManager.key());
+    LibProposal.verifyMainchainProposalGasAmount(companionNetwork, companionManager, targets, values, calldatas, gasAmounts);
 
     console2.log("Nonce:", vm.getNonce(_governor));
     vm.broadcast(_governor);
-    _roninBridgeManager.propose(chainId, expiredTime, targets, values, calldatas, gasAmounts);
+    _roninBridgeManager.propose(companionChainId, expiredTime, address(0), targets, values, calldatas, gasAmounts);
   }
 }
 

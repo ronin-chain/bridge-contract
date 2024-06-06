@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { IGeneralConfig } from "foundry-deployment-kit/interfaces/IGeneralConfig.sol";
+import { IGeneralConfigExtended } from "./IGeneralConfigExtended.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
-import { Token } from "@ronin/contracts/libraries/Token.sol";
+import { LibTokenInfo, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 
-interface ISharedArgument is IGeneralConfig {
+interface ISharedArgument is IGeneralConfigExtended {
   struct BridgeManagerParam {
     uint256 num;
     uint256 denom;
@@ -18,6 +18,7 @@ interface ISharedArgument is IGeneralConfig {
     uint96[] voteWeights;
     GlobalProposal.TargetOption[] targetOptions;
     address[] targets;
+    uint256 minRequiredGovernor;
   }
 
   struct MainchainGatewayV3Param {
@@ -36,7 +37,7 @@ interface ISharedArgument is IGeneralConfig {
     // thresholds[2]: unlockFeePercentages
     // thresholds[3]: dailyWithdrawalLimit
     uint256[][4] thresholds;
-    Token.Standard[] standards;
+    TokenStandard[] standards;
   }
 
   struct RoninGatewayV3Param {
@@ -52,7 +53,7 @@ interface ISharedArgument is IGeneralConfig {
     // packedNumbers[0]: chainIds
     // packedNumbers[1]: minimumThresholds
     uint256[][2] packedNumbers;
-    Token.Standard[] standards;
+    TokenStandard[] standards;
   }
 
   struct BridgeSlashParam {
@@ -98,6 +99,10 @@ interface ISharedArgument is IGeneralConfig {
     string symbol;
   }
 
+  struct MockERC1155Param {
+    string uri;
+  }
+
   struct UnitTestParam {
     address proxyAdmin;
     uint256 numberOfBlocksInEpoch;
@@ -106,11 +111,17 @@ interface ISharedArgument is IGeneralConfig {
     uint256[] governorPKs;
   }
 
+  struct WethUnwrapperParam {
+    address weth;
+    address owner;
+  }
+
   struct SharedParameter {
     // mainchain
     BridgeManagerParam mainchainBridgeManager;
     MainchainGatewayV3Param mainchainGatewayV3;
     PauseEnforcerParam mainchainPauseEnforcer;
+    WethUnwrapperParam mainchainWethUnwrapper;
     // ronin
     BridgeManagerParam roninBridgeManager;
     RoninGatewayV3Param roninGatewayV3;
@@ -125,6 +136,7 @@ interface ISharedArgument is IGeneralConfig {
     MockERC20Param slp;
     MockERC20Param usdc;
     MockERC721Param mockErc721;
+    MockERC1155Param mockErc1155;
     UnitTestParam test;
   }
 

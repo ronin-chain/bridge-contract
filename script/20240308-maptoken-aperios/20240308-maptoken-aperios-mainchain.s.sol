@@ -9,11 +9,7 @@ contract Migration__20240308_MapTokenAperiosMainchain is Base__MapToken, Factory
     return Base__MapToken._initCaller();
   }
 
-  function _initTokenList()
-    internal
-    override(Base__MapToken, Factory__MapTokensMainchain)
-    returns (uint256 totalToken, MapTokenInfo[] memory infos)
-  {
+  function _initTokenList() internal override(Base__MapToken, Factory__MapTokensMainchain) returns (uint256 totalToken, MapTokenInfo[] memory infos) {
     return Base__MapToken._initTokenList();
   }
 

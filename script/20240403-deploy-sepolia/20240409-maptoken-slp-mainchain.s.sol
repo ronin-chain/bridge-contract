@@ -3,15 +3,14 @@ pragma solidity ^0.8.19;
 
 import { console2 } from "forge-std/console2.sol";
 import { StdStyle } from "forge-std/StdStyle.sol";
-import { BaseMigration } from "foundry-deployment-kit/BaseMigration.s.sol";
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
-import { Token } from "@ronin/contracts/libraries/Token.sol";
+import { LibTokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { Contract } from "../utils/Contract.sol";
 import { Network } from "../utils/Network.sol";
 import { Contract } from "../utils/Contract.sol";
-import { IGeneralConfigExtended } from "../IGeneralConfigExtended.sol";
+import { IGeneralConfigExtended } from "../interfaces/IGeneralConfigExtended.sol";
 import "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
 import "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
 import "@ronin/contracts/libraries/Proposal.sol";
@@ -22,9 +21,9 @@ import { SLPDeploy } from "@ronin/script/contracts/token/SLPDeploy.s.sol";
 import { MainchainBridgeAdminUtils } from "test/helpers/MainchainBridgeAdminUtils.t.sol";
 
 import "./maptoken-slp-configs.s.sol";
-import "../BridgeMigration.sol";
+import "../Migration.s.sol";
 
-contract Migration__20240409_MapTokenSlpMainchain is BridgeMigration, Migration__MapToken_Slp_Config {
+contract Migration__20240409_MapTokenSlpMainchain is Migration, Migration__MapToken_Slp_Config {
   address internal _mainchainPauseEnforcer;
   address internal _mainchainGatewayV3;
   address internal _mainchainBridgeManager;
@@ -42,7 +41,7 @@ contract Migration__20240409_MapTokenSlpMainchain is BridgeMigration, Migration_
   function run() public {
     address[] memory mainchainTokens = new address[](1);
     address[] memory roninTokens = new address[](1);
-    Token.Standard[] memory standards = new Token.Standard[](1);
+    TokenStandard[] memory standards = new TokenStandard[](1);
     uint256[][4] memory thresholds;
     thresholds[0] = new uint256[](1);
     thresholds[1] = new uint256[](1);
@@ -64,31 +63,21 @@ contract Migration__20240409_MapTokenSlpMainchain is BridgeMigration, Migration_
 
     mainchainTokens[0] = address(_mainchainSlp);
     roninTokens[0] = _slpRoninToken;
-    standards[0] = Token.Standard.ERC20;
+    standards[0] = TokenStandard.ERC20;
     thresholds[0][0] = _highTierThreshold;
     thresholds[1][0] = _lockedThreshold;
     thresholds[2][0] = _unlockFeePercentages;
     thresholds[3][0] = _dailyWithdrawalLimit;
 
-    bytes memory innerData = abi.encodeCall(IMainchainGatewayV3.mapTokensAndThresholds, (
-      mainchainTokens,
-      roninTokens,
-      standards,
-      thresholds
-    ));
+    bytes memory innerData = abi.encodeCall(IMainchainGatewayV3.mapTokensAndThresholds, (mainchainTokens, roninTokens, standards, thresholds));
 
     vm.startBroadcast(0x968D0Cd7343f711216817E617d3f92a23dC91c07);
-    address(_mainchainGatewayV3).call(abi.encodeWithSignature("functionDelegateCall(bytes)",innerData));
+    address(_mainchainGatewayV3).call(abi.encodeWithSignature("functionDelegateCall(bytes)", innerData));
 
     _mainchainSlp.mint(address(_mainchainGatewayV3), 50_000_000);
     _mainchainSlp.mint(address(0xC65C6BEA96666f150BEF9b936630f6355BfFCC06), 100_000);
 
     return;
-
-
-
-
-
 
     // bytes memory proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
 

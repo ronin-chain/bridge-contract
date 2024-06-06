@@ -13,7 +13,7 @@ import "../utils/CommonErrors.sol";
 contract MainchainBridgeManager is BridgeManager, GovernanceRelay, GlobalGovernanceRelay {
   uint256 private constant DEFAULT_EXPIRY_DURATION = 1 << 255;
 
-  constructor(
+  function initialize(
     uint256 num,
     uint256 denom,
     uint256 roninChainId,
@@ -24,12 +24,11 @@ contract MainchainBridgeManager is BridgeManager, GovernanceRelay, GlobalGoverna
     uint96[] memory voteWeights,
     GlobalProposal.TargetOption[] memory targetOptions,
     address[] memory targets
-  )
-    payable
-    CoreGovernance(DEFAULT_EXPIRY_DURATION)
-    GlobalCoreGovernance(targetOptions, targets)
-    BridgeManager(num, denom, roninChainId, bridgeContract, callbackRegisters, bridgeOperators, governors, voteWeights)
-  {}
+  ) external initializer {
+    __CoreGovernance_init(DEFAULT_EXPIRY_DURATION);
+    __GlobalCoreGovernance_init(targetOptions, targets);
+    __BridgeManager_init(num, denom, roninChainId, bridgeContract, callbackRegisters, bridgeOperators, governors, voteWeights);
+  }
 
   /**
    * @dev See `GovernanceRelay-_relayProposal`.
@@ -42,7 +41,8 @@ contract MainchainBridgeManager is BridgeManager, GovernanceRelay, GlobalGoverna
     Ballot.VoteType[] calldata supports_,
     Signature[] calldata signatures
   ) external onlyGovernor {
-    _relayProposal(proposal, supports_, signatures, DOMAIN_SEPARATOR, msg.sender);
+    _requireExecutor(proposal.executor, msg.sender);
+    _relayProposal(proposal, supports_, signatures, msg.sender);
   }
 
   /**
@@ -56,13 +56,14 @@ contract MainchainBridgeManager is BridgeManager, GovernanceRelay, GlobalGoverna
     Ballot.VoteType[] calldata supports_,
     Signature[] calldata signatures
   ) external onlyGovernor {
-    _relayGlobalProposal({
-      globalProposal: globalProposal,
-      supports_: supports_,
-      signatures: signatures,
-      domainSeparator: DOMAIN_SEPARATOR,
-      creator: msg.sender
-    });
+    _requireExecutor(globalProposal.executor, msg.sender);
+    _relayGlobalProposal({ globalProposal: globalProposal, supports_: supports_, signatures: signatures, creator: msg.sender });
+  }
+
+  function _requireExecutor(address executor, address caller) internal pure {
+    if (executor != address(0) && caller != executor) {
+      revert ErrNonExecutorCannotRelay(executor, caller);
+    }
   }
 
   /**
@@ -77,7 +78,7 @@ contract MainchainBridgeManager is BridgeManager, GovernanceRelay, GlobalGoverna
    * @dev Returns the expiry duration for a new proposal.
    */
   function getProposalExpiryDuration() external view returns (uint256) {
-    return _getProposalExpiryDuration();
+    return _proposalExpiryDuration;
   }
 
   /**
@@ -103,5 +104,9 @@ contract MainchainBridgeManager is BridgeManager, GovernanceRelay, GlobalGoverna
    */
   function _getChainType() internal pure override returns (ChainType) {
     return ChainType.Mainchain;
+  }
+
+  function _proposalDomainSeparator() internal view override returns (bytes32) {
+    return DOMAIN_SEPARATOR;
   }
 }

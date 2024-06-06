@@ -14,10 +14,7 @@ interface IBridgeManagerCallback is IERC165 {
    * @param addeds The corresponding boolean values indicating whether the operators were added or not.
    * @return selector The selector of the function being called.
    */
-  function onBridgeOperatorsAdded(
-    address[] memory bridgeOperators,
-    bool[] memory addeds
-  ) external returns (bytes4 selector);
+  function onBridgeOperatorsAdded(address[] memory bridgeOperators, uint96[] calldata weights, bool[] memory addeds) external returns (bytes4 selector);
 
   /**
    * @dev Handles the event when bridge operators are removed.
@@ -25,19 +22,5 @@ interface IBridgeManagerCallback is IERC165 {
    * @param removeds The corresponding boolean values indicating whether the operators were removed or not.
    * @return selector The selector of the function being called.
    */
-  function onBridgeOperatorsRemoved(
-    address[] memory bridgeOperators,
-    bool[] memory removeds
-  ) external returns (bytes4 selector);
-
-  /**
-   * @dev Handles the event when a bridge operator is updated.
-   * @param currentBridgeOperator The address of the current bridge operator.
-   * @param newbridgeOperator The new address of the bridge operator.
-   * @return selector The selector of the function being called.
-   */
-  function onBridgeOperatorUpdated(
-    address currentBridgeOperator,
-    address newbridgeOperator
-  ) external returns (bytes4 selector);
+  function onBridgeOperatorsRemoved(address[] memory bridgeOperators, bool[] memory removeds) external returns (bytes4 selector);
 }

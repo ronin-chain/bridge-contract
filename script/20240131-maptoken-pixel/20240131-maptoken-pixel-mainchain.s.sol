@@ -3,21 +3,25 @@ pragma solidity ^0.8.19;
 
 import { console2 } from "forge-std/console2.sol";
 import { StdStyle } from "forge-std/StdStyle.sol";
-import { BaseMigration } from "foundry-deployment-kit/BaseMigration.s.sol";
+import { BaseMigration } from "@fdk/BaseMigration.s.sol";
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
-import { Token } from "@ronin/contracts/libraries/Token.sol";
+import { LibTokenInfo, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { Contract } from "../utils/Contract.sol";
-import { BridgeMigration } from "../BridgeMigration.sol";
-import { Network } from "../utils/Network.sol";
+import { Migration } from "../Migration.s.sol";
+import { LibCompanionNetwork } from "script/shared/libraries/LibCompanionNetwork.sol";
+import { TNetwork, Network } from "../utils/Network.sol";
+import { LibProposal } from "script/shared/libraries/LibProposal.sol";
 import { Contract } from "../utils/Contract.sol";
-import { IGeneralConfigExtended } from "../IGeneralConfigExtended.sol";
 
 import "./maptoken-pixel-configs.s.sol";
 import "./update-axiechat-config.s.sol";
 
-contract Migration__20240131_MapTokenPixelMainchain is BridgeMigration, Migration__MapToken_Pixel_Config, Migration__Update_AxieChat_Config {
+contract Migration__20240131_MapTokenPixelMainchain is Migration, Migration__MapToken_Pixel_Config, Migration__Update_AxieChat_Config {
+  using LibProposal for *;
+  using LibCompanionNetwork for *;
+
   RoninBridgeManager internal _roninBridgeManager;
   address internal _mainchainGatewayV3;
   address internal _mainchainBridgeManager;
@@ -25,21 +29,15 @@ contract Migration__20240131_MapTokenPixelMainchain is BridgeMigration, Migratio
   function setUp() public override {
     super.setUp();
 
-    _roninBridgeManager = RoninBridgeManager(_config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
-    _mainchainGatewayV3 = _config.getAddress(
-      _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).key(),
-      Contract.MainchainGatewayV3.key()
-    );
-    _mainchainBridgeManager = _config.getAddress(
-      _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).key(),
-      Contract.MainchainBridgeManager.key()
-    );
+    _roninBridgeManager = RoninBridgeManager(loadContract(Contract.RoninBridgeManager.key()));
+    _mainchainGatewayV3 = config.getAddress(config.getCompanionNetwork(network()), Contract.MainchainGatewayV3.key());
+    _mainchainBridgeManager = config.getAddress(config.getCompanionNetwork(network()), Contract.MainchainBridgeManager.key());
   }
 
   function run() public {
     address[] memory mainchainTokens = new address[](1);
     address[] memory roninTokens = new address[](1);
-    Token.Standard[] memory standards = new Token.Standard[](1);
+    TokenStandard[] memory standards = new TokenStandard[](1);
     uint256[][4] memory thresholds;
 
     uint256 expiredTime = block.timestamp + 10 days;
@@ -52,7 +50,7 @@ contract Migration__20240131_MapTokenPixelMainchain is BridgeMigration, Migratio
 
     mainchainTokens[0] = _pixelMainchainToken;
     roninTokens[0] = _pixelRoninToken;
-    standards[0] = Token.Standard.ERC20;
+    standards[0] = TokenStandard.ERC20;
     // highTierThreshold
     thresholds[0] = new uint256[](1);
     thresholds[0][0] = _highTierThreshold;
@@ -69,16 +67,11 @@ contract Migration__20240131_MapTokenPixelMainchain is BridgeMigration, Migratio
     // function mapTokensAndThresholds(
     //   address[] calldata _mainchainTokens,
     //   address[] calldata _roninTokens,
-    //   Token.Standard[] calldata _standards,
+    //   TokenStandard[] calldata _standards,
     //   uint256[][4] calldata _thresholds
     // )
 
-    bytes memory innerData = abi.encodeCall(IMainchainGatewayV3.mapTokensAndThresholds, (
-      mainchainTokens,
-      roninTokens,
-      standards,
-      thresholds
-    ));
+    bytes memory innerData = abi.encodeCall(IMainchainGatewayV3.mapTokensAndThresholds, (mainchainTokens, roninTokens, standards, thresholds));
 
     bytes memory proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
 
@@ -91,19 +84,15 @@ contract Migration__20240131_MapTokenPixelMainchain is BridgeMigration, Migratio
 
     mainchainTokens[0] = _farmlandMainchainToken;
     roninTokens[0] = _farmlandRoninToken;
-    standards[0] = Token.Standard.ERC721;
+    standards[0] = TokenStandard.ERC721;
 
     // function mapTokens(
     //   address[] calldata _mainchainTokens,
     //   address[] calldata _roninTokens,
-    //   Token.Standard[] calldata _standards
+    //   TokenStandard[] calldata _standards
     // ) external;
 
-    innerData = abi.encodeCall(IMainchainGatewayV3.mapTokens, (
-      mainchainTokens,
-      roninTokens,
-      standards
-    ));
+    innerData = abi.encodeCall(IMainchainGatewayV3.mapTokens, (mainchainTokens, roninTokens, standards));
 
     proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
 
@@ -125,18 +114,11 @@ contract Migration__20240131_MapTokenPixelMainchain is BridgeMigration, Migratio
 
     // ================ VERIFY AND EXECUTE PROPOSAL ===============
 
-    _verifyMainchainProposalGasAmount(targets, values, calldatas, gasAmounts);
-
-    uint256 chainId = _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).chainId();
+    (uint256 companionChainId, TNetwork companionNetwork) = network().companionNetworkData();
+    address companionManager = config.getAddress(companionNetwork, Contract.MainchainBridgeManager.key());
+    LibProposal.verifyMainchainProposalGasAmount(companionNetwork, companionManager, targets, values, calldatas, gasAmounts);
 
     vm.broadcast(_governor);
-    _roninBridgeManager.propose(
-      chainId,
-      expiredTime,
-      targets,
-      values,
-      calldatas,
-      gasAmounts
-    );
+    _roninBridgeManager.propose(companionChainId, expiredTime, address(0), targets, values, calldatas, gasAmounts);
   }
 }

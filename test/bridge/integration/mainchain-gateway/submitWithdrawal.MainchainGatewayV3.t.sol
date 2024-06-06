@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import { console2 as console } from "forge-std/console2.sol";
 import { Transfer as LibTransfer } from "@ronin/contracts/libraries/Transfer.sol";
-import { Token } from "@ronin/contracts/libraries/Token.sol";
+import { LibTokenInfo, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/SignatureConsumer.sol";
 import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
 import "../BaseIntegration.t.sol";
@@ -14,6 +14,13 @@ interface IERC721 {
 
 interface IERC20 {
   event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+contract ReentrancyActor {
+  fallback() external payable {
+    // reentrancy
+    payable(msg.sender).transfer(msg.value);
+  }
 }
 
 contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
@@ -29,9 +36,12 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
 
   LibTransfer.Receipt _withdrawalReceipt;
   bytes32 _domainSeparator;
+  address actor;
 
   function setUp() public virtual override {
     super.setUp();
+
+    actor = address(new ReentrancyActor());
 
     _domainSeparator = _mainchainGatewayV3.DOMAIN_SEPARATOR();
 
@@ -43,7 +53,7 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
     _withdrawalReceipt.mainchain.addr = makeAddr("recipient");
     _withdrawalReceipt.mainchain.tokenAddr = address(_mainchainWeth);
     _withdrawalReceipt.mainchain.chainId = block.chainid;
-    _withdrawalReceipt.info.erc = Token.Standard.ERC20;
+    _withdrawalReceipt.info.erc = TokenStandard.ERC20;
     _withdrawalReceipt.info.id = 0;
     _withdrawalReceipt.info.quantity = 10;
 
@@ -52,8 +62,7 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
 
   // test withdrawal > should not be able to withdraw without enough signature
   function test_RevertWhen_NotEnoughSignatures() public {
-    SignatureConsumer.Signature[] memory signatures =
-      _generateSignaturesFor(_withdrawalReceipt, wrapUint(_param.test.operatorPKs[0]));
+    SignatureConsumer.Signature[] memory signatures = _generateSignaturesFor(_withdrawalReceipt, wrapUint(_param.test.operatorPKs[0]), _domainSeparator);
 
     vm.expectRevert(ErrQueryForInsufficientVoteWeight.selector);
 
@@ -69,8 +78,7 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
     _param.test.operatorPKs[0] = _param.test.operatorPKs[1];
     _param.test.operatorPKs[1] = tempPK;
 
-    SignatureConsumer.Signature[] memory signatures =
-      _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs);
+    SignatureConsumer.Signature[] memory signatures = _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs, _domainSeparator);
 
     vm.expectRevert(abi.encodeWithSelector(ErrInvalidOrder.selector, IMainchainGatewayV3.submitWithdrawal.selector));
 
@@ -79,8 +87,7 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
 
   // test withdrawal > should be able to withdraw eth
   function test_WithdrawNative_OnMainchain() public {
-    SignatureConsumer.Signature[] memory signatures =
-      _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs);
+    SignatureConsumer.Signature[] memory signatures = _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs, _domainSeparator);
 
     uint256 balanceBefore = _withdrawalReceipt.mainchain.addr.balance;
 
@@ -97,8 +104,7 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
   function test_RevertWhen_WithdrawWithSameId() public {
     test_WithdrawNative_OnMainchain();
 
-    SignatureConsumer.Signature[] memory signatures =
-      _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs);
+    SignatureConsumer.Signature[] memory signatures = _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs, _domainSeparator);
 
     vm.expectRevert(ErrQueryForProcessedWithdrawal.selector);
 
@@ -110,8 +116,7 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
     address sender = makeAddr("sender");
     _withdrawalReceipt.mainchain.addr = sender;
 
-    SignatureConsumer.Signature[] memory signatures =
-      _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs);
+    SignatureConsumer.Signature[] memory signatures = _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs, _domainSeparator);
 
     vm.expectEmit(address(_mainchainGatewayV3));
     emit Withdrew(_withdrawalReceipt.hash(), _withdrawalReceipt);
@@ -132,8 +137,7 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
     _withdrawalReceipt.mainchain.tokenAddr = address(_mainchainAxs);
     _withdrawalReceipt.ronin.tokenAddr = address(_roninAxs);
 
-    SignatureConsumer.Signature[] memory signatures =
-      _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs);
+    SignatureConsumer.Signature[] memory signatures = _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs, _domainSeparator);
 
     vm.expectEmit(address(_mainchainAxs));
     emit IERC20.Transfer(address(_mainchainGatewayV3), recipient, quantity);
@@ -158,8 +162,7 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
     _withdrawalReceipt.mainchain.tokenAddr = address(_mainchainSlp);
     _withdrawalReceipt.ronin.tokenAddr = address(_roninSlp);
 
-    SignatureConsumer.Signature[] memory signatures =
-      _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs);
+    SignatureConsumer.Signature[] memory signatures = _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs, _domainSeparator);
 
     vm.expectEmit(address(_mainchainSlp));
     emit IERC20.Transfer(address(0), address(_mainchainGatewayV3), quantity);
@@ -187,11 +190,10 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
     _withdrawalReceipt.mainchain.tokenAddr = address(_mainchainMockERC721);
     _withdrawalReceipt.ronin.tokenAddr = address(_roninMockERC721);
     _withdrawalReceipt.info.id = tokenId;
-    _withdrawalReceipt.info.erc = Token.Standard.ERC721;
+    _withdrawalReceipt.info.erc = TokenStandard.ERC721;
     _withdrawalReceipt.info.quantity = 0;
 
-    SignatureConsumer.Signature[] memory signatures =
-      _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs);
+    SignatureConsumer.Signature[] memory signatures = _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs, _domainSeparator);
 
     vm.expectEmit(address(_mainchainMockERC721));
     emit IERC721.Transfer(address(_mainchainGatewayV3), recipient, tokenId);
@@ -215,11 +217,10 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
     _withdrawalReceipt.mainchain.tokenAddr = address(_mainchainMockERC721);
     _withdrawalReceipt.ronin.tokenAddr = address(_roninMockERC721);
     _withdrawalReceipt.info.id = tokenId;
-    _withdrawalReceipt.info.erc = Token.Standard.ERC721;
+    _withdrawalReceipt.info.erc = TokenStandard.ERC721;
     _withdrawalReceipt.info.quantity = 0;
 
-    SignatureConsumer.Signature[] memory signatures =
-      _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs);
+    SignatureConsumer.Signature[] memory signatures = _generateSignaturesFor(_withdrawalReceipt, _param.test.operatorPKs, _domainSeparator);
 
     vm.expectEmit(address(_mainchainMockERC721));
     emit IERC721.Transfer(address(0), recipient, tokenId);
@@ -230,26 +231,5 @@ contract SubmitWithdrawal_MainchainGatewayV3_Test is BaseIntegration_Test {
     _mainchainGatewayV3.submitWithdrawal(_withdrawalReceipt, signatures);
 
     assertEq(_mainchainMockERC721.ownerOf(tokenId), recipient);
-  }
-
-  function _generateSignaturesFor(LibTransfer.Receipt memory receipt, uint256[] memory signerPKs)
-    internal
-    view
-    returns (SignatureConsumer.Signature[] memory sigs)
-  {
-    sigs = new SignatureConsumer.Signature[](signerPKs.length);
-
-    for (uint256 i; i < signerPKs.length; i++) {
-      bytes32 digest = keccak256(abi.encodePacked("\x19\x01", _domainSeparator, receipt.hash()));
-
-      sigs[i] = _sign(signerPKs[i], digest);
-    }
-  }
-
-  function _sign(uint256 pk, bytes32 digest) internal pure returns (SignatureConsumer.Signature memory sig) {
-    (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk, digest);
-    sig.v = v;
-    sig.r = r;
-    sig.s = s;
   }
 }

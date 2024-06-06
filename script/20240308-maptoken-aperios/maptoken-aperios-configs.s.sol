@@ -6,7 +6,7 @@ import { MapTokenInfo } from "../libraries/MapTokenInfo.sol";
 contract Migration__MapToken_Aperios_Config {
   MapTokenInfo _aperiosInfo;
 
-  constructor () {
+  constructor() {
     _aperiosInfo.roninToken = address(0x7894b3088d069E70895EFfA4e8f7D2c243Fd04C1);
     _aperiosInfo.mainchainToken = address(0x95b4B8CaD3567B5d7EF7399C2aE1d7070692aB0D);
     _aperiosInfo.minThreshold = 10 ether;

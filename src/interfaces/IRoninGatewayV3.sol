@@ -29,14 +29,10 @@ interface IRoninGatewayV3 is MappedTokenConsumer {
   /// @dev Emitted when the withdrawal signatures is requested
   event WithdrawalSignaturesRequested(bytes32 receiptHash, Transfer.Receipt);
   /// @dev Emitted when the tokens are mapped
-  event TokenMapped(address[] roninTokens, address[] mainchainTokens, uint256[] chainIds, Token.Standard[] standards);
+  event TokenMapped(address[] roninTokens, address[] mainchainTokens, uint256[] chainIds, TokenStandard[] standards);
   /// @dev Emitted when the threshold is updated
   event TrustedThresholdUpdated(
-    uint256 indexed nonce,
-    uint256 indexed numerator,
-    uint256 indexed denominator,
-    uint256 previousNumerator,
-    uint256 previousDenominator
+    uint256 indexed nonce, uint256 indexed numerator, uint256 indexed denominator, uint256 previousNumerator, uint256 previousDenominator
   );
   /// @dev Emitted when a deposit is voted
   event DepositVoted(address indexed bridgeOperator, uint256 indexed id, uint256 indexed chainId, bytes32 receiptHash);
@@ -49,10 +45,7 @@ interface IRoninGatewayV3 is MappedTokenConsumer {
   /**
    * @dev Returns withdrawal signatures.
    */
-  function getWithdrawalSignatures(
-    uint256 _withdrawalId,
-    address[] calldata _validators
-  ) external view returns (bytes[] memory);
+  function getWithdrawalSignatures(uint256 _withdrawalId, address[] calldata _validators) external view returns (bytes[] memory);
 
   /**
    * @dev Deposits based on the receipt.
@@ -144,7 +137,7 @@ interface IRoninGatewayV3 is MappedTokenConsumer {
     address[] calldata _roninTokens,
     address[] calldata _mainchainTokens,
     uint256[] calldata chainIds,
-    Token.Standard[] calldata _standards
+    TokenStandard[] calldata _standards
   ) external;
 
   /**

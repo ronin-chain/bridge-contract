@@ -3,15 +3,13 @@ pragma solidity ^0.8.19;
 
 import { console2 } from "forge-std/console2.sol";
 import { StdStyle } from "forge-std/StdStyle.sol";
-import { BaseMigration } from "foundry-deployment-kit/BaseMigration.s.sol";
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
-import { Token } from "@ronin/contracts/libraries/Token.sol";
+import { LibTokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { Contract } from "../utils/Contract.sol";
 import { Network } from "../utils/Network.sol";
 import { Contract } from "../utils/Contract.sol";
-import { IGeneralConfigExtended } from "../IGeneralConfigExtended.sol";
 import "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
 import "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
 import "@ronin/contracts/libraries/Proposal.sol";
@@ -22,9 +20,9 @@ import { USDCDeploy } from "@ronin/script/contracts/token/USDCDeploy.s.sol";
 import { MainchainBridgeAdminUtils } from "test/helpers/MainchainBridgeAdminUtils.t.sol";
 
 import "./maptoken-usdc-configs.s.sol";
-import "../BridgeMigration.sol";
+import "../Migration.s.sol";
 
-contract Migration__20240405_MapTokenUsdcMainchain is BridgeMigration, Migration__MapToken_Usdc_Config {
+contract Migration__20240405_MapTokenUsdcMainchain is Migration, Migration__MapToken_Usdc_Config {
   address internal _mainchainPauseEnforcer;
   address internal _mainchainGatewayV3;
   address internal _mainchainBridgeManager;
@@ -42,7 +40,7 @@ contract Migration__20240405_MapTokenUsdcMainchain is BridgeMigration, Migration
   function run() public {
     address[] memory mainchainTokens = new address[](2);
     address[] memory roninTokens = new address[](2);
-    Token.Standard[] memory standards = new Token.Standard[](2);
+    TokenStandard[] memory standards = new TokenStandard[](2);
     uint256[][4] memory thresholds;
     thresholds[0] = new uint256[](2);
     thresholds[1] = new uint256[](2);
@@ -61,7 +59,7 @@ contract Migration__20240405_MapTokenUsdcMainchain is BridgeMigration, Migration
 
     mainchainTokens[0] = address(_mainchainUsdc);
     roninTokens[0] = _usdcRoninToken;
-    standards[0] = Token.Standard.ERC20;
+    standards[0] = TokenStandard.ERC20;
     thresholds[0][0] = _highTierThreshold;
     thresholds[1][0] = _lockedThreshold;
     thresholds[2][0] = _unlockFeePercentages;
@@ -69,33 +67,21 @@ contract Migration__20240405_MapTokenUsdcMainchain is BridgeMigration, Migration
 
     mainchainTokens[1] = address(0x523E8d078BE0769e806b8a154F0f7ac6F4Cde770);
     roninTokens[1] = address(0);
-    standards[1] = Token.Standard(uint8(0));
+    standards[1] = TokenStandard(uint8(0));
     thresholds[0][1] = 0;
     thresholds[1][1] = 0;
     thresholds[2][1] = 0;
     thresholds[3][1] = 0;
 
-    bytes memory innerData = abi.encodeCall(IMainchainGatewayV3.mapTokensAndThresholds, (
-      mainchainTokens,
-      roninTokens,
-      standards,
-      thresholds
-    ));
+    bytes memory innerData = abi.encodeCall(IMainchainGatewayV3.mapTokensAndThresholds, (mainchainTokens, roninTokens, standards, thresholds));
 
-    bytes memory setEmergencyPauserInnerData = abi.encodeCall(GatewayV3.setEmergencyPauser, (
-      _mainchainPauseEnforcer
-    ));
+    bytes memory setEmergencyPauserInnerData = abi.encodeCall(GatewayV3.setEmergencyPauser, (_mainchainPauseEnforcer));
 
     vm.startBroadcast(0x968D0Cd7343f711216817E617d3f92a23dC91c07);
-    address(_mainchainGatewayV3).call(abi.encodeWithSignature("functionDelegateCall(bytes)",innerData));
-    address(_mainchainGatewayV3).call(abi.encodeWithSignature("functionDelegateCall(bytes)",setEmergencyPauserInnerData));
+    address(_mainchainGatewayV3).call(abi.encodeWithSignature("functionDelegateCall(bytes)", innerData));
+    address(_mainchainGatewayV3).call(abi.encodeWithSignature("functionDelegateCall(bytes)", setEmergencyPauserInnerData));
 
     return;
-
-
-
-
-
 
     bytes memory proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
 
@@ -106,9 +92,7 @@ contract Migration__20240405_MapTokenUsdcMainchain is BridgeMigration, Migration
 
     targets[1] = _mainchainGatewayV3;
     values[1] = 0;
-    calldatas[1] = abi.encodeWithSignature("functionDelegateCall(bytes)", abi.encodeCall(GatewayV3.setEmergencyPauser, (
-      _mainchainPauseEnforcer
-    )));
+    calldatas[1] = abi.encodeWithSignature("functionDelegateCall(bytes)", abi.encodeCall(GatewayV3.setEmergencyPauser, (_mainchainPauseEnforcer)));
     gasAmounts[1] = 1_000_000;
 
     // ================ VERIFY AND EXECUTE PROPOSAL ===============
@@ -125,14 +109,13 @@ contract Migration__20240405_MapTokenUsdcMainchain is BridgeMigration, Migration
     governors[0] = 0x087D08e3ba42e64E3948962dd1371F906D1278b9;
     governors[1] = 0x52ec2e6BBcE45AfFF8955Da6410bb13812F4289F;
 
-    _mainchainProposalUtils = new MainchainBridgeAdminUtils(
-      2021, governorPKs, MainchainBridgeManager(_mainchainBridgeManager), governors[0]
-    );
+    _mainchainProposalUtils = new MainchainBridgeAdminUtils(2021, governorPKs, MainchainBridgeManager(_mainchainBridgeManager), governors[0]);
 
     Proposal.ProposalDetail memory proposal = Proposal.ProposalDetail({
       nonce: MainchainBridgeManager(_mainchainBridgeManager).round(11155111) + 1,
       chainId: block.chainid,
       expiryTimestamp: expiredTime,
+      executor: address(0),
       targets: targets,
       values: values,
       calldatas: calldatas,

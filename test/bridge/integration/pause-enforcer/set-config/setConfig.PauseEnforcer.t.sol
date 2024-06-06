@@ -22,8 +22,7 @@ contract SetConfig_PauseEnforcer_Test is BaseIntegration_Test {
   }
 
   function test_sentryEnforcerRole() public {
-    bool isSentryRole =
-      _roninPauseEnforcer.hasRole(_roninPauseEnforcer.SENTRY_ROLE(), _param.roninPauseEnforcer.sentries[0]);
+    bool isSentryRole = _roninPauseEnforcer.hasRole(_roninPauseEnforcer.SENTRY_ROLE(), _param.roninPauseEnforcer.sentries[0]);
 
     assertEq(isSentryRole, true);
   }

@@ -86,12 +86,7 @@ contract BridgeTracking is HasBridgeDeprecated, HasValidatorDeprecated, HasContr
     delete ______deprecatedValidator;
   }
 
-  function initializeV3(
-    address bridgeManager,
-    address bridgeSlash,
-    address bridgeReward,
-    address dposGA
-  ) external reinitializer(3) {
+  function initializeV3(address bridgeManager, address bridgeSlash, address bridgeReward, address dposGA) external reinitializer(3) {
     _setContract(ContractType.BRIDGE_MANAGER, bridgeManager);
     _setContract(ContractType.BRIDGE_SLASH, bridgeSlash);
     _setContract(ContractType.BRIDGE_REWARD, bridgeReward);
@@ -143,21 +138,15 @@ contract BridgeTracking is HasBridgeDeprecated, HasValidatorDeprecated, HasContr
   /**
    * @inheritdoc IBridgeTracking
    */
-  function getManyTotalBallots(
-    uint256 period,
-    address[] calldata operators
-  ) external view override returns (uint256[] memory _res) {
+  function getManyTotalBallots(uint256 period, address[] calldata operators) external view override returns (uint256[] memory _res) {
     _res = _getManyTotalBallots(period, operators);
   }
 
-  function _getManyTotalBallots(
-    uint256 period,
-    address[] memory operators
-  ) internal view returns (uint256[] memory res) {
+  function _getManyTotalBallots(uint256 period, address[] memory operators) internal view returns (uint256[] memory res) {
     uint256 length = operators.length;
     res = new uint256[](length);
     bool isBufferCounted = _isBufferCountedForPeriod(period);
-    for (uint i = 0; i < length; ) {
+    for (uint i = 0; i < length;) {
       res[i] = _totalBallotOf(period, operators[i], isBufferCounted);
 
       unchecked {
@@ -176,10 +165,7 @@ contract BridgeTracking is HasBridgeDeprecated, HasValidatorDeprecated, HasContr
   /**
    * @inheritdoc IBridgeTracking
    */
-  function handleVoteApproved(
-    VoteKind kind,
-    uint256 requestId
-  ) external override onlyContract(ContractType.BRIDGE) skipOnNotStarted {
+  function handleVoteApproved(VoteKind kind, uint256 requestId) external override onlyContract(ContractType.BRIDGE) skipOnNotStarted {
     ReceiptTrackingInfo storage _receiptInfo = _receiptTrackingInfo[kind][requestId];
 
     // Only records for the receipt which not approved
@@ -193,7 +179,7 @@ contract BridgeTracking is HasBridgeDeprecated, HasValidatorDeprecated, HasContr
       _bufferRequest.id = requestId;
 
       address[] storage _voters = _receiptInfo.voters;
-      for (uint i = 0; i < _voters.length; ) {
+      for (uint i = 0; i < _voters.length;) {
         _increaseBallot(kind, requestId, _voters[i], currentPeriod);
 
         unchecked {
@@ -208,12 +194,8 @@ contract BridgeTracking is HasBridgeDeprecated, HasValidatorDeprecated, HasContr
   /**
    * @inheritdoc IBridgeTracking
    */
-  function recordVote(
-    VoteKind kind,
-    uint256 requestId,
-    address operator
-  ) external override onlyContract(ContractType.BRIDGE) skipOnNotStarted {
-    uint256 period = IRoninValidatorSet(getContract(ContractType.VALIDATOR)).currentPeriod();
+  function recordVote(VoteKind kind, uint256 requestId, address operator) external override onlyContract(ContractType.BRIDGE) skipOnNotStarted {
+    uint256 currPd = IRoninValidatorSet(getContract(ContractType.VALIDATOR)).currentPeriod();
     _trySyncBuffer();
     ReceiptTrackingInfo storage _receiptInfo = _receiptTrackingInfo[kind][requestId];
 
@@ -224,12 +206,12 @@ contract BridgeTracking is HasBridgeDeprecated, HasValidatorDeprecated, HasContr
       return;
     }
 
-    _increaseBallot(kind, requestId, operator, period);
+    _increaseBallot(kind, requestId, operator, currPd);
 
     uint256 lastSyncPeriod = _lastSyncPeriod;
     // When switching to new period, wrap up vote info, then slash and distribute reward accordingly.
-    if (lastSyncPeriod < period) {
-      _lastSyncPeriod = period;
+    if (lastSyncPeriod < currPd) {
+      _lastSyncPeriod = currPd;
 
       address[] memory allOperators = IBridgeManager(getContract(ContractType.BRIDGE_MANAGER)).getBridgeOperators();
       uint256[] memory ballots = _getManyTotalBallots(lastSyncPeriod, allOperators);
@@ -238,26 +220,16 @@ contract BridgeTracking is HasBridgeDeprecated, HasValidatorDeprecated, HasContr
       uint256 totalBallot_ = totalBallot(lastSyncPeriod);
 
       address bridgeSlashContract = getContract(ContractType.BRIDGE_SLASH);
-      (bool success, bytes memory returnOrRevertData) = bridgeSlashContract.call(
-        abi.encodeCall(
-          IBridgeSlash.execSlashBridgeOperators,
-          (allOperators, ballots, totalBallot_, totalVote_, lastSyncPeriod)
-        )
-      );
+      (bool success, bytes memory returnOrRevertData) =
+        bridgeSlashContract.call(abi.encodeCall(IBridgeSlash.execSlashBridgeOperators, (allOperators, ballots, totalBallot_, totalVote_, lastSyncPeriod)));
       if (!success) {
-        emit ExternalCallFailed(
-          bridgeSlashContract,
-          IBridgeSlash.execSlashBridgeOperators.selector,
-          returnOrRevertData
-        );
+        emit ExternalCallFailed(bridgeSlashContract, IBridgeSlash.execSlashBridgeOperators.selector, returnOrRevertData);
       }
 
       address bridgeRewardContract = getContract(ContractType.BRIDGE_REWARD);
-      (success, returnOrRevertData) = bridgeRewardContract.call(
-        abi.encodeCall(IBridgeReward.execSyncReward, (allOperators, ballots, totalBallot_, totalVote_, lastSyncPeriod))
-      );
+      (success, returnOrRevertData) = bridgeRewardContract.call(abi.encodeCall(IBridgeReward.execSyncRewardAuto, (currPd)));
       if (!success) {
-        emit ExternalCallFailed(bridgeRewardContract, IBridgeReward.execSyncReward.selector, returnOrRevertData);
+        emit ExternalCallFailed(bridgeRewardContract, IBridgeReward.execSyncRewardAuto.selector, returnOrRevertData);
       }
     }
   }
@@ -297,11 +269,7 @@ contract BridgeTracking is HasBridgeDeprecated, HasValidatorDeprecated, HasContr
   /**
    * @dev See `totalBallotOf`.
    */
-  function _totalBallotOf(
-    uint256 period,
-    address operator,
-    bool mustCountLastStats
-  ) internal view returns (uint256 _totalBallot) {
+  function _totalBallotOf(uint256 period, address operator, bool mustCountLastStats) internal view returns (uint256 _totalBallot) {
     _totalBallot = _periodMetric[period].totalBallotOf[operator];
     if (mustCountLastStats) {
       _totalBallot += _bufferMetric.data.totalBallotOf[operator];
@@ -327,7 +295,7 @@ contract BridgeTracking is HasBridgeDeprecated, HasValidatorDeprecated, HasContr
       _metric.totalBallot += _bufferMetric.data.totalBallot;
 
       // Copy voters info and voters' ballot
-      for (uint i = 0; i < _bufferMetric.data.voters.length; ) {
+      for (uint i = 0; i < _bufferMetric.data.voters.length;) {
         address voter = _bufferMetric.data.voters[i];
         _metric.totalBallotOf[voter] += _bufferMetric.data.totalBallotOf[voter];
         delete _bufferMetric.data.totalBallotOf[voter]; // need to manually delete each element, due to mapping
@@ -338,7 +306,7 @@ contract BridgeTracking is HasBridgeDeprecated, HasValidatorDeprecated, HasContr
       }
 
       // Mark all receipts in the buffer as tracked. Keep total number of receipts and delete receipt details.
-      for (uint i = 0; i < _bufferMetric.requests.length; ) {
+      for (uint i = 0; i < _bufferMetric.requests.length;) {
         Request storage _bufferRequest = _bufferMetric.requests[i];
         ReceiptTrackingInfo storage _receiptInfo = _receiptTrackingInfo[_bufferRequest.kind][_bufferRequest.id];
         _receiptInfo.trackedPeriod = trackedPeriod;
@@ -359,9 +327,7 @@ contract BridgeTracking is HasBridgeDeprecated, HasValidatorDeprecated, HasContr
   function _isBufferCountedForPeriod(uint256 queriedPeriod) internal view returns (bool) {
     IRoninValidatorSet validatorContract = IRoninValidatorSet(getContract(ContractType.VALIDATOR));
     uint256 currentEpoch = validatorContract.epochOf(block.number);
-    (bool filled, uint256 periodOfNextTemporaryEpoch) = validatorContract.tryGetPeriodOfEpoch(
-      _bufferMetric.lastEpoch + 1
-    );
+    (bool filled, uint256 periodOfNextTemporaryEpoch) = validatorContract.tryGetPeriodOfEpoch(_bufferMetric.lastEpoch + 1);
     return filled && queriedPeriod == periodOfNextTemporaryEpoch && _bufferMetric.lastEpoch < currentEpoch;
   }
 }

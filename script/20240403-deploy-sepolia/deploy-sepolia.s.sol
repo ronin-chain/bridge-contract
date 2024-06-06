@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import { ISharedArgument } from "@ronin/script/interfaces/ISharedArgument.sol";
-import { LibSharedAddress } from "foundry-deployment-kit/libraries/LibSharedAddress.sol";
+import { LibSharedAddress } from "@fdk/libraries/LibSharedAddress.sol";
 
 import "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
 import "@ronin/contracts/ronin/gateway/PauseEnforcer.sol";
@@ -27,13 +27,13 @@ import { MockERC721Deploy } from "@ronin/script/contracts/token/MockERC721Deploy
 
 import { GeneralConfig } from "../GeneralConfig.sol";
 import { Network } from "../utils/Network.sol";
-import { BridgeMigration } from "../BridgeMigration.sol";
-import { DefaultContract } from "foundry-deployment-kit/utils/DefaultContract.sol";
+import { Migration } from "../Migration.s.sol";
+import { DefaultContract } from "@fdk/utils/DefaultContract.sol";
 import "./changeGV-config.s.sol";
 
 import "forge-std/console2.sol";
 
-contract DeploySepolia is BridgeMigration, DeploySepolia__ChangeGV_Config {
+contract DeploySepolia is Migration, DeploySepolia__ChangeGV_Config {
   ISharedArgument.SharedParameter _param;
 
   PauseEnforcer _mainchainPauseEnforcer;
@@ -87,9 +87,7 @@ contract DeploySepolia is BridgeMigration, DeploySepolia__ChangeGV_Config {
     _mainchainMockERC721 = new MockERC721Deploy().run();
 
     _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
-    _mainchainProposalUtils = new MainchainBridgeAdminUtils(
-      2021, _param.test.governorPKs, _mainchainBridgeManager, _param.mainchainBridgeManager.governors[0]
-    );
+    _mainchainProposalUtils = new MainchainBridgeAdminUtils(2021, _param.test.governorPKs, _mainchainBridgeManager, _param.mainchainBridgeManager.governors[0]);
   }
 
   function _mainchainGatewayV3Initialize() internal {
@@ -100,7 +98,7 @@ contract DeploySepolia is BridgeMigration, DeploySepolia__ChangeGV_Config {
       uint256[] memory lockedThreshold,
       uint256[] memory unlockFeePercentages,
       uint256[] memory dailyWithdrawalLimits,
-      Token.Standard[] memory standards
+      TokenStandard[] memory standards
     ) = _getMainchainAndRoninTokens();
 
     // Mainchain Gateway V3
@@ -161,6 +159,7 @@ contract DeploySepolia is BridgeMigration, DeploySepolia__ChangeGV_Config {
       nonce: _mainchainBridgeManager.round(0) + 1,
       chainId: block.chainid,
       expiryTimestamp: expiredTime,
+      executor: address(0),
       targets: targets,
       values: values,
       calldatas: calldatas,
@@ -170,8 +169,7 @@ contract DeploySepolia is BridgeMigration, DeploySepolia__ChangeGV_Config {
     Ballot.VoteType[] memory supports_ = new Ballot.VoteType[](1);
     supports_[0] = Ballot.VoteType.For;
 
-    SignatureConsumer.Signature[] memory signatures =
-      _mainchainProposalUtils.generateSignatures(proposal, _param.test.governorPKs);
+    SignatureConsumer.Signature[] memory signatures = _mainchainProposalUtils.generateSignatures(proposal, _param.test.governorPKs);
 
     vm.broadcast(_mainchainBridgeManager.getGovernors()[0]);
     _mainchainBridgeManager.relayProposal(proposal, supports_, signatures);
@@ -187,7 +185,7 @@ contract DeploySepolia is BridgeMigration, DeploySepolia__ChangeGV_Config {
       uint256[] memory lockedThreshold,
       uint256[] memory unlockFeePercentages,
       uint256[] memory dailyWithdrawalLimits,
-      Token.Standard[] memory standards
+      TokenStandard[] memory standards
     )
   {
     uint256 tokenNum = 5;
@@ -197,7 +195,7 @@ contract DeploySepolia is BridgeMigration, DeploySepolia__ChangeGV_Config {
     lockedThreshold = new uint256[](tokenNum);
     unlockFeePercentages = new uint256[](tokenNum);
     dailyWithdrawalLimits = new uint256[](tokenNum);
-    standards = new Token.Standard[](tokenNum);
+    standards = new TokenStandard[](tokenNum);
 
     mainchainTokens[0] = address(_mainchainWeth);
     roninTokens[0] = address(0x29C6F8349A028E1bdfC68BFa08BDee7bC5D47E16);
@@ -205,7 +203,7 @@ contract DeploySepolia is BridgeMigration, DeploySepolia__ChangeGV_Config {
     lockedThreshold[0] = 0.0001 * 1e18;
     dailyWithdrawalLimits[0] = 0.0003 * 1e18;
     unlockFeePercentages[0] = 100_000;
-    standards[0] = Token.Standard.ERC20;
+    standards[0] = TokenStandard.ERC20;
 
     mainchainTokens[1] = address(_mainchainAxs);
     roninTokens[1] = address(0x3C4e17b9056272Ce1b49F6900d8cFD6171a1869d);
@@ -213,7 +211,7 @@ contract DeploySepolia is BridgeMigration, DeploySepolia__ChangeGV_Config {
     lockedThreshold[1] = 40 * 1e18;
     dailyWithdrawalLimits[1] = 100 * 1e18;
     unlockFeePercentages[1] = 100_000;
-    standards[1] = Token.Standard.ERC20;
+    standards[1] = TokenStandard.ERC20;
 
     mainchainTokens[2] = address(_mainchainUsdc);
     roninTokens[2] = address(0x067FBFf8990c58Ab90BaE3c97241C5d736053F77);
@@ -221,7 +219,7 @@ contract DeploySepolia is BridgeMigration, DeploySepolia__ChangeGV_Config {
     lockedThreshold[2] = 400 * 1e6;
     dailyWithdrawalLimits[2] = 1000 * 1e6;
     unlockFeePercentages[2] = 100_000;
-    standards[2] = Token.Standard.ERC20;
+    standards[2] = TokenStandard.ERC20;
 
     mainchainTokens[3] = address(_mainchainSlp);
     roninTokens[3] = address(0x82f5483623D636BC3deBA8Ae67E1751b6CF2Bad2);
@@ -229,11 +227,11 @@ contract DeploySepolia is BridgeMigration, DeploySepolia__ChangeGV_Config {
     lockedThreshold[3] = 40 * 1e18;
     dailyWithdrawalLimits[3] = 100 * 1e18;
     unlockFeePercentages[3] = 100_000;
-    standards[3] = Token.Standard.ERC20;
+    standards[3] = TokenStandard.ERC20;
 
     mainchainTokens[4] = address(_mainchainMockERC721);
     roninTokens[4] = address(0x00);
-    standards[4] = Token.Standard.ERC721;
+    standards[4] = TokenStandard.ERC721;
   }
 
   function _grantFundForGateway() internal {

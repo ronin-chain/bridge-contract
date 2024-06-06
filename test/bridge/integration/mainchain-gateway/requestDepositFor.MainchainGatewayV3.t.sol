@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import { console2 as console } from "forge-std/console2.sol";
 import { Transfer as LibTransfer } from "@ronin/contracts/libraries/Transfer.sol";
-import { Token } from "@ronin/contracts/libraries/Token.sol";
+import { LibTokenInfo, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 
 import "../BaseIntegration.t.sol";
 
@@ -34,7 +34,7 @@ contract RequestDepositFor_MainchainGatewayV3_Test is BaseIntegration_Test {
 
     _depositRequest.recipientAddr = makeAddr("recipient");
     _depositRequest.tokenAddr = address(0);
-    _depositRequest.info.erc = Token.Standard.ERC20;
+    _depositRequest.info.erc = TokenStandard.ERC20;
     _depositRequest.info.id = 0;
     _depositRequest.info.quantity = _quantity;
 
@@ -49,9 +49,7 @@ contract RequestDepositFor_MainchainGatewayV3_Test is BaseIntegration_Test {
     cachedRequest.tokenAddr = address(_mainchainWeth);
 
     vm.expectEmit(address(_mainchainGatewayV3));
-    LibTransfer.Receipt memory receipt = cachedRequest.into_deposit_receipt(
-      _sender, _mainchainGatewayV3.depositCount(), address(_roninWeth), block.chainid
-    );
+    LibTransfer.Receipt memory receipt = cachedRequest.into_deposit_receipt(_sender, _mainchainGatewayV3.depositCount(), address(_roninWeth), block.chainid);
     emit DepositRequested(receipt.hash(), receipt);
 
     vm.prank(_sender);
@@ -70,9 +68,7 @@ contract RequestDepositFor_MainchainGatewayV3_Test is BaseIntegration_Test {
     _depositRequest.tokenAddr = address(_mainchainAxs);
 
     vm.expectEmit(address(_mainchainGatewayV3));
-    LibTransfer.Receipt memory receipt = _depositRequest.into_deposit_receipt(
-      _sender, _mainchainGatewayV3.depositCount(), address(_roninAxs), block.chainid
-    );
+    LibTransfer.Receipt memory receipt = _depositRequest.into_deposit_receipt(_sender, _mainchainGatewayV3.depositCount(), address(_roninAxs), block.chainid);
     emit DepositRequested(receipt.hash(), receipt);
 
     vm.prank(_sender);
@@ -90,13 +86,12 @@ contract RequestDepositFor_MainchainGatewayV3_Test is BaseIntegration_Test {
     _mainchainMockERC721.approve(address(_mainchainGatewayV3), tokenId);
 
     _depositRequest.tokenAddr = address(_mainchainMockERC721);
-    _depositRequest.info.erc = Token.Standard.ERC721;
+    _depositRequest.info.erc = TokenStandard.ERC721;
     _depositRequest.info.id = tokenId;
     _depositRequest.info.quantity = 0;
 
-    LibTransfer.Receipt memory receipt = _depositRequest.into_deposit_receipt(
-      _sender, _mainchainGatewayV3.depositCount(), address(_roninMockERC721), block.chainid
-    );
+    LibTransfer.Receipt memory receipt =
+      _depositRequest.into_deposit_receipt(_sender, _mainchainGatewayV3.depositCount(), address(_roninMockERC721), block.chainid);
     vm.expectEmit(address(_mainchainGatewayV3));
     emit DepositRequested(receipt.hash(), receipt);
 
@@ -111,7 +106,6 @@ contract RequestDepositFor_MainchainGatewayV3_Test is BaseIntegration_Test {
 
   // test deposit > should be able to unwrap and deposit native.
   function test_unwrapAndDepositNative() public {
-    vm.skip(true);
     vm.startPrank(_sender);
     _mainchainWeth.deposit{ value: _quantity }();
     _mainchainWeth.approve(address(_mainchainGatewayV3), _quantity);
@@ -119,15 +113,13 @@ contract RequestDepositFor_MainchainGatewayV3_Test is BaseIntegration_Test {
 
     _depositRequest.tokenAddr = address(_mainchainWeth);
 
-    LibTransfer.Receipt memory receipt = _depositRequest.into_deposit_receipt(
-      _sender, _mainchainGatewayV3.depositCount(), address(_roninWeth), block.chainid
-    );
+    LibTransfer.Receipt memory receipt = _depositRequest.into_deposit_receipt(_sender, _mainchainGatewayV3.depositCount(), address(_roninWeth), block.chainid);
     vm.expectEmit(address(_mainchainGatewayV3));
     emit DepositRequested(receipt.hash(), receipt);
 
     assertEq(address(_mainchainWeth).balance, _quantity);
 
-    vm.prank(_sender);
+    vm.startPrank(_sender);
     _mainchainGatewayV3.requestDepositFor(_depositRequest);
 
     assertEq(address(_mainchainGatewayV3).balance, _quantity);

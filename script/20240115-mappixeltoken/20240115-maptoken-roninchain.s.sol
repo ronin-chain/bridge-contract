@@ -3,18 +3,21 @@ pragma solidity ^0.8.19;
 
 import { console2 } from "forge-std/console2.sol";
 import { StdStyle } from "forge-std/StdStyle.sol";
-import { BaseMigration } from "foundry-deployment-kit/BaseMigration.s.sol";
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
 import { IRoninGatewayV3 } from "@ronin/contracts/interfaces/IRoninGatewayV3.sol";
 import { IBridgeManager } from "@ronin/contracts/interfaces/bridge/IBridgeManager.sol";
-import { Token } from "@ronin/contracts/libraries/Token.sol";
+import { LibTokenInfo, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { Contract } from "../utils/Contract.sol";
-import { BridgeMigration } from "../BridgeMigration.sol";
-import { Network } from "../utils/Network.sol";
+import { Migration } from "../Migration.s.sol";
+import { TNetwork, Network } from "../utils/Network.sol";
+import { LibProposal } from "script/shared/libraries/LibProposal.sol";
+import { LibCompanionNetwork } from "script/shared/libraries/LibCompanionNetwork.sol";
 import { Contract } from "../utils/Contract.sol";
-import { IGeneralConfigExtended } from "../IGeneralConfigExtended.sol";
 
-contract Migration__MapTokenRoninchain is BridgeMigration {
+contract Migration__MapTokenRoninchain is Migration {
+  using LibProposal for *;
+  using LibCompanionNetwork for *;
+
   RoninBridgeManager internal _roninBridgeManager;
 
   address constant _pixelRoninToken = address(0x8b50c162494567B3c8B7F00F6031341861c8dEeD);
@@ -32,43 +35,39 @@ contract Migration__MapTokenRoninchain is BridgeMigration {
 
   function setUp() public override {
     super.setUp();
-    _roninBridgeManager = RoninBridgeManager(_config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
-    _roninGatewayV3 = _config.getAddressFromCurrentNetwork(Contract.RoninGatewayV3.key());
+    _roninBridgeManager = RoninBridgeManager(config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
+    _roninGatewayV3 = config.getAddressFromCurrentNetwork(Contract.RoninGatewayV3.key());
   }
 
-  function _mapTokens() internal view returns (bytes memory) {
+  function _mapTokens() internal returns (bytes memory) {
     address[] memory mainchainTokens = new address[](2);
     address[] memory roninTokens = new address[](2);
     uint256[] memory chainIds = new uint256[](2);
-    Token.Standard[] memory standards = new Token.Standard[](2);
+    TokenStandard[] memory standards = new TokenStandard[](2);
 
+    uint256 companionChainId = network().companionChainId();
     mainchainTokens[0] = _farmlandMainchainToken;
     roninTokens[0] = _farmlandRoninToken;
-    chainIds[0] = _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).chainId();
-    standards[0] = Token.Standard.ERC721;
+    chainIds[0] = companionChainId;
+    standards[0] = TokenStandard.ERC721;
 
     mainchainTokens[1] = _pixelMainchainToken;
     roninTokens[1] = _pixelRoninToken;
-    chainIds[1] = _config.getCompanionNetwork(_config.getNetworkByChainId(block.chainid)).chainId();
-    standards[1] = Token.Standard.ERC20;
+    chainIds[1] = companionChainId;
+    standards[1] = TokenStandard.ERC20;
 
     // function mapTokens(
     //   address[] calldata _roninTokens,
     //   address[] calldata _mainchainTokens,
     //   uint256[] calldata chainIds,
-    //   Token.Standard[] calldata _standards
+    //   TokenStandard[] calldata _standards
     // )
 
-    bytes memory innerData = abi.encodeCall(IRoninGatewayV3.mapTokens, (
-      roninTokens,
-      mainchainTokens,
-      chainIds,
-      standards
-    ));
+    bytes memory innerData = abi.encodeCall(IRoninGatewayV3.mapTokens, (roninTokens, mainchainTokens, chainIds, standards));
     return abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
   }
 
-  function _removeAxieChatGovernorAddress() pure internal returns (bytes memory) {
+  function _removeAxieChatGovernorAddress() internal pure returns (bytes memory) {
     address[] memory bridgeOperator = new address[](1);
     bridgeOperator[0] = _axieChatBridgeOperator;
 
@@ -76,12 +75,10 @@ contract Migration__MapTokenRoninchain is BridgeMigration {
     //   address[] calldata bridgeOperators
     // )
 
-    return abi.encodeCall(IBridgeManager.removeBridgeOperators, (
-      bridgeOperator
-    ));
+    return abi.encodeCall(IBridgeManager.removeBridgeOperators, (bridgeOperator));
   }
 
-  function _addAxieChatGovernorAddress() pure internal returns (bytes memory) {
+  function _addAxieChatGovernorAddress() internal pure returns (bytes memory) {
     uint96[] memory voteWeight = new uint96[](1);
     address[] memory governor = new address[](1);
     address[] memory bridgeOperator = new address[](1);
@@ -96,11 +93,7 @@ contract Migration__MapTokenRoninchain is BridgeMigration {
     //   address[] calldata bridgeOperators
     // )
 
-    return abi.encodeCall(IBridgeManager.addBridgeOperators, (
-      voteWeight,
-      governor,
-      bridgeOperator
-    ));
+    return abi.encodeCall(IBridgeManager.addBridgeOperators, (voteWeight, governor, bridgeOperator));
   }
 
   function run() public {
@@ -125,16 +118,11 @@ contract Migration__MapTokenRoninchain is BridgeMigration {
     calldatas[2] = _addAxieChatGovernorAddress();
     gasAmounts[2] = 1_000_000;
 
-    _verifyRoninProposalGasAmount(targets, values, calldatas, gasAmounts);
+    (uint256 companionChainId, TNetwork companionNetwork) = network().companionNetworkData();
+    address companionManager = config.getAddress(companionNetwork, Contract.MainchainBridgeManager.key());
+    LibProposal.verifyMainchainProposalGasAmount(companionNetwork, companionManager, targets, values, calldatas, gasAmounts);
 
     vm.broadcast(sender());
-    _roninBridgeManager.propose(
-      block.chainid,
-      expiredTime,
-      targets,
-      values,
-      calldatas,
-      gasAmounts
-    );
+    _roninBridgeManager.propose(block.chainid, expiredTime, address(0), targets, values, calldatas, gasAmounts);
   }
 }

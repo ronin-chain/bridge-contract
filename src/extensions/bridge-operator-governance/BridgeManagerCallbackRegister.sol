@@ -1,16 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { IBridgeManagerCallbackRegister } from "../../interfaces/bridge/IBridgeManagerCallbackRegister.sol";
 import { IBridgeManagerCallback } from "../../interfaces/bridge/IBridgeManagerCallback.sol";
+import { HasContracts } from "../../extensions/collections/HasContracts.sol";
 import { TransparentUpgradeableProxyV2, IdentityGuard } from "../../utils/IdentityGuard.sol";
 
 /**
  * @title BridgeManagerCallbackRegister
  * @dev A contract that manages callback registrations and execution for a bridge.
  */
-abstract contract BridgeManagerCallbackRegister is IdentityGuard, IBridgeManagerCallbackRegister {
+abstract contract BridgeManagerCallbackRegister is IBridgeManagerCallbackRegister, IdentityGuard, Initializable, HasContracts {
   using EnumerableSet for EnumerableSet.AddressSet;
 
   /**
@@ -19,24 +21,26 @@ abstract contract BridgeManagerCallbackRegister is IdentityGuard, IBridgeManager
    */
   bytes32 private constant CALLBACK_REGISTERS_SLOT = 0x5da136eb38f8d8e354915fc8a767c0dc81d49de5fb65d5477122a82ddd976240;
 
-  constructor(address[] memory callbackRegisters) payable {
+  function __BridgeManagerCallbackRegister_init_unchained(address[] memory callbackRegisters) internal onlyInitializing {
     _registerCallbacks(callbackRegisters);
   }
 
   /**
    * @inheritdoc IBridgeManagerCallbackRegister
    */
-  function registerCallbacks(address[] calldata registers) external onlySelfCall returns (bool[] memory registereds) {
-    registereds = _registerCallbacks(registers);
+  function registerCallbacks(address[] calldata registers) external onlyProxyAdmin {
+    _registerCallbacks(registers);
   }
 
   /**
    * @inheritdoc IBridgeManagerCallbackRegister
    */
-  function unregisterCallbacks(
-    address[] calldata registers
-  ) external onlySelfCall returns (bool[] memory unregistereds) {
-    unregistereds = _unregisterCallbacks(registers);
+  function unregisterCallbacks(address[] calldata registers) external onlyProxyAdmin nonDuplicate(registers) {
+    EnumerableSet.AddressSet storage _callbackRegisters = _getCallbackRegisters();
+
+    for (uint256 i; i < registers.length; i++) {
+      _callbackRegisters.remove(registers[i]);
+    }
   }
 
   /**
@@ -49,51 +53,30 @@ abstract contract BridgeManagerCallbackRegister is IdentityGuard, IBridgeManager
   /**
    * @dev Internal function to register multiple callbacks with the bridge.
    * @param registers The array of callback addresses to register.
-   * @return registereds An array indicating the success status of each registration.
    */
-  function _registerCallbacks(
-    address[] memory registers
-  ) internal nonDuplicate(registers) returns (bool[] memory registereds) {
-    uint256 length = registers.length;
-    registereds = new bool[](length);
-    if (length == 0) return registereds;
-
+  function _registerCallbacks(address[] memory registers) internal nonDuplicate(registers) {
     EnumerableSet.AddressSet storage _callbackRegisters = _getCallbackRegisters();
     address register;
-    bytes4 callbackInterface = type(IBridgeManagerCallback).interfaceId;
+    bool regSuccess;
 
-    for (uint256 i; i < length; ) {
+    for (uint256 i; i < registers.length; i++) {
       register = registers[i];
 
       _requireHasCode(register);
-      _requireSupportsInterface(register, callbackInterface);
+      _requireSupportsInterface(register, type(IBridgeManagerCallback).interfaceId);
 
-      registereds[i] = _callbackRegisters.add(register);
+      regSuccess = _callbackRegisters.add(register);
 
-      unchecked {
-        ++i;
-      }
+      emit CallbackRegistered(register, regSuccess);
     }
   }
 
   /**
-   * @dev Internal function to unregister multiple callbacks from the bridge.
-   * @param registers The array of callback addresses to unregister.
-   * @return unregistereds An array indicating the success status of each unregistration.
+   * @dev Same as {_notifyRegistersUnsafe} but revert when there at least one failed internal call.
    */
-  function _unregisterCallbacks(
-    address[] memory registers
-  ) internal nonDuplicate(registers) returns (bool[] memory unregistereds) {
-    uint256 length = registers.length;
-    unregistereds = new bool[](length);
-    EnumerableSet.AddressSet storage _callbackRegisters = _getCallbackRegisters();
-
-    for (uint256 i; i < length; ) {
-      unregistereds[i] = _callbackRegisters.remove(registers[i]);
-
-      unchecked {
-        ++i;
-      }
+  function _notifyRegisters(bytes4 callbackFnSig, bytes memory inputs) internal {
+    if (!_notifyRegistersUnsafe(callbackFnSig, inputs)) {
+      revert ErrExistOneInternalCallFailed(msg.sender, callbackFnSig, inputs);
     }
   }
 
@@ -101,25 +84,28 @@ abstract contract BridgeManagerCallbackRegister is IdentityGuard, IBridgeManager
    * @dev Internal function to notify all registered callbacks with the provided function signature and data.
    * @param callbackFnSig The function signature of the callback method.
    * @param inputs The data to pass to the callback method.
+   * @return allSuccess Return true if all internal calls are success
    */
-  function _notifyRegisters(bytes4 callbackFnSig, bytes memory inputs) internal {
+  function _notifyRegistersUnsafe(bytes4 callbackFnSig, bytes memory inputs) internal returns (bool allSuccess) {
+    allSuccess = true;
+
     address[] memory registers = _getCallbackRegisters().values();
     uint256 length = registers.length;
-    if (length == 0) return;
+    if (length == 0) return allSuccess;
 
     bool[] memory successes = new bool[](length);
     bytes[] memory returnDatas = new bytes[](length);
     bytes memory callData = abi.encodePacked(callbackFnSig, inputs);
     bytes memory proxyCallData = abi.encodeCall(TransparentUpgradeableProxyV2.functionDelegateCall, (callData));
 
-    for (uint256 i; i < length; ) {
+    for (uint256 i; i < length; i++) {
+      // First, attempt to call normally
       (successes[i], returnDatas[i]) = registers[i].call(callData);
+
+      // If cannot call normally, attempt to call as the recipient is the proxy, and this caller is its admin.
       if (!successes[i]) {
         (successes[i], returnDatas[i]) = registers[i].call(proxyCallData);
-      }
-
-      unchecked {
-        ++i;
+        allSuccess = allSuccess && successes[i];
       }
     }
 

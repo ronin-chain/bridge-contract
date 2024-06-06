@@ -13,13 +13,8 @@ contract MockBridgeTracking is IBridgeTracking {
   // Mapping from period number => period tracking
   mapping(uint256 => PeriodTracking) _tracks;
 
-  function setPeriodTracking(
-    uint256 period,
-    address[] memory operators,
-    uint256[] calldata ballots,
-    uint256 totalVote_
-  ) external {
-    require(operators.length != ballots.length, "mismatch length");
+  function cheat_setPeriodTracking(uint256 period, address[] memory operators, uint256[] calldata ballots, uint256 totalVote_) external {
+    require(operators.length == ballots.length, "mismatch length");
     PeriodTracking storage _sTrack = _tracks[period];
     _sTrack.operators = operators;
     _sTrack.totalVote = totalVote_;
@@ -39,10 +34,7 @@ contract MockBridgeTracking is IBridgeTracking {
     }
   }
 
-  function getManyTotalBallots(
-    uint256 period,
-    address[] calldata operators
-  ) external view returns (uint256[] memory ballots_) {
+  function getManyTotalBallots(uint256 period, address[] calldata operators) external view returns (uint256[] memory ballots_) {
     ballots_ = new uint256[](operators.length);
     PeriodTracking storage _sTrack = _tracks[period];
     for (uint i; i < operators.length; i++) {
@@ -54,11 +46,11 @@ contract MockBridgeTracking is IBridgeTracking {
     return _ballotOf(_tracks[period], operator);
   }
 
-  function handleVoteApproved(VoteKind _kind, uint256 _requestId) external {}
+  function handleVoteApproved(VoteKind _kind, uint256 _requestId) external { }
 
-  function recordVote(VoteKind _kind, uint256 _requestId, address _operator) external {}
+  function recordVote(VoteKind _kind, uint256 _requestId, address _operator) external { }
 
-  function startedAtBlock() external view returns (uint256) {}
+  function startedAtBlock() external view returns (uint256) { }
 
   function _ballotOf(PeriodTracking storage _sTrack, address operator) private view returns (uint256) {
     return _sTrack.ballotMap[operator];

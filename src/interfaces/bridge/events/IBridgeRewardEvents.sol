@@ -29,4 +29,8 @@ interface IBridgeRewardEvents {
   event BridgeRewardScatterFailed(uint256 indexed period, address operator, uint256 amount);
   /// @dev Event emitted when the requesting period to sync  is too far.
   event BridgeRewardSyncTooFarPeriod(uint256 requestingPeriod, uint256 latestPeriod);
+
+  error ErrPeriodNotHappen(uint256 currentPeriod, uint256 latestRewardedPeriod, uint256 periodCount);
+  error ErrPeriodAlreadyRewarded(uint256 currentPeriod, uint256 latestRewardedPeriod);
+  error ErrPeriodCountIsZero();
 }

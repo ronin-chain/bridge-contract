@@ -19,17 +19,9 @@ abstract contract GovernanceRelay is CoreGovernance, CommonGovernanceRelay {
     Proposal.ProposalDetail calldata _proposal,
     Ballot.VoteType[] calldata _supports,
     Signature[] calldata _signatures,
-    bytes32 _domainSeparator,
     address _creator
   ) internal {
     _proposeProposalStruct(_proposal, _creator);
-    bytes32 _proposalHash = _proposal.hash();
-    _relayVotesBySignatures(
-      _proposal,
-      _supports,
-      _signatures,
-      ECDSA.toTypedDataHash(_domainSeparator, Ballot.hash(_proposalHash, Ballot.VoteType.For)),
-      ECDSA.toTypedDataHash(_domainSeparator, Ballot.hash(_proposalHash, Ballot.VoteType.Against))
-    );
+    _relayVotesBySignatures(_proposal, _supports, _signatures, _proposal.hash());
   }
 }
