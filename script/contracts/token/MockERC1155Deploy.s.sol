@@ -10,7 +10,7 @@ contract MockERC1155Deploy is Migration {
   function _defaultArguments() internal virtual override returns (bytes memory args) {
     ISharedArgument.MockERC1155Param memory param = config.sharedArguments().mockErc1155;
 
-    args = abi.encode(param.defaultAdmin, param.uri, param.name, param.symbol);
+    args = abi.encode(param.uri);
   }
 
   function run() public virtual returns (MockERC1155) {

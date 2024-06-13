@@ -24,10 +24,7 @@ contract RoninMockERC1155 is ERC1155Burnable, AccessControl {
     _mint(account, id, amount, data);
   }
 
-  function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data)
-    public
-    onlyRole(MINTER_ROLE)
-  {
+  function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data) public onlyRole(MINTER_ROLE) {
     _mintBatch(to, ids, amounts, data);
   }
 
@@ -35,11 +32,7 @@ contract RoninMockERC1155 is ERC1155Burnable, AccessControl {
     _burn(from, id, value);
   }
 
-  function burnBatch(address from, uint256[] memory ids, uint256[] memory amounts)
-    public
-    override
-    onlyRole(BURNER_ROLE)
-  {
+  function burnBatch(address from, uint256[] memory ids, uint256[] memory amounts) public override onlyRole(BURNER_ROLE) {
     _burnBatch(from, ids, amounts);
   }
 
