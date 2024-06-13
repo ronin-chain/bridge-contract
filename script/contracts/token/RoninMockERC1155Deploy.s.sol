@@ -8,7 +8,7 @@ import { Migration } from "../../Migration.s.sol";
 
 contract RoninMockERC1155Deploy is Migration {
   function _defaultArguments() internal virtual override returns (bytes memory args) {
-    ISharedArgument.RoninMockERC1155Param memory param = config.sharedArguments().mockErc1155;
+    ISharedArgument.RoninMockERC1155Param memory param = config.sharedArguments().roninMockErc1155;
 
     args = abi.encode(param.defaultAdmin, param.uri, param.name, param.symbol);
   }

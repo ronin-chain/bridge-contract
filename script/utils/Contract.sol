@@ -11,6 +11,7 @@ enum Contract {
   USDC,
   MockERC721,
   MockERC1155,
+  RoninMockERC1155,
   BridgeTracking,
   BridgeSlash,
   BridgeReward,
