@@ -79,7 +79,7 @@ interface IMainchainGatewayV3 is SignatureConsumer, MappedTokenConsumer {
   /**
    * @dev Locks the assets and request deposit for batch.
    */
-  function requestDepositForBatch(Transfer.RequestBatch calldata requests) external payable;
+  function requestDepositForBatch(Transfer.Request[] calldata requests) external payable;
 
   /**
    * @dev Withdraws based on the receipt and the validator signatures.
