@@ -16,6 +16,8 @@ import { TUint256Slot } from "../../types/Types.sol";
 import { ErrSyncTooFarPeriod, ErrInvalidArguments, ErrLengthMismatch, ErrUnauthorizedCall } from "../../utils/CommonErrors.sol";
 
 contract BridgeReward is IBridgeReward, BridgeTrackingHelper, HasContracts, RONTransferHelper, Initializable {
+  /// @inheritdoc IBridgeReward
+  uint256 public constant DEFAULT_ADDITION_GAS = 6200;
   /// @dev value is equal to keccak256("@ronin.dpos.gateway.BridgeReward.rewardInfo.slot") - 1
   bytes32 private constant $_REWARD_INFO = 0x518cfd198acbffe95e740cfce1af28a3f7de51f0d784893d3d72c5cc59d7062a;
   /// @dev value is equal to keccak256("@ronin.dpos.gateway.BridgeReward.rewardPerPeriod.slot") - 1
@@ -316,7 +318,7 @@ contract BridgeReward is IBridgeReward, BridgeTrackingHelper, HasContracts, RONT
       return false;
     }
 
-    if (_unsafeSendRONLimitGas({ recipient: payable(operator), amount: reward, gas: 0 })) {
+    if (_unsafeSendRONLimitGas({ recipient: payable(operator), amount: reward, gas: DEFAULT_ADDITION_GAS })) {
       _iRewardInfo.claimed += reward;
       emit BridgeRewardScattered(period, operator, reward);
       return true;
