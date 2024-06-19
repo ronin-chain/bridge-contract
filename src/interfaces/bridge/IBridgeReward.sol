@@ -6,6 +6,11 @@ import { IBridgeRewardEvents } from "./events/IBridgeRewardEvents.sol";
 
 interface IBridgeReward is IBridgeRewardEvents {
   /**
+   * @dev Configuration of gas stipend to ensure sufficient gas after London Hardfork.
+   */
+  function DEFAULT_ADDITION_GAS() external view returns (uint256);
+  
+  /**
    * @dev This function allows bridge operators to manually synchronize the reward for a given period length.
    * @param periodCount The length of the reward period for which synchronization is requested.
    */

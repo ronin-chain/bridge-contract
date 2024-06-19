@@ -16,7 +16,7 @@ import { TUint256Slot } from "../../types/Types.sol";
 import { ErrSyncTooFarPeriod, ErrInvalidArguments, ErrLengthMismatch, ErrUnauthorizedCall } from "../../utils/CommonErrors.sol";
 
 contract BridgeReward is IBridgeReward, BridgeTrackingHelper, HasContracts, RONTransferHelper, Initializable {
-  /// @dev Configuration of gas stipend to ensure sufficient gas after the London Hardfork
+  /// @inheritdoc IBridgeReward
   uint256 public constant DEFAULT_ADDITION_GAS = 6200;
   /// @dev value is equal to keccak256("@ronin.dpos.gateway.BridgeReward.rewardInfo.slot") - 1
   bytes32 private constant $_REWARD_INFO = 0x518cfd198acbffe95e740cfce1af28a3f7de51f0d784893d3d72c5cc59d7062a;
