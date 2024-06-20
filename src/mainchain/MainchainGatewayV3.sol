@@ -159,6 +159,16 @@ contract MainchainGatewayV3 is
   /**
    * @inheritdoc IMainchainGatewayV3
    */
+  function requestDepositForBatch(Transfer.Request[] calldata _requests) external payable virtual whenNotPaused {
+    uint length = _requests.length;
+    for (uint256 i; i < length; ++i) {
+      _requestDepositFor(_requests[i], msg.sender);
+    }
+  }
+
+  /**
+   * @inheritdoc IMainchainGatewayV3
+   */
   function submitWithdrawal(Transfer.Receipt calldata _receipt, Signature[] calldata _signatures) external virtual whenNotPaused returns (bool _locked) {
     return _submitWithdrawal(_receipt, _signatures);
   }
