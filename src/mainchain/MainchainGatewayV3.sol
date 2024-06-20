@@ -161,7 +161,7 @@ contract MainchainGatewayV3 is
    */
   function requestDepositForBatch(Transfer.Request[] calldata _requests) external payable virtual whenNotPaused {
     uint length = _requests.length;
-    for (uint256 i; i < length; i++) {
+    for (uint256 i; i < length; ++i) {
       _requestDepositFor(_requests[i], msg.sender);
     }
   }
