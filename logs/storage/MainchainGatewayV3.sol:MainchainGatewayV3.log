@@ -27,3 +27,6 @@ src/mainchain/MainchainGatewayV3.sol:MainchainGatewayV3:withdrawalHash (storage_
 src/mainchain/MainchainGatewayV3.sol:MainchainGatewayV3:withdrawalLocked (storage_slot: 122) (offset: 0) (type: mapping(uint256 => bool)) (numberOfBytes: 32)
 src/mainchain/MainchainGatewayV3.sol:MainchainGatewayV3:______deprecatedBridgeOperatorAddedBlock (storage_slot: 123) (offset: 0) (type: uint256) (numberOfBytes: 32)
 src/mainchain/MainchainGatewayV3.sol:MainchainGatewayV3:______deprecatedBridgeOperators (storage_slot: 124) (offset: 0) (type: uint256) (numberOfBytes: 32)
+src/mainchain/MainchainGatewayV3.sol:MainchainGatewayV3:_totalOperatorWeight (storage_slot: 125) (offset: 0) (type: uint96) (numberOfBytes: 12)
+src/mainchain/MainchainGatewayV3.sol:MainchainGatewayV3:_operatorWeight (storage_slot: 126) (offset: 0) (type: mapping(address => uint96)) (numberOfBytes: 32)
+src/mainchain/MainchainGatewayV3.sol:MainchainGatewayV3:wethUnwrapper (storage_slot: 127) (offset: 0) (type: contract WethUnwrapper) (numberOfBytes: 20)

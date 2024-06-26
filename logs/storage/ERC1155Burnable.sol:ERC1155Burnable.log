@@ -1,0 +1,3 @@
+lib/openzeppelin-contracts/contracts/token/ERC1155/extensions/ERC1155Burnable.sol:ERC1155Burnable:_balances (storage_slot: 0) (offset: 0) (type: mapping(uint256 => mapping(address => uint256))) (numberOfBytes: 32)
+lib/openzeppelin-contracts/contracts/token/ERC1155/extensions/ERC1155Burnable.sol:ERC1155Burnable:_operatorApprovals (storage_slot: 1) (offset: 0) (type: mapping(address => mapping(address => bool))) (numberOfBytes: 32)
+lib/openzeppelin-contracts/contracts/token/ERC1155/extensions/ERC1155Burnable.sol:ERC1155Burnable:_uri (storage_slot: 2) (offset: 0) (type: string) (numberOfBytes: 32)
