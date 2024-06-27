@@ -24,7 +24,7 @@ abstract contract Factory__MapTokensMainchain is Migration {
   address internal _mainchainBridgeManager;
   address private _governor;
 
-  function setUp() public override {
+  function setUp() public virtual override {
     super.setUp();
 
     _roninBridgeManager = RoninBridgeManager(config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
@@ -37,25 +37,26 @@ abstract contract Factory__MapTokensMainchain is Migration {
   function _initCaller() internal virtual returns (address);
   function _initTokenList() internal virtual returns (uint256 totalToken, MapTokenInfo[] memory infos);
 
-  function run() public virtual {
+  function _prepareMapTokensAndThresholds()
+    internal
+    returns (address[] memory mainchainTokens, address[] memory roninTokens, TokenStandard[] memory standards, uint256[][4] memory thresholds)
+  {
+    // function mapTokensAndThresholds(
+    //   address[] calldata _mainchainTokens,
+    //   address[] calldata _roninTokens,
+    //   TokenStandard.ERC20[] calldata _standards,
+    //   uint256[][4] calldata _thresholds
+    // )
     (uint256 N, MapTokenInfo[] memory tokenInfos) = _initTokenList();
 
-    address[] memory mainchainTokens = new address[](N);
-    address[] memory roninTokens = new address[](N);
-    TokenStandard[] memory standards = new TokenStandard[](N);
-    uint256[][4] memory thresholds;
+    mainchainTokens = new address[](N);
+    roninTokens = new address[](N);
+    standards = new TokenStandard[](N);
+
     thresholds[0] = new uint256[](N);
     thresholds[1] = new uint256[](N);
     thresholds[2] = new uint256[](N);
     thresholds[3] = new uint256[](N);
-
-    uint256 expiredTime = block.timestamp + 14 days;
-    address[] memory targets = new address[](1);
-    uint256[] memory values = new uint256[](1);
-    bytes[] memory calldatas = new bytes[](1);
-    uint256[] memory gasAmounts = new uint256[](1);
-
-    // ================ APERIOS AND YGG ERC-20 ======================
 
     for (uint256 i; i < N; ++i) {
       mainchainTokens[i] = tokenInfos[i].mainchainToken;
@@ -66,30 +67,36 @@ abstract contract Factory__MapTokensMainchain is Migration {
       thresholds[2][i] = tokenInfos[i].unlockFeePercentages;
       thresholds[3][i] = tokenInfos[i].dailyWithdrawalLimit;
     }
+  }
 
-    // function mapTokensAndThresholds(
-    //   address[] calldata _mainchainTokens,
-    //   address[] calldata _roninTokens,
-    //   TokenStandard[] calldata _standards,
-    //   uint256[][4] calldata _thresholds
-    // )
-
+  function _prepareProposal() internal returns (address[] memory targets, uint256[] memory values, bytes[] memory calldatas, uint256[] memory gasAmounts) {
+    (address[] memory mainchainTokens, address[] memory roninTokens, TokenStandard[] memory standards, uint256[][4] memory thresholds) =
+      _prepareMapTokensAndThresholds();
     bytes memory innerData = abi.encodeCall(IMainchainGatewayV3.mapTokensAndThresholds, (mainchainTokens, roninTokens, standards, thresholds));
-
     bytes memory proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
+
+    targets = new address[](1);
+    values = new uint256[](1);
+    calldatas = new bytes[](1);
+    gasAmounts = new uint256[](1);
 
     targets[0] = _mainchainGatewayV3;
     values[0] = 0;
     calldatas[0] = proxyData;
     gasAmounts[0] = 1_000_000;
+  }
 
-    // ================ VERIFY AND EXECUTE PROPOSAL ===============
-
-    // _verifyMainchainProposalGasAmount(targets, values, calldatas, gasAmounts);
+  function _verifyAndExecuteProposal() internal virtual {
+    (address[] memory targets, uint256[] memory values, bytes[] memory calldatas, uint256[] memory gasAmounts) = _prepareProposal();
 
     uint256 chainId = network().companionChainId();
+    uint256 expiredTime = block.timestamp + 14 days;
 
     vm.broadcast(_governor);
     _roninBridgeManager.propose(chainId, expiredTime, address(0), targets, values, calldatas, gasAmounts);
+  }
+
+  function run() public virtual {
+    _verifyAndExecuteProposal();
   }
 }
