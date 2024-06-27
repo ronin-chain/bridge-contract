@@ -48,19 +48,22 @@ abstract contract Factory__MapTokensRoninchain is Migration {
   function _initCaller() internal virtual returns (address);
   function _initTokenList() internal virtual returns (uint256 totalToken, MapTokenInfo[] memory infos);
 
-  function run() public virtual {
+  function _prepareMapToken()
+    internal
+    returns (address[] memory roninTokens, address[] memory mainchainTokens, uint256[] memory chainIds, TokenStandard[] memory standards)
+  {
+    // function mapTokens(
+    //   address[] calldata _roninTokens,
+    //   address[] calldata _mainchainTokens,
+    //   uint256[] calldata chainIds,
+    //   TokenStandard[] calldata _standards
+    // )
     (uint256 N, MapTokenInfo[] memory tokenInfos) = _initTokenList();
 
-    address[] memory roninTokens = new address[](N);
-    address[] memory mainchainTokens = new address[](N);
-    uint256[] memory chainIds = new uint256[](N);
-    TokenStandard[] memory standards = new TokenStandard[](N);
-
-    uint256 expiredTime = block.timestamp + 14 days;
-    address[] memory targets = new address[](2);
-    uint256[] memory values = new uint256[](2);
-    bytes[] memory calldatas = new bytes[](2);
-    uint256[] memory gasAmounts = new uint256[](2);
+    roninTokens = new address[](N);
+    mainchainTokens = new address[](N);
+    chainIds = new uint256[](N);
+    standards = new TokenStandard[](N);
 
     // ============= MAP TOKENS ===========
 
@@ -70,13 +73,34 @@ abstract contract Factory__MapTokensRoninchain is Migration {
       chainIds[i] = network().companionChainId();
       standards[i] = TokenStandard.ERC20;
     }
+  }
 
-    // function mapTokens(
-    //   address[] calldata _roninTokens,
-    //   address[] calldata _mainchainTokens,
-    //   uint256[] calldata chainIds,
-    //   TokenStandard[] calldata _standards
-    // )
+  function _prepareSetMinThreshold() internal returns (address[] memory roninTokensToSetMinThreshold, uint256[] memory minThresholds) {
+    (uint256 N, MapTokenInfo[] memory tokenInfos) = _initTokenList();
+
+    // ============= SET MIN THRESHOLD ============
+    // function setMinimumThresholds(
+    //   address[] calldata _tokens,
+    //   uint256[] calldata _thresholds
+    // );
+    roninTokensToSetMinThreshold = new address[](N);
+    minThresholds = new uint256[](N);
+
+    for (uint256 i; i < N; ++i) {
+      roninTokensToSetMinThreshold[i] = tokenInfos[i].roninToken;
+      minThresholds[i] = tokenInfos[i].minThreshold;
+    }
+  }
+
+  function _prepareProposal() internal returns (address[] memory targets, uint256[] memory values, bytes[] memory calldatas, uint256[] memory gasAmounts) {
+    (address[] memory roninTokens, address[] memory mainchainTokens, uint256[] memory chainIds, TokenStandard[] memory standards) = _prepareMapToken();
+    (address[] memory roninTokensToSetMinThreshold, uint256[] memory minThresholds) = _prepareSetMinThreshold();
+
+    targets = new address[](2);
+    values = new uint256[](2);
+    calldatas = new bytes[](2);
+    gasAmounts = new uint256[](2);
+
     bytes memory innerData = abi.encodeCall(IRoninGatewayV3.mapTokens, (roninTokens, mainchainTokens, chainIds, standards));
     bytes memory proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
 
@@ -85,19 +109,6 @@ abstract contract Factory__MapTokensRoninchain is Migration {
     calldatas[0] = proxyData;
     gasAmounts[0] = 1_000_000;
 
-    // ============= SET MIN THRESHOLD ============
-    // function setMinimumThresholds(
-    //   address[] calldata _tokens,
-    //   uint256[] calldata _thresholds
-    // );
-    address[] memory roninTokensToSetMinThreshold = new address[](N);
-    uint256[] memory minThresholds = new uint256[](N);
-
-    for (uint256 i; i < N; ++i) {
-      roninTokensToSetMinThreshold[i] = tokenInfos[i].roninToken;
-      minThresholds[i] = tokenInfos[i].minThreshold;
-    }
-
     innerData = abi.encodeCall(MinimumWithdrawal.setMinimumThresholds, (roninTokensToSetMinThreshold, minThresholds));
     proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
 
@@ -105,12 +116,23 @@ abstract contract Factory__MapTokensRoninchain is Migration {
     values[1] = 0;
     calldatas[1] = proxyData;
     gasAmounts[1] = 1_000_000;
+  }
 
+  function _verifyAndExecuteProposal() internal virtual {
     // ================ VERIFY AND EXECUTE PROPOSAL ===============
 
     // _verifyRoninProposalGasAmount(targets, values, calldatas, gasAmounts);
 
+    (address[] memory targets, uint256[] memory values, bytes[] memory calldatas, uint256[] memory gasAmounts) = _prepareProposal();
+
+    uint256 chainId = network().companionChainId();
+    uint256 expiredTime = block.timestamp + 14 days;
+
     vm.broadcast(_governor);
-    _roninBridgeManager.propose(block.chainid, expiredTime, address(0), targets, values, calldatas, gasAmounts);
+    _roninBridgeManager.propose(chainId, expiredTime, address(0), targets, values, calldatas, gasAmounts);
+  }
+
+  function run() public virtual {
+    _verifyAndExecuteProposal();
   }
 }
