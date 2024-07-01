@@ -10,13 +10,13 @@ import { MinimumWithdrawal } from "@ronin/contracts/extensions/MinimumWithdrawal
 import { LibTokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { Ballot } from "@ronin/contracts/libraries/Ballot.sol";
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
-
+import { Proposal } from "@ronin/contracts/libraries/Proposal.sol";
 import { Contract } from "../utils/Contract.sol";
 import { Migration } from "../Migration.s.sol";
 import { Network } from "../utils/Network.sol";
 import { Contract } from "../utils/Contract.sol";
 import { IGeneralConfigExtended } from "../interfaces/IGeneralConfigExtended.sol";
-
+import { LibProposal } from "script/shared/libraries/LibProposal.sol";
 import { MapTokenInfo } from "../libraries/MapTokenInfo.sol";
 import { LibCompanionNetwork } from "script/shared/libraries/LibCompanionNetwork.sol";
 
@@ -26,14 +26,94 @@ abstract contract Factory__MapTokensRoninchain is Migration {
   RoninBridgeManager internal _roninBridgeManager;
   address internal _roninGatewayV3;
   address private _governor;
+  address[] internal _governors;
 
-  function setUp() public override {
+  function setUp() public virtual override {
     super.setUp();
     _roninBridgeManager = RoninBridgeManager(config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
     _roninGatewayV3 = config.getAddressFromCurrentNetwork(Contract.RoninGatewayV3.key());
 
     _governor = _initCaller();
     _cheatWeightOperator(_governor);
+  }
+
+  function run() public virtual {
+    Proposal.ProposalDetail memory proposal = _createAndVerifyProposal();
+    _propose(proposal);
+  }
+
+  function _initCaller() internal virtual returns (address);
+  function _initTokenList() internal virtual returns (uint256 totalToken, MapTokenInfo[] memory infos);
+
+  function _proposeAndExecute(Proposal.ProposalDetail memory proposal) internal {
+    proposal.executor = _governors[0];
+    _propose(proposal);
+
+    uint256 minVoteWeight = _roninBridgeManager.minimumVoteWeight();
+    uint256 sumVoteWeight;
+    uint256 amountGovernorsNeedToVote;
+
+    for (uint256 i; i < _governors.length; ++i) {
+      sumVoteWeight += _roninBridgeManager.getGovernorWeight(_governors[i]);
+      amountGovernorsNeedToVote++;
+      if (sumVoteWeight >= minVoteWeight) break;
+    }
+    require(sumVoteWeight > 0 && amountGovernorsNeedToVote > 0);
+
+    for (uint256 i; i < amountGovernorsNeedToVote; ++i) {
+      vm.broadcast(_governors[i]);
+      _roninBridgeManager.castProposalVoteForCurrentNetwork(proposal, Ballot.VoteType.For);
+    }
+
+    vm.broadcast(_governors[0]);
+    _roninBridgeManager.execute{ gas: 2_000_000 }(proposal);
+  }
+
+  function _propose(Proposal.ProposalDetail memory proposal) internal virtual {
+    vm.broadcast(_governor);
+    _roninBridgeManager.propose(
+      proposal.chainId, proposal.expiryTimestamp, proposal.executor, proposal.targets, proposal.values, proposal.calldatas, proposal.gasAmounts
+    );
+  }
+
+  function _createAndVerifyProposal() internal returns (Proposal.ProposalDetail memory proposal) {
+    (address[] memory roninTokens, address[] memory mainchainTokens, uint256[] memory chainIds, TokenStandard[] memory standards) = _prepareMapToken();
+    (address[] memory roninTokensToSetMinThreshold, uint256[] memory minThresholds) = _prepareSetMinThreshold();
+
+    address[] memory targets = new address[](2);
+    uint256[] memory values = new uint256[](2);
+    bytes[] memory calldatas = new bytes[](2);
+    uint256[] memory gasAmounts = new uint256[](2);
+
+    bytes memory innerData = abi.encodeCall(IRoninGatewayV3.mapTokens, (roninTokens, mainchainTokens, chainIds, standards));
+    bytes memory proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
+
+    uint256 expiredTime = block.timestamp + 14 days;
+    targets[0] = _roninGatewayV3;
+    values[0] = 0;
+    calldatas[0] = proxyData;
+    gasAmounts[0] = 1_000_000;
+
+    innerData = abi.encodeCall(MinimumWithdrawal.setMinimumThresholds, (roninTokensToSetMinThreshold, minThresholds));
+    proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
+
+    targets[1] = _roninGatewayV3;
+    values[1] = 0;
+    calldatas[1] = proxyData;
+    gasAmounts[1] = 1_000_000;
+
+    LibProposal.verifyProposalGasAmount(address(_roninBridgeManager), targets, values, calldatas, gasAmounts);
+
+    proposal = Proposal.ProposalDetail({
+      nonce: RoninBridgeManager(_roninBridgeManager).round(2021) + 1,
+      chainId: block.chainid,
+      expiryTimestamp: expiredTime,
+      executor: address(0),
+      targets: targets,
+      values: values,
+      calldatas: calldatas,
+      gasAmounts: gasAmounts
+    });
   }
 
   function _cheatWeightOperator(address gov) internal {
@@ -45,22 +125,22 @@ abstract contract Factory__MapTokensRoninchain is Migration {
     vm.store(address(_roninBridgeManager), $, newOpAndWeight);
   }
 
-  function _initCaller() internal virtual returns (address);
-  function _initTokenList() internal virtual returns (uint256 totalToken, MapTokenInfo[] memory infos);
-
-  function run() public virtual {
+  function _prepareMapToken()
+    internal
+    returns (address[] memory roninTokens, address[] memory mainchainTokens, uint256[] memory chainIds, TokenStandard[] memory standards)
+  {
+    // function mapTokens(
+    //   address[] calldata _roninTokens,
+    //   address[] calldata _mainchainTokens,
+    //   uint256[] calldata chainIds,
+    //   TokenStandard[] calldata _standards
+    // )
     (uint256 N, MapTokenInfo[] memory tokenInfos) = _initTokenList();
 
-    address[] memory roninTokens = new address[](N);
-    address[] memory mainchainTokens = new address[](N);
-    uint256[] memory chainIds = new uint256[](N);
-    TokenStandard[] memory standards = new TokenStandard[](N);
-
-    uint256 expiredTime = block.timestamp + 14 days;
-    address[] memory targets = new address[](2);
-    uint256[] memory values = new uint256[](2);
-    bytes[] memory calldatas = new bytes[](2);
-    uint256[] memory gasAmounts = new uint256[](2);
+    roninTokens = new address[](N);
+    mainchainTokens = new address[](N);
+    chainIds = new uint256[](N);
+    standards = new TokenStandard[](N);
 
     // ============= MAP TOKENS ===========
 
@@ -70,47 +150,22 @@ abstract contract Factory__MapTokensRoninchain is Migration {
       chainIds[i] = network().companionChainId();
       standards[i] = TokenStandard.ERC20;
     }
+  }
 
-    // function mapTokens(
-    //   address[] calldata _roninTokens,
-    //   address[] calldata _mainchainTokens,
-    //   uint256[] calldata chainIds,
-    //   TokenStandard[] calldata _standards
-    // )
-    bytes memory innerData = abi.encodeCall(IRoninGatewayV3.mapTokens, (roninTokens, mainchainTokens, chainIds, standards));
-    bytes memory proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
-
-    targets[0] = _roninGatewayV3;
-    values[0] = 0;
-    calldatas[0] = proxyData;
-    gasAmounts[0] = 1_000_000;
+  function _prepareSetMinThreshold() internal returns (address[] memory roninTokensToSetMinThreshold, uint256[] memory minThresholds) {
+    (uint256 N, MapTokenInfo[] memory tokenInfos) = _initTokenList();
 
     // ============= SET MIN THRESHOLD ============
     // function setMinimumThresholds(
     //   address[] calldata _tokens,
     //   uint256[] calldata _thresholds
     // );
-    address[] memory roninTokensToSetMinThreshold = new address[](N);
-    uint256[] memory minThresholds = new uint256[](N);
+    roninTokensToSetMinThreshold = new address[](N);
+    minThresholds = new uint256[](N);
 
     for (uint256 i; i < N; ++i) {
       roninTokensToSetMinThreshold[i] = tokenInfos[i].roninToken;
       minThresholds[i] = tokenInfos[i].minThreshold;
     }
-
-    innerData = abi.encodeCall(MinimumWithdrawal.setMinimumThresholds, (roninTokensToSetMinThreshold, minThresholds));
-    proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
-
-    targets[1] = _roninGatewayV3;
-    values[1] = 0;
-    calldatas[1] = proxyData;
-    gasAmounts[1] = 1_000_000;
-
-    // ================ VERIFY AND EXECUTE PROPOSAL ===============
-
-    // _verifyRoninProposalGasAmount(targets, values, calldatas, gasAmounts);
-
-    vm.broadcast(_governor);
-    _roninBridgeManager.propose(block.chainid, expiredTime, address(0), targets, values, calldatas, gasAmounts);
   }
 }
