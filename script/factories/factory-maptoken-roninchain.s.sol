@@ -35,23 +35,20 @@ abstract contract Factory__MapTokensRoninchain is Migration {
 
     _governor = _initCaller();
     _cheatWeightOperator(_governor);
-
-    _governors = new address[](4);
-    _governors[3] = address(0);
-    _governors[2] = address(0);
-    _governors[0] = address(0);
-    _governors[1] = address(0);
   }
 
   function run() public virtual {
-    _proposeAndCastVoteForProposal();
+    Proposal.ProposalDetail memory proposal = _createAndVerifyProposal();
+    _propose(proposal);
   }
 
   function _initCaller() internal virtual returns (address);
   function _initTokenList() internal virtual returns (uint256 totalToken, MapTokenInfo[] memory infos);
 
-  function _proposeAndCastVoteForProposal() internal {
-    Proposal.ProposalDetail memory proposal = _proposeProposal();
+  function _proposeAndExecute(Proposal.ProposalDetail memory proposal) internal {
+    proposal.executor = _governors[0];
+
+    _propose(proposal);
 
     uint256 minVoteWeight = _roninBridgeManager.minimumVoteWeight();
     uint256 sumVoteWeight;
@@ -68,11 +65,12 @@ abstract contract Factory__MapTokensRoninchain is Migration {
       vm.broadcast(_governors[i]);
       _roninBridgeManager.castProposalVoteForCurrentNetwork(proposal, Ballot.VoteType.For);
     }
+
+    vm.broadcast(_governors[0]);
+    _roninBridgeManager.execute{ gas: 2_000_000 }(proposal);
   }
 
-  function _proposeProposal() internal virtual returns (Proposal.ProposalDetail memory proposal) {
-    proposal = _createAndVerifyProposal();
-
+  function _propose(Proposal.ProposalDetail memory proposal) internal virtual {
     vm.broadcast(_governor);
     _roninBridgeManager.propose(
       proposal.chainId, proposal.expiryTimestamp, proposal.executor, proposal.targets, proposal.values, proposal.calldatas, proposal.gasAmounts
@@ -111,7 +109,7 @@ abstract contract Factory__MapTokensRoninchain is Migration {
       nonce: RoninBridgeManager(_roninBridgeManager).round(2021) + 1,
       chainId: block.chainid,
       expiryTimestamp: expiredTime,
-      executor: 0x0000000000000000000000000000000000000000,
+      executor: address(0),
       targets: targets,
       values: values,
       calldatas: calldatas,

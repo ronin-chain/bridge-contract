@@ -12,7 +12,6 @@ import { LibTokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibToken
 import { Contract } from "../utils/Contract.sol";
 import { Migration } from "../Migration.s.sol";
 import { Network, TNetwork } from "../utils/Network.sol";
-import { Contract } from "../utils/Contract.sol";
 import { IGeneralConfigExtended } from "../interfaces/IGeneralConfigExtended.sol";
 import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/SignatureConsumer.sol";
 import { MapTokenInfo } from "../libraries/MapTokenInfo.sol";
@@ -31,35 +30,33 @@ abstract contract Factory__MapTokensMainchain is Migration {
   address[] internal _governors;
   uint256[] internal _governorPKs;
 
-  function setUp() public virtual override {
+  function setUp() public override {
     super.setUp();
-
-    _roninBridgeManager = RoninBridgeManager(config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
-    _mainchainGatewayV3 = config.getAddress(network().companionNetwork(), Contract.MainchainGatewayV3.key());
-    _mainchainBridgeManager = config.getAddress(network().companionNetwork(), Contract.MainchainBridgeManager.key());
+    if (block.chainid == 2020 || block.chainid == 2021) {
+      _roninBridgeManager = RoninBridgeManager(config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
+      _mainchainGatewayV3 = config.getAddress(network().companionNetwork(), Contract.MainchainGatewayV3.key());
+      _mainchainBridgeManager = config.getAddress(network().companionNetwork(), Contract.MainchainBridgeManager.key());
+    }
 
     _governor = _initCaller();
   }
 
   function run() public virtual {
-    _proposeProposal();
+    Proposal.ProposalDetail memory proposal = _createAndVerifyProposal();
+    _propose(proposal);
   }
 
   function _initCaller() internal virtual returns (address);
   function _initTokenList() internal virtual returns (uint256 totalToken, MapTokenInfo[] memory infos);
 
-  function _proposeProposal() internal virtual {
-    Proposal.ProposalDetail memory proposal = _createAndVerifyProposal();
-
+  function _propose(Proposal.ProposalDetail memory proposal) internal virtual {
     vm.broadcast(_governor);
     _roninBridgeManager.propose(
       proposal.chainId, proposal.expiryTimestamp, proposal.executor, proposal.targets, proposal.values, proposal.calldatas, proposal.gasAmounts
     );
   }
 
-  function _relayProposal() internal {
-    Proposal.ProposalDetail memory proposal = _createAndVerifyProposal();
-
+  function _relayProposal(Proposal.ProposalDetail memory proposal) internal {
     MainchainBridgeAdminUtils mainchainProposalUtils =
       new MainchainBridgeAdminUtils(2021, _governorPKs, MainchainBridgeManager(_mainchainBridgeManager), _governors[0]);
 
@@ -71,8 +68,8 @@ abstract contract Factory__MapTokensMainchain is Migration {
     }
 
     SignatureConsumer.Signature[] memory signatures = mainchainProposalUtils.generateSignatures(proposal, _governorPKs);
-    vm.broadcast(_governors[0]);
 
+    vm.broadcast(_governors[0]);
     MainchainBridgeManager(_mainchainBridgeManager).relayProposal{ gas: 2_000_000 }(proposal, supports_, signatures);
   }
 
