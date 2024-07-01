@@ -47,7 +47,6 @@ abstract contract Factory__MapTokensRoninchain is Migration {
 
   function _proposeAndExecute(Proposal.ProposalDetail memory proposal) internal {
     proposal.executor = _governors[0];
-
     _propose(proposal);
 
     uint256 minVoteWeight = _roninBridgeManager.minimumVoteWeight();

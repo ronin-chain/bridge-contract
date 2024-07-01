@@ -16,11 +16,14 @@ contract Migration__20242606_MapTokenAnimaRoninTestnet is Base__MapToken, Factor
   }
 
   function run() public override {
-    _governors = new address[](4);
-    _governors[3] = 0xd24D87DDc1917165435b306aAC68D99e0F49A3Fa;
-    _governors[2] = 0xb033ba62EC622dC54D0ABFE0254e79692147CA26;
-    _governors[0] = 0x087D08e3ba42e64E3948962dd1371F906D1278b9;
-    _governors[1] = 0x52ec2e6BBcE45AfFF8955Da6410bb13812F4289F;
+    address[] memory governorsMemory = new address[](4);
+    governorsMemory[3] = 0xd24D87DDc1917165435b306aAC68D99e0F49A3Fa;
+    governorsMemory[2] = 0xb033ba62EC622dC54D0ABFE0254e79692147CA26;
+    governorsMemory[0] = 0x087D08e3ba42e64E3948962dd1371F906D1278b9;
+    governorsMemory[1] = 0x52ec2e6BBcE45AfFF8955Da6410bb13812F4289F;
+    for (uint256 i; i < 4; ++i) {
+      _governors.push(governorsMemory[i]);
+    }
 
     Proposal.ProposalDetail memory proposal = _createAndVerifyProposal();
 

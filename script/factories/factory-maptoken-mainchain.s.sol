@@ -69,8 +69,13 @@ abstract contract Factory__MapTokensMainchain is Migration {
 
     SignatureConsumer.Signature[] memory signatures = mainchainProposalUtils.generateSignatures(proposal, _governorPKs);
 
+    uint256 gasAmounts = 1_000_000;
+    for (uint256 i; i < proposal.gasAmounts.length; ++i) {
+      gasAmounts += proposal.gasAmounts[i];
+    }
+
     vm.broadcast(_governors[0]);
-    MainchainBridgeManager(_mainchainBridgeManager).relayProposal{ gas: 2_000_000 }(proposal, supports_, signatures);
+    MainchainBridgeManager(_mainchainBridgeManager).relayProposal{ gas: gasAmounts }(proposal, supports_, signatures);
   }
 
   function _createAndVerifyProposal() internal returns (Proposal.ProposalDetail memory proposal) {
@@ -90,8 +95,6 @@ abstract contract Factory__MapTokensMainchain is Migration {
     calldatas[0] = proxyData;
     gasAmounts[0] = 1_000_000;
 
-    uint256 nonce = (block.chainid == 2021 || block.chainid == 2020) ? 0 : MainchainBridgeManager(_mainchainBridgeManager).round(11155111) + 1;
-
     // Verify gas when call from mainchain.
     LibProposal.verifyProposalGasAmount(address(_mainchainBridgeManager), targets, values, calldatas, gasAmounts);
 
@@ -100,9 +103,19 @@ abstract contract Factory__MapTokensMainchain is Migration {
     // address companionManager = config.getAddress(companionNetwork, Contract.MainchainBridgeManager.key());
     // LibProposal.verifyMainchainProposalGasAmount(companionNetwork, companionManager, targets, values, calldatas, gasAmounts);
 
+    uint256 chainId;
+    uint256 nonce;
+    if (block.chainid == 2020 || block.chainid == 2021) {
+      nonce = 0;
+      (chainId,) = network().companionNetworkData();
+    } else {
+      nonce = MainchainBridgeManager(_mainchainBridgeManager).round(11155111) + 1;
+      chainId = block.chainid;
+    }
+
     proposal = Proposal.ProposalDetail({
       nonce: nonce,
-      chainId: block.chainid,
+      chainId: chainId,
       expiryTimestamp: expiredTime,
       executor: address(0),
       targets: targets,
@@ -145,8 +158,6 @@ abstract contract Factory__MapTokensMainchain is Migration {
   }
 
   function _cheatStorage(address[] memory governors) internal {
-    // ================ Cheat Storage ===============
-
     bytes32 governorsSlot = keccak256(abi.encode(0xc648703095712c0419b6431ae642c061f0a105ac2d7c3d9604061ef4ebc38300));
     uint256 length = governors.length;
     //cheat governors addresses
