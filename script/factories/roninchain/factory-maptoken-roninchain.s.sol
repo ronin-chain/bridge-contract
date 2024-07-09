@@ -124,22 +124,11 @@ abstract contract Factory__MapTokensRoninchain is Migration {
       gasAmounts += proposal.gasAmounts[i];
     }
 
-    vm.broadcast(_governors[0]);
+    vm.broadcast(_specifiedCaller);
     _roninBridgeManager.execute{ gas: gasAmounts }(proposal);
   }
 
   function _propose(Proposal.ProposalDetail memory proposal) internal virtual {
-    // ============= LOCAL SIMULATION ==================
-    _cheatWeightOperator(_specifiedCaller);
-    Ballot.VoteType cheatingSupport = Ballot.VoteType.For;
-    vm.startPrank(_specifiedCaller);
-    _roninBridgeManager.propose(
-      proposal.chainId, proposal.expiryTimestamp, proposal.executor, proposal.targets, proposal.values, proposal.calldatas, proposal.gasAmounts
-    );
-    _roninBridgeManager.castProposalVoteForCurrentNetwork(proposal, cheatingSupport);
-    _roninBridgeManager.execute{ gas: 2_000_000 }(proposal);
-    vm.stopPrank();
-
     vm.broadcast(_specifiedCaller);
     _roninBridgeManager.propose(
       proposal.chainId, proposal.expiryTimestamp, proposal.executor, proposal.targets, proposal.values, proposal.calldatas, proposal.gasAmounts
