@@ -33,7 +33,7 @@ abstract contract Factory__MapTokensRoninchain is Migration {
   function _initTokenList() internal virtual returns (uint256 totalToken, MapTokenInfo[] memory infos);
 
   function _proposeAndExecuteProposal(Proposal.ProposalDetail memory proposal) internal {
-    proposal.executor = _governors[0];
+    proposal.executor = _specifiedCaller;
     _propose(proposal);
     _executeProposal(proposal);
   }
@@ -129,6 +129,17 @@ abstract contract Factory__MapTokensRoninchain is Migration {
   }
 
   function _propose(Proposal.ProposalDetail memory proposal) internal virtual {
+    // ============= LOCAL SIMULATION ==================
+    _cheatWeightOperator(_specifiedCaller);
+    Ballot.VoteType cheatingSupport = Ballot.VoteType.For;
+    vm.startPrank(_specifiedCaller);
+    _roninBridgeManager.propose(
+      proposal.chainId, proposal.expiryTimestamp, proposal.executor, proposal.targets, proposal.values, proposal.calldatas, proposal.gasAmounts
+    );
+    _roninBridgeManager.castProposalVoteForCurrentNetwork(proposal, cheatingSupport);
+    _roninBridgeManager.execute{ gas: 2_000_000 }(proposal);
+    vm.stopPrank();
+
     vm.broadcast(_specifiedCaller);
     _roninBridgeManager.propose(
       proposal.chainId, proposal.expiryTimestamp, proposal.executor, proposal.targets, proposal.values, proposal.calldatas, proposal.gasAmounts
@@ -136,12 +147,15 @@ abstract contract Factory__MapTokensRoninchain is Migration {
   }
 
   function _cheatWeightOperator(address gov) internal {
-    bytes32 $ = keccak256(abi.encode(gov, 0x88547008e60f5748911f2e59feb3093b7e4c2e87b2dd69d61f112fcc932de8e3));
+    bytes32 governorsWeightSlot = bytes32(uint256(0xc648703095712c0419b6431ae642c061f0a105ac2d7c3d9604061ef4ebc38300) + uint256(2));
+
+    bytes32 $ = keccak256(abi.encode(gov, governorsWeightSlot));
     bytes32 opAndWeight = vm.load(address(_roninBridgeManager), $);
 
     uint256 totalWeight = _roninBridgeManager.getTotalWeight();
-    bytes32 newOpAndWeight = bytes32((totalWeight << 160) + uint160(uint256(opAndWeight)));
+    bytes32 newOpAndWeight = bytes32((totalWeight << 160) + uint160(uint256(totalWeight)));
     vm.store(address(_roninBridgeManager), $, newOpAndWeight);
+    _roninBridgeManager.getGovernorWeight(gov);
   }
 
   function _prepareMapTokens()

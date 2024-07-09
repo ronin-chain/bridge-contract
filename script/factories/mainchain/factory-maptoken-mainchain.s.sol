@@ -196,4 +196,18 @@ abstract contract Factory__MapTokensMainchain is Migration {
       vm.store(_mainchainBridgeManager, valueSlot, bytes32(uint256(uint96(100))));
     }
   }
+
+  function _cheatWeightOperator(address gov) internal {
+    // bytes32 governorsSlot = keccak256(abi.encode(0xc648703095712c0419b6431ae642c061f0a105ac2d7c3d9604061ef4ebc3830));
+    // vm.store(address(_roninBridgeManager), governorsSlot, bytes32(uint256(uint160(gov))));
+    bytes32 governorsWeightSlot = bytes32(uint256(0xc648703095712c0419b6431ae642c061f0a105ac2d7c3d9604061ef4ebc38300) + uint256(2));
+
+    bytes32 $ = keccak256(abi.encode(gov, governorsWeightSlot));
+    bytes32 opAndWeight = vm.load(address(_roninBridgeManager), $);
+
+    uint256 totalWeight = _roninBridgeManager.getTotalWeight();
+    bytes32 newOpAndWeight = bytes32((totalWeight << 160) + uint160(uint256(totalWeight)));
+    vm.store(address(_roninBridgeManager), $, newOpAndWeight);
+    _roninBridgeManager.getGovernorWeight(gov);
+  }
 }

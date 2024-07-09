@@ -23,7 +23,9 @@ abstract contract Factory__MapTokensMainchain_Ethereum is Factory__MapTokensMain
   }
 
   function run() public virtual override {
-    Proposal.ProposalDetail memory proposal = _createAndVerifyProposalOnMainchain(network().companionChainId(), 0);
+    uint256 chainId = network().companionChainId();
+    uint256 nonce = _roninBridgeManager.round(chainId) + 1;
+    Proposal.ProposalDetail memory proposal = _createAndVerifyProposalOnMainchain(chainId, nonce);
     _propose(proposal);
   }
 }

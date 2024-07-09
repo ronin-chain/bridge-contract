@@ -2,10 +2,11 @@
 pragma solidity ^0.8.19;
 
 import { console2 } from "forge-std/console2.sol";
-import "../factories/roninchain/factory-maptoken-ronin-mainnet.s.sol";
+import "../factories/roninchain/factory-maptoken-ronin-testnet.s.sol";
 import "./base-maptoken.s.sol";
+import { Proposal } from "@ronin/contracts/libraries/Proposal.sol";
 
-contract Migration__20240308_MapTokenAperiosRoninchain is Base__MapToken, Factory__MapTokensRonin_Mainnet {
+contract Migration__20240708_MapTokenWBTCRoninTestnet is Base__MapToken, Factory__MapTokensRonin_Testnet {
   function _initCaller() internal override(Base__MapToken, Factory__MapTokensRoninchain) returns (address) {
     return Base__MapToken._initCaller();
   }
@@ -14,8 +15,11 @@ contract Migration__20240308_MapTokenAperiosRoninchain is Base__MapToken, Factor
     return Base__MapToken._initTokenList();
   }
 
+  function _initGovernors() internal override(Base__MapToken, Factory__MapTokensRonin_Testnet) returns (address[] memory) {
+    return Base__MapToken._initGovernors();
+  }
+
   function run() public override {
-    console2.log("nonce", vm.getNonce(SM_GOVERNOR)); // Log nonce for workaround of nonce increase when switch network
-    Factory__MapTokensRonin_Mainnet.run();
+    Factory__MapTokensRonin_Testnet.run();
   }
 }

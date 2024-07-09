@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import { MapTokenInfo } from "../libraries/MapTokenInfo.sol";
+import { LibTokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 
 contract Migration__MapToken_Aperios_Config {
   MapTokenInfo _aperiosInfo;
@@ -9,6 +10,7 @@ contract Migration__MapToken_Aperios_Config {
   constructor() {
     _aperiosInfo.roninToken = address(0x7894b3088d069E70895EFfA4e8f7D2c243Fd04C1);
     _aperiosInfo.mainchainToken = address(0x95b4B8CaD3567B5d7EF7399C2aE1d7070692aB0D);
+    _aperiosInfo.standard = TokenStandard.ERC20;
     _aperiosInfo.minThreshold = 10 ether;
     _aperiosInfo.highTierThreshold = 10_000_000 ether;
     _aperiosInfo.lockedThreshold = 40_000_000 ether;
