@@ -30,6 +30,11 @@ abstract contract Factory__MapTokensMainchain is Migration {
   address[] internal _governors;
   uint256[] internal _governorPKs;
 
+  function setUp() public virtual override {
+    super.setUp();
+    _specifiedCaller = _initCaller();
+  }
+
   function run() public virtual;
   function _initCaller() internal virtual returns (address);
   function _initTokenList() internal virtual returns (uint256 totalToken, MapTokenInfo[] memory infos);

@@ -12,13 +12,6 @@ import "./factory-maptoken-roninchain.s.sol";
 abstract contract Factory__MapTokensRonin_Testnet is Factory__MapTokensRoninchain {
   using LibCompanionNetwork for *;
 
-  function setUp() public override {
-    super.setUp();
-    _roninBridgeManager = RoninBridgeManager(config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
-    _roninGatewayV3 = config.getAddressFromCurrentNetwork(Contract.RoninGatewayV3.key());
-    _specifiedCaller = _initCaller();
-  }
-
   function _initGovernors() internal virtual returns (address[] memory);
 
   function run() public virtual override {

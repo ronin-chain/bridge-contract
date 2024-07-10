@@ -28,6 +28,13 @@ abstract contract Factory__MapTokensRoninchain is Migration {
   address internal _specifiedCaller;
   address[] internal _governors;
 
+  function setUp() public virtual override {
+    super.setUp();
+    _roninBridgeManager = RoninBridgeManager(config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
+    _roninGatewayV3 = config.getAddressFromCurrentNetwork(Contract.RoninGatewayV3.key());
+    _specifiedCaller = _initCaller();
+  }
+
   function run() public virtual;
   function _initCaller() internal virtual returns (address);
   function _initTokenList() internal virtual returns (uint256 totalToken, MapTokenInfo[] memory infos);
