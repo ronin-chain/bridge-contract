@@ -19,6 +19,9 @@ import { LibCompanionNetwork } from "script/shared/libraries/LibCompanionNetwork
 import { MainchainBridgeAdminUtils } from "test/helpers/MainchainBridgeAdminUtils.t.sol";
 import { MainchainBridgeManager } from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
 import { LibProposal } from "script/shared/libraries/LibProposal.sol";
+import { Network, TNetwork } from "../../utils/Network.sol";
+import { IBridgeManager } from "@ronin/contracts/interfaces/bridge/IBridgeManager.sol";
+import { DefaultNetwork } from "@fdk/utils/DefaultNetwork.sol";
 
 abstract contract Factory__MapTokensMainchain is Migration {
   using LibCompanionNetwork for *;

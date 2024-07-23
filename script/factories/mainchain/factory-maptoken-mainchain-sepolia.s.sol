@@ -9,6 +9,7 @@ import { Proposal } from "@ronin/contracts/libraries/Proposal.sol";
 import { Contract } from "../../utils/Contract.sol";
 import { MainchainBridgeManager } from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
 import "./factory-maptoken-mainchain.s.sol";
+import "../simulation/factory-maptoken-simulation-mainchain.s.sol";
 
 abstract contract Factory__MapTokensMainchain_Sepolia is Factory__MapTokensMainchain {
   function setUp() public override {
@@ -52,7 +53,10 @@ abstract contract Factory__MapTokensMainchain_Sepolia is Factory__MapTokensMainc
 
     uint256 chainId = block.chainid;
     uint256 nonce = MainchainBridgeManager(_mainchainBridgeManager).round(chainId) + 1;
+
     Proposal.ProposalDetail memory proposal = _createAndVerifyProposalOnMainchain(chainId, nonce);
+    // Simulate relay proposal
+    new Factory__MapTokensSimulation_Mainchain().simulate(proposal);
     _relayProposal(proposal);
   }
 }

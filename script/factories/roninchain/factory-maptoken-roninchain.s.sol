@@ -39,10 +39,43 @@ abstract contract Factory__MapTokensRoninchain is Migration {
   function _initCaller() internal virtual returns (address);
   function _initTokenList() internal virtual returns (uint256 totalToken, MapTokenInfo[] memory infos);
 
+  function _propose(Proposal.ProposalDetail memory proposal) internal virtual {
+    vm.broadcast(_specifiedCaller);
+    _roninBridgeManager.propose(
+      proposal.chainId, proposal.expiryTimestamp, proposal.executor, proposal.targets, proposal.values, proposal.calldatas, proposal.gasAmounts
+    );
+  }
+
   function _proposeAndExecuteProposal(Proposal.ProposalDetail memory proposal) internal {
     proposal.executor = _specifiedCaller;
     _propose(proposal);
     _executeProposal(proposal);
+  }
+
+  function _executeProposal(Proposal.ProposalDetail memory proposal) internal {
+    uint256 minVoteWeight = _roninBridgeManager.minimumVoteWeight();
+    uint256 sumVoteWeight;
+    uint256 numberGovernorsNeedToVote;
+
+    for (uint256 i; i < _governors.length; ++i) {
+      sumVoteWeight += _roninBridgeManager.getGovernorWeight(_governors[i]);
+      numberGovernorsNeedToVote++;
+      if (sumVoteWeight >= minVoteWeight) break;
+    }
+    require(sumVoteWeight > 0 && numberGovernorsNeedToVote > 0);
+
+    for (uint256 i; i < numberGovernorsNeedToVote; ++i) {
+      vm.broadcast(_governors[i]);
+      _roninBridgeManager.castProposalVoteForCurrentNetwork(proposal, Ballot.VoteType.For);
+    }
+
+    uint256 gasAmounts = 1_000_000;
+    for (uint256 i; i < proposal.gasAmounts.length; ++i) {
+      gasAmounts += proposal.gasAmounts[i];
+    }
+
+    vm.broadcast(_specifiedCaller);
+    _roninBridgeManager.execute{ gas: gasAmounts }(proposal);
   }
 
   function _createAndVerifyProposalOnRonin() internal returns (Proposal.ProposalDetail memory proposal) {

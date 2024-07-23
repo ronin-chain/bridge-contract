@@ -8,6 +8,7 @@ import { Proposal } from "@ronin/contracts/libraries/Proposal.sol";
 import { Contract } from "../../utils/Contract.sol";
 import { MainchainBridgeManager } from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
 import "./factory-maptoken-roninchain.s.sol";
+import "../simulation/factory-maptoken-simulation-roninchain.s.sol";
 
 abstract contract Factory__MapTokensRonin_Testnet is Factory__MapTokensRoninchain {
   using LibCompanionNetwork for *;
@@ -22,6 +23,8 @@ abstract contract Factory__MapTokensRonin_Testnet is Factory__MapTokensRoninchai
     }
 
     Proposal.ProposalDetail memory proposal = _createAndVerifyProposalOnRonin();
+    // Simulate execute proposal
+    new Factory__MapTokensSimulation_Roninchain().simulate(proposal);
     _proposeAndExecuteProposal(proposal);
   }
 }
