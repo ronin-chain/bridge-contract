@@ -28,7 +28,7 @@ contract Factory__MapTokensSimulation_Roninchain is Factory__MapTokensSimulation
 
     Ballot.VoteType cheatingSupport = Ballot.VoteType.For;
     address cheatingGov = makeAddr("Governor");
-    _cheatWeightOperator(IBridgeManager(_roninBridgeManager), cheatingGov);
+    _cheatWeightGovernor(IBridgeManager(_roninBridgeManager), cheatingGov);
 
     vm.startPrank(cheatingGov);
     _roninBridgeManager.propose(

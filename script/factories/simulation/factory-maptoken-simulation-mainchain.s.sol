@@ -53,7 +53,7 @@ contract Factory__MapTokensSimulation_Mainchain is Factory__MapTokensSimulation_
 
     vm.startPrank(cheatingGov);
     if (network() == DefaultNetwork.RoninMainnet.key() || network() == DefaultNetwork.RoninTestnet.key()) {
-      _cheatWeightOperator(IBridgeManager(_roninBridgeManager), cheatingGov);
+      _cheatWeightGovernor(IBridgeManager(_roninBridgeManager), cheatingGov);
 
       _roninBridgeManager.propose(
         proposal.chainId, proposal.expiryTimestamp, proposal.executor, proposal.targets, proposal.values, proposal.calldatas, proposal.gasAmounts
@@ -75,12 +75,12 @@ contract Factory__MapTokensSimulation_Mainchain is Factory__MapTokensSimulation_
         assertEq(MainchainBridgeManager(mMainchainAdress).round(block.chainid) + 1, proposal.nonce);
       }
 
-      _cheatWeightOperator(IBridgeManager(mMainchainAdress), cheatingGov);
+      _cheatWeightGovernor(IBridgeManager(mMainchainAdress), cheatingGov);
       MainchainBridgeManager(mMainchainAdress).relayProposal{ gas: gasAmounts }(proposal, cheatingSupports, cheatingSignatures);
 
       config.switchTo(currentNetwork);
     } else {
-      _cheatWeightOperator(IBridgeManager(_mainchainBridgeManager), cheatingGov);
+      _cheatWeightGovernor(IBridgeManager(_mainchainBridgeManager), cheatingGov);
       MainchainBridgeManager(_mainchainBridgeManager).relayProposal{ gas: gasAmounts }(proposal, cheatingSupports, cheatingSignatures);
     }
     vm.stopPrank();
