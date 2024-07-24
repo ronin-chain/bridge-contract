@@ -21,7 +21,7 @@ contract Migration__20240708_MapTokenWBTCSepolia is Base__MapToken, Factory__Map
     return Base__MapToken._initTokenList();
   }
 
-  function _isLocalSimulation() internal virtual override returns (bool) {
+  function _isLocalSimulation() internal virtual returns (bool) {
     return false;
   }
 
