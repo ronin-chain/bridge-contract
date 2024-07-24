@@ -18,33 +18,15 @@ abstract contract Factory__MapTokensMainchain_Sepolia is Factory__MapTokensMainc
     _mainchainBridgeManager = config.getAddressFromCurrentNetwork(Contract.MainchainBridgeManager.key());
   }
 
-  function _isLocalSimulation() internal virtual returns (bool);
   function _initGovernorPKs() internal virtual returns (uint256[] memory);
   function _initGovernors() internal virtual returns (address[] memory);
-
-  function _initLocalGovernorPKs() internal virtual returns (uint256[] memory) {
-    require(_isLocalSimulation(), "Not in local simulation mode");
-    revert("_initLocalGovernorPKs() must be implemented for local simulation");
-  }
-
-  function _initLocalGovernors() internal virtual returns (address[] memory) {
-    require(_isLocalSimulation(), "Not in local simulation mode");
-    revert("_initLocalGovernors() must be implemented for local simulation");
-  }
 
   function run() public virtual override {
     address[] memory mGovernors;
     uint256[] memory mGovernorsPk;
 
-    if (_isLocalSimulation()) {
-      mGovernors = _initLocalGovernors();
-      mGovernorsPk = _initLocalGovernorPKs();
-
-      _cheatLocalReplaceGovernors(mGovernors);
-    } else {
-      mGovernors = _initGovernors();
-      mGovernorsPk = _initGovernorPKs();
-    }
+    mGovernors = _initGovernors();
+    mGovernorsPk = _initGovernorPKs();
 
     for (uint256 i; i < mGovernors.length; ++i) {
       _governors.push(mGovernors[i]);

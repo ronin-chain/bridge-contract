@@ -67,7 +67,7 @@ abstract contract Factory__MapTokensMainchain is Migration {
       gasAmounts += proposal.gasAmounts[i];
     }
 
-    vm.broadcast(_governors[0]);
+    vm.broadcast(_specifiedCaller);
     MainchainBridgeManager(_mainchainBridgeManager).relayProposal{ gas: gasAmounts }(proposal, supports_, signatures);
   }
 
@@ -102,13 +102,13 @@ abstract contract Factory__MapTokensMainchain is Migration {
     calldatas[0] = proxyData;
     gasAmounts[0] = 1_000_000;
 
-    if (block.chainid == 2020) {
-      // Verify gas when call from ronin.
+    if (block.chainid == 2020 || block.chainid == 2021) {
+      // Verify gas amount for ronin targets.
       (uint256 companionChainId, TNetwork companionNetwork) = network().companionNetworkData();
       address companionManager = config.getAddress(companionNetwork, Contract.MainchainBridgeManager.key());
       LibProposal.verifyMainchainProposalGasAmount(companionNetwork, companionManager, targets, values, calldatas, gasAmounts);
     } else {
-      // Verify gas when call from mainchain.
+      // Verify gas amount for mainchain targets.
       LibProposal.verifyProposalGasAmount(address(_mainchainBridgeManager), targets, values, calldatas, gasAmounts);
     }
 
@@ -175,47 +175,5 @@ abstract contract Factory__MapTokensMainchain is Migration {
       roninTokens[i] = tokenInfos[i].roninToken;
       standards[i] = tokenInfos[i].standard;
     }
-  }
-
-  function _cheatLocalReplaceGovernors(address[] memory governors) internal {
-    bytes32 governorsSlot = keccak256(abi.encode(0xc648703095712c0419b6431ae642c061f0a105ac2d7c3d9604061ef4ebc3830));
-    console.logBytes32(governorsSlot);
-    uint256 length = governors.length;
-
-    // Cheat governors addresses.
-    for (uint256 i; i < length; ++i) {
-      bytes32 governorSlotId = bytes32(uint256(governorsSlot) + uint256(i));
-      vm.store(_mainchainBridgeManager, governorSlotId, bytes32(uint256(uint160(governors[i]))));
-    }
-
-    // Check if cheat successfully.
-    for (uint256 i; i < length; ++i) {
-      bytes32 governorSlotId = bytes32(uint256(governorsSlot) + uint256(i));
-      bytes32 afterCheatData = vm.load(_mainchainBridgeManager, bytes32(uint256(governorsSlot) + uint256(i)));
-
-      assertEq(afterCheatData, bytes32(uint256(uint160(governors[i]))));
-    }
-
-    // Cheat governors weights.
-    bytes32 governorsWeightSlot = bytes32(uint256(0xc648703095712c0419b6431ae642c061f0a105ac2d7c3d9604061ef4ebc38300) + uint256(2));
-    for (uint256 i; i < length; ++i) {
-      address key = governors[i];
-      bytes32 valueSlot = keccak256(abi.encode(key, governorsWeightSlot));
-      vm.store(_mainchainBridgeManager, valueSlot, bytes32(uint256(uint96(100))));
-    }
-  }
-
-  function _cheatWeightOperator(address gov) internal {
-    // bytes32 governorsSlot = keccak256(abi.encode(0xc648703095712c0419b6431ae642c061f0a105ac2d7c3d9604061ef4ebc3830));
-    // vm.store(address(_roninBridgeManager), governorsSlot, bytes32(uint256(uint160(gov))));
-    bytes32 governorsWeightSlot = bytes32(uint256(0xc648703095712c0419b6431ae642c061f0a105ac2d7c3d9604061ef4ebc38300) + uint256(2));
-
-    bytes32 $ = keccak256(abi.encode(gov, governorsWeightSlot));
-    bytes32 opAndWeight = vm.load(address(_roninBridgeManager), $);
-
-    uint256 totalWeight = _roninBridgeManager.getTotalWeight();
-    bytes32 newOpAndWeight = bytes32((totalWeight << 160) + uint160(uint256(totalWeight)));
-    vm.store(address(_roninBridgeManager), $, newOpAndWeight);
-    _roninBridgeManager.getGovernorWeight(gov);
   }
 }

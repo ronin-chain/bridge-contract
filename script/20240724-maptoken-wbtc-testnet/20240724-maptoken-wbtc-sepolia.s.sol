@@ -10,7 +10,7 @@ import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/Signatu
 import { Proposal } from "@ronin/contracts/libraries/Proposal.sol";
 import { MainchainBridgeManager } from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
 
-contract Migration__20242606_MapTokenAnimaMainchain is Base__MapToken, Factory__MapTokensMainchain_Sepolia {
+contract Migration__20240724_MapTokenWBTCSepolia is Base__MapToken, Factory__MapTokensMainchain_Sepolia {
   MainchainBridgeAdminUtils _mainchainProposalUtils;
 
   function _initCaller() internal override(Base__MapToken, Factory__MapTokensMainchain) returns (address) {
