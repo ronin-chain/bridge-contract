@@ -18,10 +18,10 @@ contract Migration__Governors_Config {
     governors[2] = 0x087D08e3ba42e64E3948962dd1371F906D1278b9;
     governors[3] = 0x52ec2e6BBcE45AfFF8955Da6410bb13812F4289F;
 
-    pkOpSecretRefs[0] = "op://Tri X TuDo/6bxmktndkmp6nabsn2if4mznsi/password";
-    pkOpSecretRefs[1] = "op://Tri X TuDo/6totodbje7qvffc56pgtuusnny/password";
-    pkOpSecretRefs[2] = "op://Tri X TuDo/ouyrwjv2haolekgqlugl3vu2q4/password";
-    pkOpSecretRefs[3] = "op://Tri X TuDo/qlsa3zdtl7lo7jpgd6bhm2pwv4/password";
+    pkOpSecretRefs[0] = "op://{your_secret_reference}";
+    pkOpSecretRefs[1] = "op://{your_secret_reference}";
+    pkOpSecretRefs[2] = "op://{your_secret_reference}";
+    pkOpSecretRefs[3] = "op://{your_secret_reference}";
 
     // TODO: replace by private key of the testnet governors
     governorPks[0] = _readOPRef(pkOpSecretRefs[0]);
