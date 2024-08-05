@@ -14,12 +14,42 @@ import {
   GlobalCoreGovernance,
   GlobalGovernanceProposal
 } from "../../extensions/sequential-governance/governance-proposal/GlobalGovernanceProposal.sol";
+import { IRoninGatewayV3 } from "../../interfaces/IRoninGatewayV3.sol";
+import { MinimumWithdrawal } from "../../extensions/MinimumWithdrawal.sol";
+import { TokenStandard } from "../../libraries/LibTokenInfo.sol";
 import { VoteStatusConsumer } from "../../interfaces/consumers/VoteStatusConsumer.sol";
 import "../../utils/CommonErrors.sol";
 
 contract RoninBridgeManager is BridgeManager, GovernanceProposal, GlobalGovernanceProposal {
   using Proposal for Proposal.ProposalDetail;
   using GlobalProposal for GlobalProposal.GlobalProposalDetail;
+
+  function hotfix__mapToken_setMinimumThresholds_registerCallbacks() external onlyProxyAdmin {
+    require(block.chainid == 2020, "Only on ronin-mainnet");
+
+    address[] memory roninTokens = new address[](1);
+    address[] memory mainchainTokens = new address[](1);
+    uint256[] memory chainIds = new uint256[](1);
+    address[] memory callbacks = new address[](1);
+    TokenStandard[] memory standards = new TokenStandard[](1);
+    uint256[] memory withdrawalThresholds = new uint256[](1);
+
+    roninTokens[0] = 0x7E73630F81647bCFD7B1F2C04c1C662D17d4577e;
+    mainchainTokens[0] = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
+    chainIds[0] = 1;
+    callbacks[0] = 0x273cdA3AFE17eB7BcB028b058382A9010ae82B24; // Bridge Slash contract
+    standards[0] = TokenStandard.ERC20;
+    withdrawalThresholds[0] = 0.000167 * 10 ** 8;
+
+    GlobalProposal.TargetOption[] memory targetOptions = new GlobalProposal.TargetOption[](1);
+    targetOptions[0] = GlobalProposal.TargetOption.GatewayContract;
+    address gw = _resolveTargets({ targetOptions: targetOptions, strict: true })[0];
+
+    IRoninGatewayV3(gw).mapTokens({ _roninTokens: roninTokens, _mainchainTokens: mainchainTokens, chainIds: chainIds, _standards: standards });
+    MinimumWithdrawal(gw).setMinimumThresholds({ _tokens: mainchainTokens, _thresholds: withdrawalThresholds });
+
+    _registerCallbacks(callbacks);
+  }
 
   /**
    * CURRENT NETWORK
