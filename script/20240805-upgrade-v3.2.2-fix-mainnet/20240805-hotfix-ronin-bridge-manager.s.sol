@@ -44,7 +44,7 @@ contract Migration__20240805_HotFix_RoninBridgeManager is Migration {
       0,
       abi.encodeCall(
         TransparentUpgradeableProxy.upgradeToAndCall,
-        (hotfixImpl, abi.encodeCall(RoninBridgeManager.hotfix__mapToken_setMinimumThresholds_registerCallbacks, (newRoninGWImpl)))
+        (hotfixImpl, abi.encodeWithSignature("hotfix__mapToken_setMinimumThresholds_registerCallbacks(address)", (newRoninGWImpl)))
       )
     );
 

@@ -43,6 +43,7 @@ import { PauseEnforcer } from "@ronin/contracts/ronin/gateway/PauseEnforcer.sol"
 import { IPauseTarget } from "@ronin/contracts/interfaces/IPauseTarget.sol";
 import { GatewayV3 } from "@ronin/contracts/extensions/GatewayV3.sol";
 import { IBridgeManagerCallbackRegister } from "@ronin/contracts/interfaces/bridge/IBridgeManagerCallbackRegister.sol";
+import { LibProxy } from "@fdk/libraries/LibProxy.sol";
 
 import { RoninBridgeManagerDeploy } from "@ronin/script/contracts/RoninBridgeManagerDeploy.s.sol";
 import { RoninGatewayV3Deploy } from "@ronin/script/contracts/RoninGatewayV3Deploy.s.sol";
@@ -141,6 +142,14 @@ contract BaseIntegration_Test is Base_Test {
     _configBridgeTrackingForRoninGateway();
 
     sender = makeAddr("sender");
+
+    // address proxyAdmin = LibProxy.getProxyAdmin(address(_roninBridgeManager));
+    // vm.prank(proxyAdmin);
+    // TransparentUpgradeableProxyV2(payable(address(_roninBridgeManager))).changeAdmin(address(_roninBridgeManager));
+
+    // proxyAdmin = LibProxy.getProxyAdmin(address(_mainchainBridgeManager));
+    // vm.prank(proxyAdmin);
+    // TransparentUpgradeableProxyV2(payable(address(_mainchainBridgeManager))).changeAdmin(address(_mainchainBridgeManager));
   }
 
   function _deployContractsOnRonin() internal {
@@ -201,12 +210,20 @@ contract BaseIntegration_Test is Base_Test {
     _roninPauseEnforcerInitialize();
     _roninGatewayV3Initialize();
     _constructForRoninBridgeManager();
+
+    // address proxyAdmin = LibProxy.getProxyAdmin(address(_roninBridgeManager));
+    // vm.prank(proxyAdmin);
+    // TransparentUpgradeableProxyV2(payable(address(_roninBridgeManager))).changeAdmin(address(_roninBridgeManager));
   }
 
   function _initializeMainchain() internal {
     _mainchainPauseEnforcerInitialize();
     _constructForMainchainBridgeManager();
     _mainchainGatewayV3Initialize();
+
+    // address proxyAdmin = LibProxy.getProxyAdmin(address(_mainchainBridgeManager));
+    // vm.prank(proxyAdmin);
+    // TransparentUpgradeableProxyV2(payable(address(_mainchainBridgeManager))).changeAdmin(address(_mainchainBridgeManager));
   }
 
   function _bridgeRewardInitialize() internal {
