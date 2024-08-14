@@ -8,10 +8,6 @@ import { TNetwork } from "@fdk/types/TNetwork.sol";
 contract Verify_Script_20240716 is Migration__20240716_P2_UpgradeBridgeRoninchain, Migration__20240716_P3_UpgradeBridgeMainchain {
   using StdStyle for *;
 
-  function setUp() public override(Migration__20240716_P2_UpgradeBridgeRoninchain, Migration__20240716_P3_UpgradeBridgeMainchain) {
-    Migration__20240716_P2_UpgradeBridgeRoninchain.setUp();
-  }
-
   function run() public override(Migration__20240716_P2_UpgradeBridgeRoninchain, Migration__20240716_P3_UpgradeBridgeMainchain) {
     TNetwork currentNetwork = network();
     TNetwork companionNetwork = config.getCompanionNetwork(currentNetwork);

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { ISharedArgument } from "@ronin/script/interfaces/ISharedArgument.sol";
+import { ISharedArgument } from "script/interfaces/ISharedArgument.sol";
 import { LibSharedAddress } from "@fdk/libraries/LibSharedAddress.sol";
-
-import "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
-import "@ronin/contracts/ronin/gateway/PauseEnforcer.sol";
+import { TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
+import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
+import { IPauseEnforcer } from "script/interfaces/IPauseEnforcer.sol";
 import { Proposal } from "@ronin/contracts/libraries/Proposal.sol";
 import { Ballot } from "@ronin/contracts/libraries/Ballot.sol";
 import { IMainchainBridgeManager } from "script/interfaces/IMainchainBridgeManager.sol";
@@ -17,17 +17,16 @@ import { MockWrappedToken } from "@ronin/contracts/mocks/token/MockWrappedToken.
 
 import { MainchainBridgeAdminUtils } from "test/helpers/MainchainBridgeAdminUtils.t.sol";
 
-import { MainchainGatewayV3Deploy } from "@ronin/script/contracts/MainchainGatewayV3Deploy.s.sol";
-import { MainchainBridgeManagerDeploy } from "@ronin/script/contracts/MainchainBridgeManagerDeploy.s.sol";
-import { MainchainPauseEnforcerDeploy } from "@ronin/script/contracts/MainchainPauseEnforcerDeploy.s.sol";
-import { WETHDeploy } from "@ronin/script/contracts/token/WETHDeploy.s.sol";
-import { WRONDeploy } from "@ronin/script/contracts/token/WRONDeploy.s.sol";
-import { AXSDeploy } from "@ronin/script/contracts/token/AXSDeploy.s.sol";
-import { SLPDeploy } from "@ronin/script/contracts/token/SLPDeploy.s.sol";
-import { USDCDeploy } from "@ronin/script/contracts/token/USDCDeploy.s.sol";
-import { MockERC721Deploy } from "@ronin/script/contracts/token/MockERC721Deploy.s.sol";
-
-import { GeneralConfig } from "../GeneralConfig.sol";
+import { MainchainGatewayV3Deploy } from "script/contracts/MainchainGatewayV3Deploy.s.sol";
+import { MainchainBridgeManagerDeploy } from "script/contracts/MainchainBridgeManagerDeploy.s.sol";
+import { MainchainPauseEnforcerDeploy } from "script/contracts/MainchainPauseEnforcerDeploy.s.sol";
+import { WETHDeploy } from "script/contracts/token/WETHDeploy.s.sol";
+import { WRONDeploy } from "script/contracts/token/WRONDeploy.s.sol";
+import { AXSDeploy } from "script/contracts/token/AXSDeploy.s.sol";
+import { SLPDeploy } from "script/contracts/token/SLPDeploy.s.sol";
+import { USDCDeploy } from "script/contracts/token/USDCDeploy.s.sol";
+import { MockERC721Deploy } from "script/contracts/token/MockERC721Deploy.s.sol";
+import { IWETH } from "@ronin/contracts/interfaces/IWETH.sol";
 import { Network } from "../utils/Network.sol";
 import { Migration } from "../Migration.s.sol";
 import { DefaultContract } from "@fdk/utils/DefaultContract.sol";
@@ -38,8 +37,8 @@ import { console } from "forge-std/console.sol";
 contract DeploySepolia is Migration, DeploySepolia__ChangeGV_Config {
   ISharedArgument.SharedParameter _param;
 
-  PauseEnforcer _mainchainPauseEnforcer;
-  MainchainGatewayV3 _mainchainGatewayV3;
+  IPauseEnforcer _mainchainPauseEnforcer;
+  IMainchainGatewayV3 _mainchainGatewayV3;
   IMainchainBridgeManager _mainchainBridgeManager;
 
   MockWrappedToken _mainchainWeth;
@@ -51,10 +50,6 @@ contract DeploySepolia is Migration, DeploySepolia__ChangeGV_Config {
   MainchainBridgeAdminUtils _mainchainProposalUtils;
   // Default proxy admin for sepolia
   address internal constant PROXY_ADMIN = 0x968D0Cd7343f711216817E617d3f92a23dC91c07;
-
-  function _configByteCode() internal virtual override returns (bytes memory) {
-    return abi.encodePacked(type(GeneralConfig).creationCode);
-  }
 
   function _sharedArguments() internal virtual override returns (bytes memory rawArgs) {
     return "";
@@ -117,23 +112,29 @@ contract DeploySepolia is Migration, DeploySepolia__ChangeGV_Config {
     ISharedArgument.MainchainGatewayV3Param memory param = _param.mainchainGatewayV3;
 
     vm.broadcast(sender());
-    _mainchainGatewayV3.initialize(
-      param.roleSetter,
-      IWETH(param.wrappedToken),
-      2021,
-      param.numerator,
-      param.highTierVWNumerator,
-      param.denominator,
-      param.addresses,
-      param.thresholds,
-      param.standards
+    (bool success,) = address(_mainchainGatewayV3).call(
+      abi.encodeWithSignature(
+        "initialize(address,address,uint256,uint256,uint256,uint256,address[][3],uint256[][4],uint8[])",
+        param.roleSetter,
+        IWETH(param.wrappedToken),
+        2021,
+        param.numerator,
+        param.highTierVWNumerator,
+        param.denominator,
+        param.addresses,
+        param.thresholds,
+        param.standards
+      )
     );
+    require(success, "MainchainGatewayV3: initialize failed");
 
     vm.broadcast(sender());
-    _mainchainGatewayV3.initializeV2(address(_mainchainBridgeManager));
+    (success,) = address(_mainchainGatewayV3).call(abi.encodeWithSignature("initializeV2(address)", _mainchainBridgeManager));
+    require(success, "MainchainGatewayV3: initializeV2 failed");
 
     vm.broadcast(sender());
-    _mainchainGatewayV3.setEmergencyPauser(address(_mainchainPauseEnforcer));
+    (success,) = address(_mainchainGatewayV3).call(abi.encodeWithSignature("setEmergencyPauser(address)", _mainchainPauseEnforcer));
+    require(success, "MainchainGatewayV3: setEmergencyPauser failed");
   }
 
   function _correctGVs() internal {
@@ -171,7 +172,7 @@ contract DeploySepolia is Migration, DeploySepolia__ChangeGV_Config {
     Ballot.VoteType[] memory supports_ = new Ballot.VoteType[](1);
     supports_[0] = Ballot.VoteType.For;
 
-    SignatureConsumer.Signature[] memory signatures = _mainchainProposalUtils.generateSignatures(proposal, _param.test.governorPKs);
+    Signature[] memory signatures = _mainchainProposalUtils.generateSignatures(proposal, _param.test.governorPKs);
 
     vm.broadcast(_mainchainBridgeManager.getGovernors()[0]);
     _mainchainBridgeManager.relayProposal(proposal, supports_, signatures);
@@ -238,7 +239,8 @@ contract DeploySepolia is Migration, DeploySepolia__ChangeGV_Config {
 
   function _grantFundForGateway() internal {
     vm.broadcast(sender());
-    _mainchainGatewayV3.receiveEther{ value: 0.1 ether }();
+    (bool success,) = address(_mainchainGatewayV3).call{ value: 0.1 ether }(abi.encodeWithSignature("receiveEther()"));
+    require(success, "MainchainGatewayV3: receiveEther failed");
 
     vm.broadcast(PROXY_ADMIN);
     _mainchainAxs.mint(address(_mainchainGatewayV3), 1_000_000 * 1e18);

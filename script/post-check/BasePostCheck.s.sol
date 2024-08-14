@@ -11,8 +11,9 @@ import { IBridgeManager } from "@ronin/contracts/interfaces/bridge/IBridgeManage
 import { TransparentUpgradeableProxyV2 } from "@ronin/contracts/extensions/TransparentUpgradeableProxyV2.sol";
 import { LibArray } from "script/shared/libraries/LibArray.sol";
 import { LibProxy } from "@fdk/libraries/LibProxy.sol";
+import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/SignatureConsumer.sol";
 
-abstract contract BasePostCheck is BaseMigration {
+abstract contract BasePostCheck is BaseMigration, SignatureConsumer {
   using StdStyle for *;
   using LibArray for *;
   using LibProxy for *;

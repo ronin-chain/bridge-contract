@@ -12,26 +12,26 @@ import { Network } from "../utils/Network.sol";
 import { Contract } from "../utils/Contract.sol";
 import { ISharedArgument } from "../interfaces/ISharedArgument.sol";
 import { IMainchainBridgeManager } from "script/interfaces/IMainchainBridgeManager.sol";
-import "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
+import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
 import "@ronin/contracts/libraries/Proposal.sol";
 import "@ronin/contracts/libraries/Ballot.sol";
 
 import { LibProxy } from "@fdk/libraries/LibProxy.sol";
 import { DefaultContract } from "@fdk/utils/DefaultContract.sol";
 import { MockSLP } from "@ronin/contracts/mocks/token/MockSLP.sol";
-import { SLPDeploy } from "@ronin/script/contracts/token/SLPDeploy.s.sol";
+import { SLPDeploy } from "script/contracts/token/SLPDeploy.s.sol";
 import { MainchainBridgeAdminUtils } from "test/helpers/MainchainBridgeAdminUtils.t.sol";
-import "@ronin/script/contracts/MainchainBridgeManagerDeploy.s.sol";
-import "@ronin/script/contracts/MainchainWethUnwrapperDeploy.s.sol";
-import "@ronin/script/contracts/MainchainGatewayBatcherDeploy.s.sol";
+import "script/contracts/MainchainBridgeManagerDeploy.s.sol";
+import "script/contracts/MainchainWethUnwrapperDeploy.s.sol";
+import "script/contracts/MainchainGatewayBatcherDeploy.s.sol";
 
 import { Migration } from "../Migration.s.sol";
 
 contract Migration__20240606_DeployBatcherSepolia is Migration {
   IMainchainBridgeManager _currMainchainBridgeManager;
   IMainchainBridgeManager _newMainchainBridgeManager;
-  MainchainGatewayV3 _currMainchainBridge;
-  MainchainGatewayBatcher _mainchainGatewayBatcher;
+  IMainchainGatewayV3 _currMainchainBridge;
+  IMainchainGatewayBatcher _mainchainGatewayBatcher;
 
   address private _governor;
   address[] private _voters;
@@ -56,11 +56,11 @@ contract Migration__20240606_DeployBatcherSepolia is Migration {
     // _deployMainchainBridgeManager();
     // _upgradeBridgeMainchain();
 
-    _currMainchainBridge = MainchainGatewayV3(loadContract(Contract.MainchainGatewayV3.key()));
+    _currMainchainBridge = IMainchainGatewayV3(loadContract(Contract.MainchainGatewayV3.key()));
     // vm.stopBroadcast();
     // vm.startBroadcast(TESTNET_ADMIN);
     _mainchainGatewayBatcher =
-      new MainchainGatewayBatcherDeploy().runWithArgs(abi.encodeWithSelector(MainchainGatewayBatcher.initialize.selector, address(_currMainchainBridge)));
+      new MainchainGatewayBatcherDeploy().runWithArgs(abi.encodeWithSelector(IMainchainGatewayBatcher.initialize.selector, address(_currMainchainBridge)));
     // vm.stopBroadcast();
   }
 
@@ -69,8 +69,10 @@ contract Migration__20240606_DeployBatcherSepolia is Migration {
     address mainchainGatewayV3Proxy = loadContract(Contract.MainchainGatewayV3.key());
 
     vm.startBroadcast(0x968D0Cd7343f711216817E617d3f92a23dC91c07);
-    address(pauseEnforcerProxy).call(abi.encodeWithSignature("changeAdmin(address)", _currMainchainBridgeManager));
-    address(mainchainGatewayV3Proxy).call(abi.encodeWithSignature("changeAdmin(address)", _currMainchainBridgeManager));
+    (bool success,) = address(pauseEnforcerProxy).call(abi.encodeWithSignature("changeAdmin(address)", _currMainchainBridgeManager));
+    require(success, "Failed to change admin of MainchainPauseEnforcer");
+    (success,) = address(mainchainGatewayV3Proxy).call(abi.encodeWithSignature("changeAdmin(address)", _currMainchainBridgeManager));
+    require(success, "Failed to change admin of MainchainGatewayV3");
     vm.stopBroadcast();
   }
 

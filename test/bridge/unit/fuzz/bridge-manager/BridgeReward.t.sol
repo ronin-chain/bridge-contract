@@ -7,8 +7,8 @@ import { LibArrayUtils } from "@ronin/test/helpers/LibArrayUtils.t.sol";
 import { IBridgeRewardEvents } from "@ronin/contracts/interfaces/bridge/events/IBridgeRewardEvents.sol";
 import { IBridgeManager, BridgeManagerUtils } from "../utils/BridgeManagerUtils.t.sol";
 import { MockValidatorContract_OnlyTiming_ForHardhatTest } from "@ronin/contracts/mocks/ronin/MockValidatorContract_OnlyTiming_ForHardhatTest.sol";
-import { BridgeTracking } from "@ronin/contracts/ronin/gateway/BridgeTracking.sol";
-import { BridgeReward } from "@ronin/contracts/ronin/gateway/BridgeReward.sol";
+import { IBridgeTracking } from "@ronin/contracts/interfaces/bridge/IBridgeTracking.sol";
+import { IBridgeReward } from "@ronin/contracts/interfaces/bridge/IBridgeReward.sol";
 import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import { RoleAccess, ContractType, AddressArrayUtils, MockBridgeManager } from "@ronin/contracts/mocks/ronin/MockBridgeManager.sol";
 import { IBridgeSlash, MockBridgeSlash, BridgeSlash } from "@ronin/contracts/mocks/ronin/MockBridgeSlash.sol";
@@ -210,15 +210,15 @@ contract BridgeRewardTest is Base_Test, IBridgeRewardEvents, BridgeManagerUtils 
 
     _defaultBridgeManagerInputs = abi.encode(bridgeOperators, governors, voteWeights);
 
-    _bridgeManagerLogic = address(new MockBridgeManager());
+    _bridgeManagerLogic = deployCode("MockBridgeManager.sol");
     _bridgeManagerContract = address(
       new TransparentUpgradeableProxy(_bridgeManagerLogic, _admin, abi.encodeCall(MockBridgeManager.initialize, (bridgeOperators, governors, voteWeights)))
     );
 
-    _bridgeTrackingLogic = address(new BridgeTracking());
+    _bridgeTrackingLogic = deployCode("BridgeTracking.sol");
     _bridgeTrackingContract = address(new TransparentUpgradeableProxy(_bridgeTrackingLogic, _admin, ""));
 
-    _bridgeSlashLogic = address(new MockBridgeSlash());
+    _bridgeSlashLogic = deployCode("MockBridgeSlash.sol");
     _bridgeSlashContract = address(
       new TransparentUpgradeableProxy(
         _bridgeSlashLogic, _admin, abi.encodeCall(BridgeSlash.initialize, (_validatorContract, _bridgeManagerContract, _bridgeTrackingContract, address(0)))

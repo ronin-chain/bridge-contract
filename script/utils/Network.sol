@@ -41,6 +41,8 @@ function blockTime(Network network) pure returns (uint256) {
   if (network == Network.Goerli) return 15;
   if (network == Network.Sepolia) return 15;
   if (network == Network.EthMainnet) return 3;
+
+  return type(uint256).max;
 }
 
 function explorer(Network network) pure returns (string memory link) {

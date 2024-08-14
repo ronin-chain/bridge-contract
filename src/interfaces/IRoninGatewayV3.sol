@@ -3,8 +3,9 @@ pragma solidity ^0.8.0;
 
 import "../libraries/Transfer.sol";
 import "./consumers/MappedTokenConsumer.sol";
+import "./consumers/VoteStatusConsumer.sol";
 
-interface IRoninGatewayV3 is MappedTokenConsumer {
+interface IRoninGatewayV3 is MappedTokenConsumer, VoteStatusConsumer {
   /**
    * @dev Error thrown when attempting to withdraw funds that have already been migrated.
    */
@@ -43,6 +44,8 @@ interface IRoninGatewayV3 is MappedTokenConsumer {
    * @dev Returns withdrawal count.
    */
   function withdrawalCount() external view returns (uint256);
+
+  function depositVote(uint256, uint256) external view returns (VoteStatus status, bytes32 finalHash, uint256 expiredAt, uint256 createdAt);
 
   /**
    * @dev Returns withdrawal signatures.

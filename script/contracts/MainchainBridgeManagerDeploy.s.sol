@@ -8,8 +8,6 @@ import { LibProxy } from "@fdk/libraries/LibProxy.sol";
 import { ISharedArgument } from "../interfaces/ISharedArgument.sol";
 import { Migration } from "../Migration.s.sol";
 
-import { MainchainGatewayV3Deploy } from "./MainchainGatewayV3Deploy.s.sol";
-
 contract MainchainBridgeManagerDeploy is Migration {
   using LibProxy for *;
 

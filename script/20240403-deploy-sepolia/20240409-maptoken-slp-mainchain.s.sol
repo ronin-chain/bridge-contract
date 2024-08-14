@@ -11,12 +11,12 @@ import { Network } from "../utils/Network.sol";
 import { Contract } from "../utils/Contract.sol";
 import { IGeneralConfigExtended } from "../interfaces/IGeneralConfigExtended.sol";
 import { IMainchainBridgeManager } from "script/interfaces/IMainchainBridgeManager.sol";
-import "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
+import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
 import "@ronin/contracts/libraries/Proposal.sol";
 import "@ronin/contracts/libraries/Ballot.sol";
 
 import { MockSLP } from "@ronin/contracts/mocks/token/MockSLP.sol";
-import { SLPDeploy } from "@ronin/script/contracts/token/SLPDeploy.s.sol";
+import { SLPDeploy } from "script/contracts/token/SLPDeploy.s.sol";
 import { MainchainBridgeAdminUtils } from "test/helpers/MainchainBridgeAdminUtils.t.sol";
 
 import "./maptoken-slp-configs.s.sol";
@@ -71,7 +71,8 @@ contract Migration__20240409_MapTokenSlpMainchain is Migration, Migration__MapTo
     bytes memory innerData = abi.encodeCall(IMainchainGatewayV3.mapTokensAndThresholds, (mainchainTokens, roninTokens, standards, thresholds));
 
     vm.startBroadcast(0x968D0Cd7343f711216817E617d3f92a23dC91c07);
-    address(_mainchainGatewayV3).call(abi.encodeWithSignature("functionDelegateCall(bytes)", innerData));
+    (bool success,) = address(_mainchainGatewayV3).call(abi.encodeWithSignature("functionDelegateCall(bytes)", innerData));
+    require(success, "Migration__20240409_MapTokenSlpMainchain: failed to map tokens and thresholds");
 
     _mainchainSlp.mint(address(_mainchainGatewayV3), 50_000_000);
     _mainchainSlp.mint(address(0xC65C6BEA96666f150BEF9b936630f6355BfFCC06), 100_000);
@@ -87,7 +88,7 @@ contract Migration__20240409_MapTokenSlpMainchain is Migration, Migration__MapTo
 
     // targets[1] = _mainchainGatewayV3;
     // values[1] = 0;
-    // calldatas[1] = abi.encodeWithSignature("functionDelegateCall(bytes)", abi.encodeCall(GatewayV3.setEmergencyPauser, (
+    // calldatas[1] = abi.encodeWithSignature("functionDelegateCall(bytes)", abi.encodeWithSignature("setEmergencyPauser(address)",
     //   _mainchainPauseEnforcer
     // )));
     // gasAmounts[1] = 1_000_000;
@@ -126,7 +127,7 @@ contract Migration__20240409_MapTokenSlpMainchain is Migration, Migration__MapTo
     // supports_[2] = Ballot.VoteType.For;
     // supports_[3] = Ballot.VoteType.For;
 
-    // SignatureConsumer.Signature[] memory signatures = _mainchainProposalUtils.generateSignatures(proposal, governorPKs);
+    // Signature[] memory signatures = _mainchainProposalUtils.generateSignatures(proposal, governorPKs);
 
     // vm.broadcast(governors[0]);
     // MainchainBridgeManager(_mainchainBridgeManager).relayProposal(proposal, supports_, signatures);

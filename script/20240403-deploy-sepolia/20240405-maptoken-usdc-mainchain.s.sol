@@ -1,21 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { StdStyle } from "forge-std/StdStyle.sol";
 import { IRoninBridgeManager } from "script/interfaces/IRoninBridgeManager.sol";
 import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
-import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
 import { LibTokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
-import { Contract } from "../utils/Contract.sol";
 import { Network } from "../utils/Network.sol";
 import { Contract } from "../utils/Contract.sol";
 import { IMainchainBridgeManager } from "script/interfaces/IMainchainBridgeManager.sol";
-import "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
-import "@ronin/contracts/libraries/Proposal.sol";
-import "@ronin/contracts/libraries/Ballot.sol";
+import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
+import { Proposal } from "@ronin/contracts/libraries/Proposal.sol";
+import { Ballot } from "@ronin/contracts/libraries/Ballot.sol";
 
 import { MockUSDC } from "@ronin/contracts/mocks/token/MockUSDC.sol";
-import { USDCDeploy } from "@ronin/script/contracts/token/USDCDeploy.s.sol";
+import { USDCDeploy } from "script/contracts/token/USDCDeploy.s.sol";
 import { MainchainBridgeAdminUtils } from "test/helpers/MainchainBridgeAdminUtils.t.sol";
 
 import "./maptoken-usdc-configs.s.sol";
@@ -74,11 +71,13 @@ contract Migration__20240405_MapTokenUsdcMainchain is Migration, Migration__MapT
 
     bytes memory innerData = abi.encodeCall(IMainchainGatewayV3.mapTokensAndThresholds, (mainchainTokens, roninTokens, standards, thresholds));
 
-    bytes memory setEmergencyPauserInnerData = abi.encodeCall(GatewayV3.setEmergencyPauser, (_mainchainPauseEnforcer));
+    bytes memory setEmergencyPauserInnerData = abi.encodeWithSignature("setEmergencyPauser(address)", _mainchainPauseEnforcer);
 
     vm.startBroadcast(0x968D0Cd7343f711216817E617d3f92a23dC91c07);
-    address(_mainchainGatewayV3).call(abi.encodeWithSignature("functionDelegateCall(bytes)", innerData));
-    address(_mainchainGatewayV3).call(abi.encodeWithSignature("functionDelegateCall(bytes)", setEmergencyPauserInnerData));
+    (bool success,) = address(_mainchainGatewayV3).call(abi.encodeWithSignature("functionDelegateCall(bytes)", innerData));
+    require(success, "MainchainGatewayV3 mapTokensAndThresholds failed");
+    (success,) = address(_mainchainGatewayV3).call(abi.encodeWithSignature("functionDelegateCall(bytes)", setEmergencyPauserInnerData));
+    require(success, "MainchainGatewayV3 setEmergencyPauser failed");
 
     return;
 
@@ -91,7 +90,7 @@ contract Migration__20240405_MapTokenUsdcMainchain is Migration, Migration__MapT
 
     targets[1] = _mainchainGatewayV3;
     values[1] = 0;
-    calldatas[1] = abi.encodeWithSignature("functionDelegateCall(bytes)", abi.encodeCall(GatewayV3.setEmergencyPauser, (_mainchainPauseEnforcer)));
+    calldatas[1] = abi.encodeWithSignature("functionDelegateCall(bytes)", abi.encodeWithSignature("setEmergencyPauser(address)", _mainchainPauseEnforcer));
     gasAmounts[1] = 1_000_000;
 
     // ================ VERIFY AND EXECUTE PROPOSAL ===============
@@ -127,7 +126,7 @@ contract Migration__20240405_MapTokenUsdcMainchain is Migration, Migration__MapT
     supports_[2] = Ballot.VoteType.For;
     supports_[3] = Ballot.VoteType.For;
 
-    SignatureConsumer.Signature[] memory signatures = _mainchainProposalUtils.generateSignatures(proposal, governorPKs);
+    Signature[] memory signatures = _mainchainProposalUtils.generateSignatures(proposal, governorPKs);
 
     vm.broadcast(governors[0]);
     IMainchainBridgeManager(_mainchainBridgeManager).relayProposal(proposal, supports_, signatures);

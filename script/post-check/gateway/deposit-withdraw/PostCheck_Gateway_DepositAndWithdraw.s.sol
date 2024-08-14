@@ -16,16 +16,15 @@ import { LibCompanionNetwork } from "script/shared/libraries/LibCompanionNetwork
 import { StdStorage, stdStorage } from "forge-std/StdStorage.sol";
 import { IBridgeManager } from "@ronin/contracts/interfaces/bridge/IBridgeManager.sol";
 import { LibArray } from "script/shared/libraries/LibArray.sol";
-import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/SignatureConsumer.sol";
 import { IRoninGatewayV3, RoninGatewayV3 } from "@ronin/contracts/ronin/gateway/RoninGatewayV3.sol";
 import { IRoninBridgeManager } from "script/interfaces/IRoninBridgeManager.sol";
 import { IMainchainBridgeManager } from "script/interfaces/IMainchainBridgeManager.sol";
 import { IMainchainGatewayV3, MainchainGatewayV3 } from "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
 import { TransparentUpgradeableProxyV2 } from "@ronin/contracts/extensions/TransparentUpgradeableProxyV2.sol";
-import { HasContracts } from "@ronin/contracts/extensions/collections/HasContracts.sol";
+import { IHasContracts } from "@ronin/contracts/interfaces/collections/IHasContracts.sol";
 import { ContractType } from "@ronin/contracts/utils/ContractType.sol";
 
-abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck, SignatureConsumer {
+abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
   using LibProxy for *;
   using LibArray for *;
   using LibProposal for *;
@@ -144,16 +143,16 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck, Signatu
 
   function validate_HasBridgeManager() internal onPostCheck("validate_HasBridgeManager") {
     assertEq(roninBridgeManager.getProxyAdmin(), roninBridgeManager, "Invalid ProxyAdmin in RoninBridgeManager, expected self");
-    assertEq(HasContracts(roninGateway).getContract(ContractType.BRIDGE_MANAGER), roninBridgeManager, "Invalid RoninBridgeManager in roninGateway");
-    assertEq(HasContracts(bridgeTracking).getContract(ContractType.BRIDGE_MANAGER), roninBridgeManager, "Invalid RoninBridgeManager in bridgeTracking");
-    assertEq(HasContracts(bridgeReward).getContract(ContractType.BRIDGE_MANAGER), roninBridgeManager, "Invalid RoninBridgeManager in bridgeReward");
-    assertEq(HasContracts(bridgeSlash).getContract(ContractType.BRIDGE_MANAGER), roninBridgeManager, "Invalid RoninBridgeManager in bridgeSlash");
+    assertEq(IHasContracts(roninGateway).getContract(ContractType.BRIDGE_MANAGER), roninBridgeManager, "Invalid RoninBridgeManager in roninGateway");
+    assertEq(IHasContracts(bridgeTracking).getContract(ContractType.BRIDGE_MANAGER), roninBridgeManager, "Invalid RoninBridgeManager in bridgeTracking");
+    assertEq(IHasContracts(bridgeReward).getContract(ContractType.BRIDGE_MANAGER), roninBridgeManager, "Invalid RoninBridgeManager in bridgeReward");
+    assertEq(IHasContracts(bridgeSlash).getContract(ContractType.BRIDGE_MANAGER), roninBridgeManager, "Invalid RoninBridgeManager in bridgeSlash");
 
     (TNetwork prevNetwork, uint256 prevForkId) = switchTo(companionNetwork);
 
     assertEq(mainchainBridgeManager.getProxyAdmin(), mainchainBridgeManager, "Invalid ProxyAdmin in MainchainBridgeManager, expected self");
     assertEq(
-      HasContracts(mainchainGateway).getContract(ContractType.BRIDGE_MANAGER), mainchainBridgeManager, "Invalid MainchainBridgeManager in mainchainGateway"
+      IHasContracts(mainchainGateway).getContract(ContractType.BRIDGE_MANAGER), mainchainBridgeManager, "Invalid MainchainBridgeManager in mainchainGateway"
     );
 
     switchBack(prevNetwork, prevForkId);

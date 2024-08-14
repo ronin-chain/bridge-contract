@@ -11,17 +11,17 @@ import { Contract } from "../utils/Contract.sol";
 import { Network } from "../utils/Network.sol";
 import { Contract } from "../utils/Contract.sol";
 import { ISharedArgument } from "../interfaces/ISharedArgument.sol";
-import "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
+import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
 import "@ronin/contracts/libraries/Proposal.sol";
 import "@ronin/contracts/libraries/Ballot.sol";
 
 import { LibProxy } from "@fdk/libraries/LibProxy.sol";
 import { DefaultContract } from "@fdk/utils/DefaultContract.sol";
 import { MockSLP } from "@ronin/contracts/mocks/token/MockSLP.sol";
-import { SLPDeploy } from "@ronin/script/contracts/token/SLPDeploy.s.sol";
+import { SLPDeploy } from "script/contracts/token/SLPDeploy.s.sol";
 import { MainchainBridgeAdminUtils } from "test/helpers/MainchainBridgeAdminUtils.t.sol";
-import "@ronin/script/contracts/MainchainBridgeManagerDeploy.s.sol";
-import "@ronin/script/contracts/MainchainWethUnwrapperDeploy.s.sol";
+import "script/contracts/MainchainBridgeManagerDeploy.s.sol";
+import "script/contracts/MainchainWethUnwrapperDeploy.s.sol";
 
 import "../20240411-upgrade-v3.2.0-testnet/20240411-helper.s.sol";
 import "./20240619-operators-key.s.sol";
@@ -99,7 +99,7 @@ contract Migration__20240619_P3_UpgradeBridgeMainchain is Migration, Migration__
     supports_[2] = Ballot.VoteType.For;
     supports_[3] = Ballot.VoteType.For;
 
-    SignatureConsumer.Signature[] memory signatures = _mainchainProposalUtils.generateSignatures(proposal, _loadGovernorPKs());
+    Signature[] memory signatures = _mainchainProposalUtils.generateSignatures(proposal, _loadGovernorPKs());
 
     vm.broadcast(governors[0]);
     // 2_000_000 to assure tx.gasleft is bigger than the gas of the proposal.

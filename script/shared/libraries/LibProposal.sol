@@ -191,7 +191,6 @@ library LibProposal {
     uint256[] memory gasAmounts
   ) internal preserveState {
     TNetwork currentNetwork = config.getCurrentNetwork();
-    uint256 currentForkId = config.getForkId(currentNetwork);
 
     config.createFork(companionNetwork);
     config.switchTo(companionNetwork);

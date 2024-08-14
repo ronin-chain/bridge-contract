@@ -5,9 +5,10 @@ import { console } from "forge-std/console.sol";
 import { Test } from "forge-std/Test.sol";
 import { LibArrayUtils } from "@ronin/test/helpers/LibArrayUtils.t.sol";
 import { TransparentUpgradeableProxyV2 } from "@ronin/contracts/extensions/TransparentUpgradeableProxyV2.sol";
-import { RoninGatewayV3 } from "@ronin/contracts/ronin/gateway/RoninGatewayV3.sol";
+import { IRoninGatewayV3 } from "@ronin/contracts/interfaces/IRoninGatewayV3.sol";
 import { MockValidatorSet_ForFoundryTest } from "../../../../mocks/MockValidatorSet_ForFoundryTest.sol";
-import { BridgeTracking } from "@ronin/contracts/ronin/gateway/BridgeTracking.sol";
+import { IBridgeTracking } from "@ronin/contracts/interfaces/bridge/IBridgeTracking.sol";
+
 import { IBridgeSlash, MockBridgeSlash, BridgeSlash } from "@ronin/contracts/mocks/ronin/MockBridgeSlash.sol";
 import { IBridgeManager, BridgeManagerUtils } from "../utils/BridgeManagerUtils.t.sol";
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
@@ -27,14 +28,10 @@ contract BridgeSlashTest is IBridgeSlashEvents, BridgeManagerUtils {
   /// @dev immutable contracts
   address internal _admin;
   address internal _validatorContract;
-  address internal _bridgeManagerLogic;
   address internal _bridgeManagerContract;
   /// @dev proxy contracts
-  address internal _gatewayLogic;
   address internal _gatewayContract;
-  address internal _bridgeSlashLogic;
   address internal _bridgeSlashContract;
-  address internal _bridgeTrackingLogic;
   address internal _bridgeTrackingContract;
 
   bytes internal _defaultBridgeManagerInputs;
@@ -255,21 +252,17 @@ contract BridgeSlashTest is IBridgeSlashEvents, BridgeManagerUtils {
       getValidInputs(DEFAULT_R1, DEFAULT_R2, DEFAULT_R3, DEFAULT_NUM_BRIDGE_OPERATORS);
     _defaultBridgeManagerInputs = abi.encode(bridgeOperators, governors, voteWeights);
 
-    _bridgeManagerLogic = address(new MockBridgeManager());
     _bridgeManagerContract = address(
-      new TransparentUpgradeableProxyV2(_bridgeManagerLogic, _admin, abi.encodeCall(MockBridgeManager.initialize, (bridgeOperators, governors, voteWeights)))
+      new TransparentUpgradeableProxyV2(
+        deployCode("MockBridgeManager.sol"), _admin, abi.encodeCall(MockBridgeManager.initialize, (bridgeOperators, governors, voteWeights))
+      )
     );
 
-    _gatewayLogic = address(new RoninGatewayV3());
-    _gatewayContract = address(new TransparentUpgradeableProxyV2(_gatewayLogic, _admin, ""));
-
-    _bridgeTrackingLogic = address(new BridgeTracking());
-    _bridgeTrackingContract = address(new TransparentUpgradeableProxyV2(_bridgeTrackingLogic, _bridgeManagerContract, ""));
-
-    _bridgeSlashLogic = address(new MockBridgeSlash());
+    _gatewayContract = address(new TransparentUpgradeableProxyV2(deployCode("RoninGatewayV3.sol"), _admin, ""));
+    _bridgeTrackingContract = address(new TransparentUpgradeableProxyV2(deployCode("BridgeTracking.sol"), _bridgeManagerContract, ""));
     _bridgeSlashContract = address(
       new TransparentUpgradeableProxyV2(
-        _bridgeSlashLogic,
+        deployCode("BridgeSlash.sol"),
         _bridgeManagerContract,
         abi.encodeCall(BridgeSlash.initialize, (_validatorContract, _bridgeManagerContract, _bridgeTrackingContract, address(0)))
       )
@@ -280,11 +273,8 @@ contract BridgeSlashTest is IBridgeSlashEvents, BridgeManagerUtils {
     vm.label(_admin, "ADMIN");
     vm.label(_validatorContract, "VALIDATOR");
     vm.label(_bridgeManagerContract, "BRIDGE_MANAGER");
-    vm.label(_gatewayLogic, "GATEWAY_LOGIC");
     vm.label(_gatewayContract, "GATEWAY");
-    vm.label(_bridgeTrackingLogic, "BRIDGE_TRACKING_LOGIC");
     vm.label(_bridgeTrackingContract, "BRIDGE_TRACKING");
-    vm.label(_bridgeSlashLogic, "BRIDGE_SLASH_LOGIC");
     vm.label(_bridgeSlashContract, "BRIDGE_SLASH");
   }
 }

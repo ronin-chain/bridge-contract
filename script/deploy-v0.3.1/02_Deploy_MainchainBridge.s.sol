@@ -12,7 +12,7 @@ import { WETHDeploy } from "../contracts/token/WETHDeploy.s.sol";
 import { ISharedArgument } from "../interfaces/ISharedArgument.sol";
 import { IGeneralConfigExtended } from "../interfaces/IGeneralConfigExtended.sol";
 import { LibCompanionNetwork } from "script/shared/libraries/LibCompanionNetwork.sol";
-import { MainchainGatewayV3, MainchainGatewayV3Deploy } from "../contracts/MainchainGatewayV3Deploy.s.sol";
+import { IMainchainGatewayV3, MainchainGatewayV3Deploy } from "../contracts/MainchainGatewayV3Deploy.s.sol";
 import { WethUnwrapper, MainchainWethUnwrapperDeploy } from "../contracts/MainchainWethUnwrapperDeploy.s.sol";
 import { IMainchainBridgeManager, MainchainBridgeManagerDeploy } from "../contracts/MainchainBridgeManagerDeploy.s.sol";
 
@@ -22,7 +22,7 @@ contract Migration_02_Deploy_MainchainBridge is Migration {
 
   address private _weth;
   WethUnwrapper private _mainchainWethUnwrapper;
-  MainchainGatewayV3 private _mainchainGatewayV3;
+  IMainchainGatewayV3 private _mainchainGatewayV3;
   IMainchainBridgeManager private _mainchainBridgeManager;
 
   function _injectDependencies() internal virtual override {
@@ -48,37 +48,47 @@ contract Migration_02_Deploy_MainchainBridge is Migration {
     // callbackRegisters[1] = address(_roninGatewayV3);
 
     uint256 companionChainId = network().companionChainId();
-    _mainchainBridgeManager.initialize({
-      num: param.num,
-      denom: param.denom,
-      roninChainId: companionChainId,
-      bridgeContract: address(_mainchainGatewayV3),
-      callbackRegisters: param.callbackRegisters,
-      bridgeOperators: param.bridgeOperators,
-      governors: param.governors,
-      voteWeights: param.voteWeights,
-      targetOptions: param.targetOptions,
-      targets: param.targets
-    });
+    (bool success,) = address(_mainchainBridgeManager).call(
+      abi.encodeWithSignature(
+        "initialize(uint256,uint256,uint256,address,address[],address[],address[],uint96[],uint8[],address[])",
+        param.num,
+        param.denom,
+        companionChainId,
+        address(_mainchainGatewayV3),
+        param.callbackRegisters,
+        param.bridgeOperators,
+        param.governors,
+        param.voteWeights,
+        param.targetOptions,
+        param.targets
+      )
+    );
+    require(success, "MainchainBridgeManager: initialization failed");
   }
 
   function _initMainchainGatewayV3() internal logFn("Init MainchainGatewayV3") {
     ISharedArgument.MainchainGatewayV3Param memory param = config.sharedArguments().mainchainGatewayV3;
 
     uint256 companionChainId = network().companionChainId();
-    _mainchainGatewayV3.initialize(
-      param.roleSetter,
-      IWETH(_weth),
-      companionChainId,
-      param.numerator,
-      param.highTierVWNumerator,
-      param.denominator,
-      param.addresses,
-      param.thresholds,
-      param.standards
+    (bool success,) = address(_mainchainGatewayV3).call(
+      abi.encodeWithSignature(
+        "initialize(address,address,uint256,uint256,uint256,uint256,address[][3],uint256[][4],uint8[])",
+        param.roleSetter,
+        IWETH(_weth),
+        companionChainId,
+        param.numerator,
+        param.highTierVWNumerator,
+        param.denominator,
+        param.addresses,
+        param.thresholds,
+        param.standards
+      )
     );
-    _mainchainGatewayV3.initializeV2(address(_mainchainBridgeManager));
-    _mainchainGatewayV3.initializeV3();
-    _mainchainGatewayV3.initializeV4(payable(address(_mainchainWethUnwrapper)));
+    require(success, "MainchainGatewayV3: initialization failed");
+    (success,) = address(_mainchainGatewayV3).call(abi.encodeWithSignature("initializeV2(address)", address(_mainchainBridgeManager)));
+    require(success, "MainchainGatewayV3: initialization V2 failed");
+    (success,) = address(_mainchainGatewayV3).call(abi.encodeWithSignature("initializeV3()"));
+    require(success, "MainchainGatewayV3: initialization V3 failed");
+    (success,) = address(_mainchainGatewayV3).call(abi.encodeWithSignature("initializeV4(address)", payable(address(_mainchainWethUnwrapper))));
   }
 }

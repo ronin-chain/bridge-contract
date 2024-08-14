@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { console } from "forge-std/console.sol";
 import { StdStyle } from "forge-std/StdStyle.sol";
 import { Migration } from "../Migration.s.sol";
 import { TNetwork, Network } from "../utils/Network.sol";
@@ -9,10 +8,10 @@ import { DefaultNetwork } from "@fdk/utils/DefaultNetwork.sol";
 import { TContract, Contract } from "../utils/Contract.sol";
 import { ISharedArgument } from "../interfaces/ISharedArgument.sol";
 import { IGeneralConfigExtended } from "../interfaces/IGeneralConfigExtended.sol";
-import { BridgeSlash, BridgeSlashDeploy } from "../contracts/BridgeSlashDeploy.s.sol";
-import { BridgeReward, BridgeRewardDeploy } from "../contracts/BridgeRewardDeploy.s.sol";
-import { BridgeTracking, BridgeTrackingDeploy } from "../contracts/BridgeTrackingDeploy.s.sol";
-import { RoninGatewayV3, RoninGatewayV3Deploy } from "../contracts/RoninGatewayV3Deploy.s.sol";
+import { IBridgeSlash, BridgeSlashDeploy } from "../contracts/BridgeSlashDeploy.s.sol";
+import { IBridgeReward, BridgeRewardDeploy } from "../contracts/BridgeRewardDeploy.s.sol";
+import { IBridgeTracking, BridgeTrackingDeploy } from "../contracts/BridgeTrackingDeploy.s.sol";
+import { IRoninGatewayV3, RoninGatewayV3Deploy } from "../contracts/RoninGatewayV3Deploy.s.sol";
 import { ContractType } from "@ronin/contracts/utils/ContractType.sol";
 import { LibProxy } from "@fdk/libraries/LibProxy.sol";
 import { TransparentUpgradeableProxyV2 } from "@ronin/contracts/extensions/TransparentUpgradeableProxyV2.sol";
@@ -24,10 +23,10 @@ contract Migration_01_Deploy_RoninBridge is Migration {
   using StdStyle for *;
   using LibProxy for *;
 
-  BridgeSlash private _bridgeSlash;
-  BridgeReward private _bridgeReward;
-  RoninGatewayV3 private _roninGatewayV3;
-  BridgeTracking private _bridgeTracking;
+  IBridgeSlash private _bridgeSlash;
+  IBridgeReward private _bridgeReward;
+  IRoninGatewayV3 private _roninGatewayV3;
+  IBridgeTracking private _bridgeTracking;
   IRoninBridgeManager private _roninBridgeManager;
   address private _validatorSet;
 
@@ -72,8 +71,8 @@ contract Migration_01_Deploy_RoninBridge is Migration {
     // _initRoninBridgeManager();
   }
 
-  function _initRoninBridgeManager() internal logFn("Init RoninBridgeManager") {
-    ISharedArgument.BridgeManagerParam memory param = config.sharedArguments().roninBridgeManager;
+  function _initRoninBridgeManager() internal view logFn("Init RoninBridgeManager") {
+    // ISharedArgument.BridgeManagerParam memory param = config.sharedArguments().roninBridgeManager;
     // address[] memory callbackRegisters = new address[](1);
     // callbackRegisters[0] = address(_bridgeSlash);
     // callbackRegisters[1] = address(_roninGatewayV3);
@@ -94,57 +93,64 @@ contract Migration_01_Deploy_RoninBridge is Migration {
   }
 
   function _initBridgeTracking() internal logFn("Init BridgeTracking") {
-    _bridgeTracking.initialize({
-      bridgeContract: address(_roninGatewayV3),
-      validatorContract: address(new MockValidatorContract_OnlyTiming_ForHardhatTest(200)),
-      startedAtBlock_: 0
-    });
-    _bridgeTracking.initializeV3({
-      bridgeManager: address(_roninBridgeManager),
-      bridgeSlash: address(_bridgeSlash),
-      bridgeReward: address(_bridgeReward),
-      dposGA: address(0x0)
-    });
+    (bool success,) = address(_bridgeTracking).call(
+      abi.encodeWithSignature("initialize(address,address,uint256)", _roninGatewayV3, new MockValidatorContract_OnlyTiming_ForHardhatTest(200), 0)
+    );
+    require(success, "BridgeTracking initialize failed");
+
+    (success,) = address(_bridgeTracking).call(
+      abi.encodeWithSignature("initializeV3(address,address,address,address)", _roninBridgeManager, _bridgeSlash, _bridgeReward, address(0x0))
+    );
+    require(success, "BridgeTracking initializeV3 failed");
   }
 
   function _initBridgeReward() internal logFn("Init BridgeReward") {
     ISharedArgument.BridgeRewardParam memory param = config.sharedArguments().bridgeReward;
-    _bridgeReward.initialize({
-      bridgeManagerContract: address(_roninBridgeManager),
-      bridgeTrackingContract: address(_bridgeTracking),
-      bridgeSlashContract: address(_bridgeSlash),
-      validatorSetContract: _validatorSet,
-      dposGA: address(0x0),
-      rewardPerPeriod: param.rewardPerPeriod
-    });
-    // _bridgeReward.initializeREP2();
-    _bridgeReward.initializeV2();
+    (bool success,) = address(_bridgeReward).call(
+      abi.encodeWithSignature(
+        "initialize(address,address,address,address,address,uint256)",
+        _roninBridgeManager,
+        _bridgeTracking,
+        _bridgeSlash,
+        _validatorSet,
+        address(0x0),
+        param.rewardPerPeriod
+      )
+    );
+    require(success, "BridgeReward initialize failed");
+    // (success,) = address(_bridgeReward).call(abi.encodeWithSignature("initializeREP2()"));
+    (success,) = address(_bridgeReward).call(abi.encodeWithSignature("initializeV2()"));
+    require(success, "BridgeReward initializeV2 failed");
   }
 
   function _initBridgeSlash() internal logFn("Init BridgeSlash") {
-    _bridgeSlash.initialize({
-      validatorContract: _validatorSet,
-      bridgeManagerContract: address(_roninBridgeManager),
-      bridgeTrackingContract: address(_bridgeTracking),
-      dposGA: address(0x0)
-    });
+    (bool success,) = address(_bridgeSlash).call(
+      abi.encodeWithSignature("initialize(address,address,address,address)", _validatorSet, _roninBridgeManager, _bridgeTracking, address(0))
+    );
+    require(success, "BridgeSlash initialize failed");
   }
 
   function _initRoninGatewayV3() internal logFn("Init RoninGatewayV3") {
     ISharedArgument.RoninGatewayV3Param memory param = config.sharedArguments().roninGatewayV3;
 
-    _roninGatewayV3.initialize(
-      param.roleSetter,
-      param.numerator,
-      param.denominator,
-      param.trustedNumerator,
-      param.trustedDenominator,
-      param.withdrawalMigrators,
-      param.packedAddresses,
-      param.packedNumbers,
-      param.standards
+    (bool success,) = address(_roninGatewayV3).call(
+      abi.encodeWithSignature(
+        "initialize(address,uint256,uint256,uint256,uint256,address[],address[][2],uint256[][2],uint8[])",
+        param.roleSetter,
+        param.numerator,
+        param.denominator,
+        param.trustedNumerator,
+        param.trustedDenominator,
+        param.withdrawalMigrators,
+        param.packedAddresses,
+        param.packedNumbers,
+        param.standards
+      )
     );
-    _roninGatewayV3.initializeV3(address(_roninBridgeManager));
+    require(success, "RoninGatewayV3 initialize failed");
+
+    (success,) = address(_roninGatewayV3).call(abi.encodeWithSignature("initializeV3()", address(_roninBridgeManager)));
+    require(success, "RoninGatewayV3 initializeV3 failed");
 
     address admin = payable(address(_roninGatewayV3)).getProxyAdmin();
     vm.startBroadcast(admin);

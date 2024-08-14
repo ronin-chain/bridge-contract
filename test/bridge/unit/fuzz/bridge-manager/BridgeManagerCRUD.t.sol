@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { console } from "forge-std/console.sol";
 import { IBridgeManager, BridgeManagerUtils } from "../utils/BridgeManagerUtils.t.sol";
-import { RoninGatewayV3 } from "@ronin/contracts/ronin/gateway/RoninGatewayV3.sol";
+import { IRoninGatewayV3 } from "@ronin/contracts/interfaces/IRoninGatewayV3.sol";
 import { RoleAccess, ContractType, MockBridgeManager } from "@ronin/contracts/mocks/ronin/MockBridgeManager.sol";
 import { TransparentUpgradeableProxyV2 } from "@ronin/contracts/extensions/TransparentUpgradeableProxyV2.sol";
-import "@ronin/contracts/libraries/Uint96ArrayUtils.sol";
-import "@ronin/contracts/libraries/AddressArrayUtils.sol";
+import { Uint96ArrayUtils } from "@ronin/contracts/libraries/Uint96ArrayUtils.sol";
+import { AddressArrayUtils } from "@ronin/contracts/libraries/AddressArrayUtils.sol";
 import {
   ErrBridgeOperatorUpdateFailed,
   ErrBridgeOperatorAlreadyExisted,

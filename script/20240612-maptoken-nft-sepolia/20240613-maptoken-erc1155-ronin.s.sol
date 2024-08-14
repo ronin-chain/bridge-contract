@@ -16,7 +16,7 @@ import "@ronin/contracts/libraries/Proposal.sol";
 import "@ronin/contracts/libraries/Ballot.sol";
 
 import { MockUSDC } from "@ronin/contracts/mocks/token/MockUSDC.sol";
-import { USDCDeploy } from "@ronin/script/contracts/token/USDCDeploy.s.sol";
+import { USDCDeploy } from "script/contracts/token/USDCDeploy.s.sol";
 import { MainchainBridgeAdminUtils } from "test/helpers/MainchainBridgeAdminUtils.t.sol";
 
 import { Migration } from "../Migration.s.sol";

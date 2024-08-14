@@ -19,7 +19,7 @@ interface IBridgeSlash is IBridgeSlashEvents {
    * @param bridgeOperators The addresses of the bridge operators.
    * @return untilPeriods The penalized periods for the bridge operators.
    */
-  function getSlashUntilPeriodOf(address[] calldata bridgeOperators) external returns (uint256[] memory untilPeriods);
+  function getSlashUntilPeriodOf(address[] calldata bridgeOperators) external view returns (uint256[] memory untilPeriods);
 
   /**
    * @dev Retrieves the added periods of the specified bridge operators.

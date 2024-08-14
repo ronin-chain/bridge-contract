@@ -13,14 +13,14 @@ import { Contract } from "../utils/Contract.sol";
 import { ISharedArgument } from "../interfaces/ISharedArgument.sol";
 import "@ronin/contracts/ronin/gateway/BridgeReward.sol";
 import { IMainchainBridgeManager } from "script/interfaces/IMainchainBridgeManager.sol";
-import "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
+import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
 import "@ronin/contracts/libraries/Proposal.sol";
 import "@ronin/contracts/libraries/Ballot.sol";
 
 import { MockSLP } from "@ronin/contracts/mocks/token/MockSLP.sol";
-import { SLPDeploy } from "@ronin/script/contracts/token/SLPDeploy.s.sol";
+import { SLPDeploy } from "script/contracts/token/SLPDeploy.s.sol";
 import { MainchainBridgeAdminUtils } from "test/helpers/MainchainBridgeAdminUtils.t.sol";
-import "@ronin/script/contracts/RoninBridgeManagerDeploy.s.sol";
+import "script/contracts/RoninBridgeManagerDeploy.s.sol";
 import { DefaultContract } from "@fdk/utils/DefaultContract.sol";
 import "./20240411-deploy-bridge-manager-helper.s.sol";
 import "./20240411-helper.s.sol";
@@ -113,11 +113,12 @@ contract Migration__20240409_P2_UpgradeBridgeRoninchain is Migration__20240409_H
     proposal.gasAmounts = gasAmounts;
 
     vm.broadcast(gaVoters[2]);
-    address(roninGA).call{ gas: 10_000_000 }(
+    (bool success,) = address(roninGA).call{ gas: 10_000_000 }(
       abi.encodeWithSignature(
         "castProposalVoteForCurrentNetwork((uint256,uint256,uint256,address[],uint256[],bytes[],uint256[]),uint8)", proposal, Ballot.VoteType.For
       )
     );
+    require(success, "castProposalVoteForCurrentNetwork failed");
   }
 
   function _upgradeBridgeRoninchain() private {

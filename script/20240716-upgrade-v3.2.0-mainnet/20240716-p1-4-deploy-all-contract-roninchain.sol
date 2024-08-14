@@ -8,8 +8,8 @@ import { WBTC } from "src/tokens/erc20/WBTC.sol";
 
 import { GlobalProposal } from "@ronin/contracts/libraries/GlobalProposal.sol";
 import { IMainchainBridgeManager } from "script/interfaces/IMainchainBridgeManager.sol";
-import "@ronin/script/contracts/MainchainBridgeManagerDeploy.s.sol";
-import "@ronin/script/contracts/MainchainWethUnwrapperDeploy.s.sol";
+import "script/contracts/MainchainBridgeManagerDeploy.s.sol";
+import "script/contracts/MainchainWethUnwrapperDeploy.s.sol";
 
 import "./20240716-deploy-wbtc-helper.s.sol";
 

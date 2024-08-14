@@ -19,7 +19,7 @@ contract NormalPause_GatewayV3_Test is BaseIntegration_Test {
     _roninProposalUtils.functionDelegateCall(address(_roninGatewayV3), calldata_);
 
     assertEq(_roninPauseEnforcer.emergency(), false);
-    assertEq(_roninGatewayV3.paused(), true);
+    assertEq(IPauseTarget(address(_roninGatewayV3)).paused(), true);
   }
 
   // Normal pause & emergency unpause > Should not be able to emergency unpause
@@ -55,6 +55,6 @@ contract NormalPause_GatewayV3_Test is BaseIntegration_Test {
     _roninProposalUtils.functionDelegateCall(address(_roninGatewayV3), calldata_);
 
     assertEq(_roninPauseEnforcer.emergency(), false);
-    assertEq(_roninGatewayV3.paused(), false);
+    assertEq(IPauseTarget(address(_roninGatewayV3)).paused(), false);
   }
 }

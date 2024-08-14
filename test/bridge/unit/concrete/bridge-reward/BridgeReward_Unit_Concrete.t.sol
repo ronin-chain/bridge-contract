@@ -9,7 +9,7 @@ import { IBridgeManager } from "@ronin/contracts/interfaces/bridge/IBridgeManage
 import { IBridgeReward } from "@ronin/contracts/interfaces/bridge/IBridgeReward.sol";
 import { IBridgeSlash } from "@ronin/contracts/interfaces/bridge/IBridgeSlash.sol";
 
-import { BridgeReward } from "@ronin/contracts/ronin/gateway/BridgeReward.sol";
+import { IBridgeReward } from "@ronin/contracts/interfaces/bridge/IBridgeReward.sol";
 
 import { MockBridgeTracking } from "@ronin/test/mocks/MockBridgeTracking.sol";
 import { MockBridgeManager } from "@ronin/test/mocks/MockBridgeManager.sol";

@@ -89,7 +89,7 @@ abstract contract PostCheck_BridgeManager_Proposal is BasePostCheck {
         nonce: mainchainManager.round(block.chainid) + 1
       });
 
-      SignatureConsumer.Signature[] memory signatures = proposal.generateSignatures(cheatGovernorPk.toSingletonArray(), Ballot.VoteType.For);
+      Signature[] memory signatures = proposal.generateSignatures(cheatGovernorPk.toSingletonArray(), Ballot.VoteType.For);
       Ballot.VoteType[] memory _supports = new Ballot.VoteType[](signatures.length);
 
       uint256 minimumForVoteWeight = mainchainManager.minimumVoteWeight();
@@ -150,7 +150,7 @@ abstract contract PostCheck_BridgeManager_Proposal is BasePostCheck {
         nonce: mainchainManager.round(block.chainid) + 1
       });
 
-      SignatureConsumer.Signature[] memory signatures = proposal.generateSignatures(cheatGovernorPk.toSingletonArray(), Ballot.VoteType.For);
+      Signature[] memory signatures = proposal.generateSignatures(cheatGovernorPk.toSingletonArray(), Ballot.VoteType.For);
       Ballot.VoteType[] memory _supports = new Ballot.VoteType[](signatures.length);
 
       uint256 minimumForVoteWeight = mainchainManager.minimumVoteWeight();
@@ -193,7 +193,7 @@ abstract contract PostCheck_BridgeManager_Proposal is BasePostCheck {
       nonce: manager.round(0) + 1
     });
 
-    SignatureConsumer.Signature[] memory signatures;
+    Signature[] memory signatures;
     Ballot.VoteType[] memory _supports;
     {
       signatures = globalProposal.generateSignaturesGlobal(cheatGovernorPk.toSingletonArray(), Ballot.VoteType.For);

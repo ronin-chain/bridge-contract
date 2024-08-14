@@ -19,7 +19,7 @@ contract EmergencyAction_PauseEnforcer_Test is BaseIntegration_Test {
     _roninPauseEnforcer.triggerPause();
 
     assertEq(_roninPauseEnforcer.emergency(), true);
-    assertEq(_roninGatewayV3.paused(), true);
+    assertEq(IPauseTarget(address(_roninGatewayV3)).paused(), true);
   }
 
   // Emergency pause & emergency unpause > Should the gateway cannot interacted when on pause
@@ -35,7 +35,7 @@ contract EmergencyAction_PauseEnforcer_Test is BaseIntegration_Test {
     // ids: new uint256[](0),
     // quantities: new uint256[](0)
 
-    vm.expectRevert("Pausable: paused");
+    vm.expectRevert("Pausable: ");
 
     _roninGatewayV3.depositFor(receipt);
   }
@@ -58,7 +58,7 @@ contract EmergencyAction_PauseEnforcer_Test is BaseIntegration_Test {
     _roninPauseEnforcer.triggerUnpause();
 
     assertEq(_roninPauseEnforcer.emergency(), false);
-    assertEq(_roninGatewayV3.paused(), false);
+    assertEq(IPauseTarget(address(_roninGatewayV3)).paused(), false);
   }
 
   // Emergency pause & emergency unpause > Should the gateway can be interacted after unpause

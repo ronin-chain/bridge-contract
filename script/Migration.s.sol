@@ -19,8 +19,9 @@ import { LibArray } from "script/shared/libraries/LibArray.sol";
 import { IPostCheck } from "./interfaces/IPostCheck.sol";
 import { IRoninBridgeManager } from "script/interfaces/IRoninBridgeManager.sol";
 import { LibDeploy, DeployInfo, ProxyInterface, UpgradeInfo } from "@fdk/libraries/LibDeploy.sol";
+import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/SignatureConsumer.sol";
 
-contract Migration is BaseMigration, Utils {
+contract Migration is BaseMigration, Utils, SignatureConsumer {
   using LibProxy for *;
   using LibArray for *;
   using StdStyle for *;
@@ -33,7 +34,7 @@ contract Migration is BaseMigration, Utils {
   function _postCheck() internal virtual override {
     address postChecker = _deployImmutable(
       Contract.PostChecker.key(),
-      "PostChecker.sol:PostChecker",//string memory artifactName,
+      "PostChecker.sol:PostChecker", //string memory artifactName,
       makeAddr("PostCheckerDeployer"),
       0,
       EMPTY_ARGS

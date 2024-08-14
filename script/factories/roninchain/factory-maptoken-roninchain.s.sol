@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { console2 } from "forge-std/console2.sol";
 import { StdStyle } from "forge-std/StdStyle.sol";
 
 import { RoninBridgeManager } from "@ronin/contracts/ronin/gateway/RoninBridgeManager.sol";
@@ -99,7 +98,7 @@ abstract contract Factory__MapTokensRoninchain is Migration {
     bytes memory innerData = abi.encodeCall(IRoninGatewayV3.mapTokens, (roninTokens, mainchainTokens, chainIds, standards));
     bytes memory proxyData = abi.encodeWithSignature("functionDelegateCall(bytes)", innerData);
 
-    uint256 expiredTime = block.timestamp + 14 days;
+    uint256 expiry = block.timestamp + 14 days;
     targets[0] = _roninGatewayV3;
     values[0] = 0;
     calldatas[0] = proxyData;
@@ -111,7 +110,7 @@ abstract contract Factory__MapTokensRoninchain is Migration {
       calldatas = new bytes[](2);
       gasAmounts = new uint256[](2);
 
-      uint256 expiredTime = block.timestamp + 14 days;
+      uint256 expiry = block.timestamp + 14 days;
       targets[0] = _roninGatewayV3;
       values[0] = 0;
       calldatas[0] = proxyData;
@@ -133,7 +132,7 @@ abstract contract Factory__MapTokensRoninchain is Migration {
     proposal = Proposal.ProposalDetail({
       nonce: RoninBridgeManager(_roninBridgeManager).round(block.chainid) + 1,
       chainId: block.chainid,
-      expiryTimestamp: expiredTime,
+      expiryTimestamp: expiry,
       executor: address(0),
       targets: targets,
       values: values,

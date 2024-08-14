@@ -11,12 +11,12 @@ import { Contract } from "../utils/Contract.sol";
 import { Network } from "../utils/Network.sol";
 import { Contract } from "../utils/Contract.sol";
 import { IMainchainBridgeManager } from "script/interfaces/IMainchainBridgeManager.sol";
-import "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
+import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
 import "@ronin/contracts/libraries/Proposal.sol";
 import "@ronin/contracts/libraries/Ballot.sol";
 
 import { MockUSDC } from "@ronin/contracts/mocks/token/MockUSDC.sol";
-import { USDCDeploy } from "@ronin/script/contracts/token/USDCDeploy.s.sol";
+import { USDCDeploy } from "script/contracts/token/USDCDeploy.s.sol";
 import { MainchainBridgeAdminUtils } from "test/helpers/MainchainBridgeAdminUtils.t.sol";
 
 import { Migration } from "../Migration.s.sol";
@@ -65,7 +65,8 @@ contract Migration__20240613_MapERC1155SepoliaMainchain is Migration {
     bytes memory innerData = abi.encodeCall(IMainchainGatewayV3.mapTokensAndThresholds, (mainchainTokens, roninTokens, standards, thresholds));
 
     vm.prank(_mainchainBridgeManager);
-    address(_mainchainGatewayV3).call(abi.encodeWithSignature("functionDelegateCall(bytes)", innerData));
+    (bool success,) = address(_mainchainGatewayV3).call(abi.encodeWithSignature("functionDelegateCall(bytes)", innerData));
+    require(success, "Migration__20240613_MapERC1155SepoliaMainchain: failed to call functionDelegateCall");
 
     // return;
 
@@ -109,7 +110,7 @@ contract Migration__20240613_MapERC1155SepoliaMainchain is Migration {
     supports_[2] = Ballot.VoteType.For;
     supports_[3] = Ballot.VoteType.For;
 
-    SignatureConsumer.Signature[] memory signatures = _mainchainProposalUtils.generateSignatures(proposal, governorPKs);
+    Signature[] memory signatures = _mainchainProposalUtils.generateSignatures(proposal, governorPKs);
 
     vm.broadcast(governors[0]);
     // 2_000_000 to assure tx.gasleft is bigger than the gas of the proposal.

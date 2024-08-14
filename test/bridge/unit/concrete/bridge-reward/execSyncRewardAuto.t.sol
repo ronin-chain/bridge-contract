@@ -8,7 +8,7 @@ import "@ronin/contracts/utils/CommonErrors.sol";
 import { ContractType } from "@ronin/contracts/utils/ContractType.sol";
 import { IBridgeReward } from "@ronin/contracts/interfaces/bridge/IBridgeReward.sol";
 import { IBridgeRewardEvents } from "@ronin/contracts/interfaces/bridge/events/IBridgeRewardEvents.sol";
-import { BridgeReward } from "@ronin/contracts/ronin/gateway/BridgeReward.sol";
+import { IBridgeReward } from "@ronin/contracts/interfaces/bridge/IBridgeReward.sol";
 import { BridgeTrackingHelper } from "@ronin/contracts/extensions/bridge-operator-governance/BridgeTrackingHelper.sol";
 
 import { BridgeReward_Unit_Concrete_Test } from "./BridgeReward_Unit_Concrete.t.sol";

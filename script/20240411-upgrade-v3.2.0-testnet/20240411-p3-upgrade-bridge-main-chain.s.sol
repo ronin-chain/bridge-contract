@@ -12,17 +12,17 @@ import { Network } from "../utils/Network.sol";
 import { Contract } from "../utils/Contract.sol";
 import { ISharedArgument } from "../interfaces/ISharedArgument.sol";
 import { IMainchainBridgeManager } from "script/interfaces/IMainchainBridgeManager.sol";
-import "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
+import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
 import "@ronin/contracts/libraries/Proposal.sol";
 import "@ronin/contracts/libraries/Ballot.sol";
 
 import { LibProxy } from "@fdk/libraries/LibProxy.sol";
 import { DefaultContract } from "@fdk/utils/DefaultContract.sol";
 import { MockSLP } from "@ronin/contracts/mocks/token/MockSLP.sol";
-import { SLPDeploy } from "@ronin/script/contracts/token/SLPDeploy.s.sol";
+import { SLPDeploy } from "script/contracts/token/SLPDeploy.s.sol";
 import { MainchainBridgeAdminUtils } from "test/helpers/MainchainBridgeAdminUtils.t.sol";
-import "@ronin/script/contracts/MainchainBridgeManagerDeploy.s.sol";
-import "@ronin/script/contracts/MainchainWethUnwrapperDeploy.s.sol";
+import "script/contracts/MainchainBridgeManagerDeploy.s.sol";
+import "script/contracts/MainchainWethUnwrapperDeploy.s.sol";
 
 import "./20240411-helper.s.sol";
 import "./20240411-operators-key.s.sol";
@@ -61,8 +61,10 @@ contract Migration__20240409_P3_UpgradeBridgeMainchain is Migration, Migration__
     address mainchainGatewayV3Proxy = loadContract(Contract.MainchainGatewayV3.key());
 
     vm.startBroadcast(0x968D0Cd7343f711216817E617d3f92a23dC91c07);
-    address(pauseEnforcerProxy).call(abi.encodeWithSignature("changeAdmin(address)", _currMainchainBridgeManager));
-    address(mainchainGatewayV3Proxy).call(abi.encodeWithSignature("changeAdmin(address)", _currMainchainBridgeManager));
+    (bool success,) = address(pauseEnforcerProxy).call(abi.encodeWithSignature("changeAdmin(address)", _currMainchainBridgeManager));
+    require(success, "Failed to change admin of MainchainPauseEnforcer");
+    (success,) = address(mainchainGatewayV3Proxy).call(abi.encodeWithSignature("changeAdmin(address)", _currMainchainBridgeManager));
+    require(success, "Failed to change admin of MainchainGatewayV3");
     vm.stopBroadcast();
   }
 
@@ -155,9 +157,8 @@ contract Migration__20240409_P3_UpgradeBridgeMainchain is Migration, Migration__
     targets[5] = address(_newMainchainBridgeManager);
     targets[6] = address(_newMainchainBridgeManager);
 
-    calldatas[0] = abi.encodeWithSignature(
-      "upgradeToAndCall(address,bytes)", mainchainGatewayV3Logic, abi.encodeWithSelector(MainchainGatewayV3.initializeV4.selector, wethUnwrapper)
-    );
+    calldatas[0] =
+      abi.encodeWithSignature("upgradeToAndCall(address,bytes)", mainchainGatewayV3Logic, abi.encodeWithSignature("initializeV4(address)", wethUnwrapper));
     calldatas[1] =
       abi.encodeWithSignature("functionDelegateCall(bytes)", (abi.encodeWithSignature("setContract(uint8,address)", 11, address(_newMainchainBridgeManager))));
     calldatas[2] = abi.encodeWithSignature("changeAdmin(address)", address(_newMainchainBridgeManager));
@@ -187,14 +188,15 @@ contract Migration__20240409_P3_UpgradeBridgeMainchain is Migration, Migration__
       supports_[i] = Ballot.VoteType.For;
     }
 
-    SignatureConsumer.Signature[] memory signatures = _generateSignaturesFor(getDomain(), hashLegacyProposal(proposal), _loadGovernorPKs(), Ballot.VoteType.For);
+    Signature[] memory signatures = _generateSignaturesFor(getDomain(), hashLegacyProposal(proposal), _loadGovernorPKs(), Ballot.VoteType.For);
 
     vm.broadcast(_governor);
-    address(_currMainchainBridgeManager).call{ gas: (proposal.targets.length + 1) * 1_000_000 }(
+    (bool success,) = address(_currMainchainBridgeManager).call{ gas: (proposal.targets.length + 1) * 1_000_000 }(
       abi.encodeWithSignature(
         "relayProposal((uint256,uint256,uint256,address[],uint256[],bytes[],uint256[]),uint8[],(uint8,bytes32,bytes32)[])", proposal, supports_, signatures
       )
     );
+    require(success, "Failed to relay proposal");
   }
 
   function getDomain() public pure returns (bytes32) {
@@ -213,8 +215,8 @@ contract Migration__20240409_P3_UpgradeBridgeMainchain is Migration, Migration__
     bytes32 proposalHash,
     uint256[] memory signerPKs,
     Ballot.VoteType support
-  ) public pure returns (SignatureConsumer.Signature[] memory sigs) {
-    sigs = new SignatureConsumer.Signature[](signerPKs.length);
+  ) public pure returns (Signature[] memory sigs) {
+    sigs = new Signature[](signerPKs.length);
 
     for (uint256 i; i < signerPKs.length; i++) {
       bytes32 digest = ECDSA.toTypedDataHash(domain, Ballot.hash(proposalHash, support));
@@ -222,7 +224,7 @@ contract Migration__20240409_P3_UpgradeBridgeMainchain is Migration, Migration__
     }
   }
 
-  function _sign(uint256 pk, bytes32 digest) internal pure returns (SignatureConsumer.Signature memory sig) {
+  function _sign(uint256 pk, bytes32 digest) internal pure returns (Signature memory sig) {
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk, digest);
     sig.v = v;
     sig.r = r;

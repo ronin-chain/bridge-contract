@@ -18,7 +18,7 @@ contract Migration__Deploy_RoninMockERC1155_Testnet is Migration {
 
   RoninMockERC1155 private _mockErc1155;
 
-  function run() public virtual returns (RoninMockERC1155) {
+  function run() public {
     if (network() == Network.Sepolia.key()) {
       GatewayV3 = 0x06855f31dF1d3D25cE486CF09dB49bDa535D2a9e;
     }

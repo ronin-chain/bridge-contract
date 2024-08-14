@@ -60,7 +60,7 @@ abstract contract Factory__MapTokensMainchain is Migration {
       supports_[i] = Ballot.VoteType.For;
     }
 
-    SignatureConsumer.Signature[] memory signatures = mainchainProposalUtils.generateSignatures(proposal, _governorPKs);
+    Signature[] memory signatures = mainchainProposalUtils.generateSignatures(proposal, _governorPKs);
 
     uint256 gasAmounts = 1_000_000;
     for (uint256 i; i < proposal.gasAmounts.length; ++i) {

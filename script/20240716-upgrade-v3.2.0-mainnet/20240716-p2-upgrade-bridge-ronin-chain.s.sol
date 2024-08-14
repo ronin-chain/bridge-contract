@@ -15,14 +15,14 @@ import { Contract } from "../utils/Contract.sol";
 import { ISharedArgument } from "../interfaces/ISharedArgument.sol";
 import "@ronin/contracts/ronin/gateway/BridgeReward.sol";
 import { IMainchainBridgeManager } from "script/interfaces/IMainchainBridgeManager.sol";
-import "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
+import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
 import "@ronin/contracts/libraries/Proposal.sol";
 import "@ronin/contracts/libraries/Ballot.sol";
 
 import { MockSLP } from "@ronin/contracts/mocks/token/MockSLP.sol";
-import { SLPDeploy } from "@ronin/script/contracts/token/SLPDeploy.s.sol";
+import { SLPDeploy } from "script/contracts/token/SLPDeploy.s.sol";
 import { MainchainBridgeAdminUtils } from "test/helpers/MainchainBridgeAdminUtils.t.sol";
-import "@ronin/script/contracts/RoninBridgeManagerDeploy.s.sol";
+import "script/contracts/RoninBridgeManagerDeploy.s.sol";
 import { DefaultContract } from "@fdk/utils/DefaultContract.sol";
 import "./20240716-deploy-bridge-manager-helper.s.sol";
 import "./20240716-helper.s.sol";
@@ -39,9 +39,6 @@ contract Migration__20240716_P2_UpgradeBridgeRoninchain is
   ISharedArgument.SharedParameter _param;
   LegacyProposalDetail _roninProposal;
 
-  function setUp() public virtual override {
-    super.setUp();
-  }
   function run() public virtual onlyOn(DefaultNetwork.RoninMainnet.key()) {
     console.log("=== Starting migration Roninchain".bold().cyan());
     _currRoninBridgeManager = IRoninBridgeManager(0x5FA49E6CA54a9daa8eCa4F403ADBDE5ee075D84a);

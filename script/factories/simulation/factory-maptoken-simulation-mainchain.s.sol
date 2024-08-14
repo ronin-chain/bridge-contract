@@ -44,7 +44,7 @@ contract Factory__MapTokensSimulation_Mainchain is Factory__MapTokensSimulation_
 
     cheatingSupports[0] = Ballot.VoteType.For;
     cheatingPks[0] = cheatingGovPk;
-    SignatureConsumer.Signature[] memory cheatingSignatures = LibProposal.generateSignatures(proposal, cheatingPks, Ballot.VoteType.For);
+    Signature[] memory cheatingSignatures = LibProposal.generateSignatures(proposal, cheatingPks, Ballot.VoteType.For);
 
     uint256 gasAmounts = 1_000_000;
     for (uint256 i; i < proposal.gasAmounts.length; ++i) {

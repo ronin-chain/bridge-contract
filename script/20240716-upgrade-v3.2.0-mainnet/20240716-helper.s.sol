@@ -25,7 +25,7 @@ contract Migration__20240716_Helper is Migration {
   function _helperProposeForCurrentNetwork(LegacyProposalDetail memory proposal) internal {
     console.log("Real start broadcast to propose proposal:", _proposer);
     vm.startBroadcast(_proposer);
-    address(_currRoninBridgeManager).call(
+    (bool success,) = address(_currRoninBridgeManager).call(
       abi.encodeWithSignature(
         "proposeProposalForCurrentNetwork(uint256,address[],uint256[],bytes[],uint256[],uint8)",
         proposal.expiryTimestamp,
@@ -36,6 +36,7 @@ contract Migration__20240716_Helper is Migration {
         Ballot.VoteType.For
       )
     );
+    require(success, "proposeProposalForCurrentNetwork failed");
     vm.stopBroadcast();
   }
 
@@ -46,11 +47,12 @@ contract Migration__20240716_Helper is Migration {
       }
 
       vm.prank(_voters[i]);
-      address(_currRoninBridgeManager).call{ gas: (proposal.targets.length + 1) * 1_000_000 }(
+      (bool success,) = address(_currRoninBridgeManager).call{ gas: (proposal.targets.length + 1) * 1_000_000 }(
         abi.encodeWithSignature(
           "castProposalVoteForCurrentNetwork((uint256,uint256,uint256,address[],uint256[],bytes[],uint256[]),uint8)", proposal, Ballot.VoteType.For
         )
       );
+      require(success, "castProposalVoteForCurrentNetwork failed");
     }
   }
 }
