@@ -256,7 +256,7 @@ contract Migration__20240807_IR_Recover is Migration {
     sigs[0].r = 0xb377fd3c624426b0ef33f110dfc9424e6444f9000e8d4a859cd9102e59834544;
     sigs[0].s = 0x2e7f1f124b131944db2982c70f5ffc4054326facbbca95f161f3f042b58f52f8;
 
-    vm.expectRevert(abi.encodeWithSelector(IMainchainGatewayV3.ErrQueryForInsufficientVoteWeight.selector));
+    vm.expectRevert(abi.encodeWithSelector(IMainchainGatewayV3.ErrInvalidSigner.selector, 0x11219E77CB5dF1E33e6e2985830d9Ef07f513f02, 0, sigs[0]));
     _mainchainGW.submitWithdrawal(dummyReceipt, sigs);
 
     bool reverted = vm.revertTo(snapshotId);
