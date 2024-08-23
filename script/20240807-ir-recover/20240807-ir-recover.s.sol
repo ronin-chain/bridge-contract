@@ -17,6 +17,7 @@ import { TransparentUpgradeableProxyV2, TransparentUpgradeableProxy } from "@ron
 import { IMainchainBridgeManager } from "script/interfaces/IMainchainBridgeManager.sol";
 import { IRoninBridgeManager } from "script/interfaces/IRoninBridgeManager.sol";
 import { MainchainBridgeManager } from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
+import { IQuorum } from "@ronin/contracts/interfaces/IQuorum.sol";
 import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
 import { MainchainGatewayV3 } from "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
 import { IBridgeManagerCallback } from "@ronin/contracts/interfaces/bridge/IBridgeManagerCallback.sol";
@@ -26,6 +27,10 @@ import { Transfer } from "@ronin/contracts/libraries/Transfer.sol";
 import { TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/SignatureConsumer.sol";
 import { LibProxy } from "@fdk/libraries/LibProxy.sol";
+
+interface IWithdrawalLimitation {
+  function checkHighTierVoteWeightThreshold(uint256 _voteWeight) external view virtual returns (bool);
+}
 
 contract Migration__20240807_IR_Recover is Migration {
   using LibProxy for *;
@@ -197,7 +202,6 @@ contract Migration__20240807_IR_Recover is Migration {
   }
 
   function _preCheck_Withdrawable() internal {
-
     uint256 snapshotId = vm.snapshot();
 
     _fake_unpause();
@@ -226,22 +230,73 @@ contract Migration__20240807_IR_Recover is Migration {
     console.log("Stop pranking Pause Enforcer");
   }
 
+  function _fake_pause() internal {
+    address pauseEnforcer = 0xe514d9DEB7966c8BE0ca922de8a064264eA6bcd4;
+    console.log("Pranking Pause Enforcer");
+    vm.prank(pauseEnforcer);
+    (bool success,) = address(_mainchainGW).call(abi.encodeWithSignature("pause()"));
+    require(success, "Cannot pause mainchain gateway");
+    console.log("Stop pranking Pause Enforcer");
+  }
+
   function _perform_checkAfterPrankFix() internal {
+    console.log("=== _perform_checkAfterPrankFix ===");
     // - Total weight in `BM` and `GW` the same
     {
       uint256 totalWeightBM = _mainchainBM.getTotalWeight();
       uint96 totalWeightGW = getGWTotalWeight();
       require(totalWeightBM == uint256(totalWeightGW), "Mismatched total weight");
+      require(totalWeightBM == 2200, "Mismatched total weight 2200");
     }
 
     // - Weight of all operators in `BM` and `GW` the same
     (, address[] memory operatorsBM, uint96[] memory weightsBM) = _mainchainBM.getFullBridgeOperatorInfos();
     for (uint256 i = 0; i < operatorsBM.length; i++) {
       require(getGWWeight(operatorsBM[i]) == weightsBM[i], "Mismatched weight");
+      require(getGWWeight(operatorsBM[i]) == 100, "Mismatched weight 100");
     }
 
     {
       _postCheck_Withdrawable();
+    }
+
+    // Check minimum weight = specific number
+    {
+      require(IQuorum(address(_mainchainGW)).minimumVoteWeight() == 1540, "Mismatched minimum vote weight 1540");
+    }
+
+    // Check threshold
+    {
+      require(IQuorum(address(_mainchainGW)).checkThreshold(1540) == true, "Malfunction threshold 1540");
+      require(IQuorum(address(_mainchainGW)).checkThreshold(1541) == true, "Malfunction threshold 1541");
+      require(IQuorum(address(_mainchainGW)).checkThreshold(1539) == false, "Malfunction threshold 1539");
+      require(IQuorum(address(_mainchainGW)).checkThreshold(0) == false, "Malfunction threshold 0");
+
+      require(IWithdrawalLimitation(address(_mainchainGW)).checkHighTierVoteWeightThreshold(1980) == true, "Malfunction high tier threshold 1980");
+      require(IWithdrawalLimitation(address(_mainchainGW)).checkHighTierVoteWeightThreshold(1981) == true, "Malfunction high tier threshold 1981");
+      require(IWithdrawalLimitation(address(_mainchainGW)).checkHighTierVoteWeightThreshold(1979) == false, "Malfunction high tier threshold 1979");
+      require(IWithdrawalLimitation(address(_mainchainGW)).checkHighTierVoteWeightThreshold(0) == false, "Malfunction high tier threshold 0");
+    }
+
+    // Check `depositForBatch` is removed
+    {
+      _fake_unpause();
+      Transfer.Request[] memory dummyRequests = new Transfer.Request[](1);
+
+      // Method get removed, so it reverted in fallback with invalid deposit
+      vm.expectRevert(abi.encodeWithSignature("ErrInvalidInfo()"));
+      address(_mainchainGW).call(abi.encodeWithSignature("requestDepositForBatch((address,address,(uint8,uint256,uint256))[])", dummyRequests));
+      _fake_pause();
+    }
+
+    // Check `WETHUnwrapper` is removed
+    {
+      _fake_unpause();
+
+      // Method get removed, so it reverted in fallback with invalid deposit
+      vm.expectRevert(abi.encodeWithSignature("ErrInvalidInfo()"));
+      address(_mainchainGW).staticcall(abi.encodeWithSignature("WETHUnwrapper()"));
+      _fake_pause();
     }
   }
 
@@ -263,7 +318,7 @@ contract Migration__20240807_IR_Recover is Migration {
     require(reverted, string.concat("Cannot revert to snapshot id: ", vm.toString(snapshotId)));
   }
 
-  function _postCheck() virtual override internal  {
+  function _postCheck() internal virtual override {
     switchTo(_companionNetwork);
 
     // Cheat to unpause of MainchainGatewayV3 to self to pass post-check.
