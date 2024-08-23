@@ -9,7 +9,7 @@ abstract contract MinimumWithdrawal is HasProxyAdmin {
   error ErrQueryForTooSmallQuantity();
 
   /// @dev Emitted when the minimum thresholds are updated
-  event MinimumThresholdsUpdated(address[] tokens, uint256[] threshold);
+  event MinimumThresholdsUpdated(address[] roninTokens, uint256[] threshold);
 
   /**
    * @dev Mapping from ronin token address => minimum thresholds.
