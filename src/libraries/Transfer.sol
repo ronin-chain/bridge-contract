@@ -17,11 +17,20 @@ library Transfer {
   }
 
   struct Request {
-    // For deposit request: Recipient address on Ronin network
-    // For withdrawal request: Recipient address on mainchain network
+    /**
+     * Recipient of address in companion network.
+     *
+     * For deposit request: Recipient address on Ronin network
+     * For withdrawal request: Recipient address on Mainchain network
+     */
     address recipientAddr;
-    // Token address to deposit/withdraw
-    // Value 0: native token
+
+    /**
+     * Token address of current network to deposit/withdraw
+     *
+     * - For deposit request: address(0) for native ETH, otherwise address on Mainchain network
+     * - For withdrawal request: address on Ronin network
+     */
     address tokenAddr;
     TokenInfo info;
   }
