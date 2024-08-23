@@ -11,7 +11,10 @@ abstract contract MinimumWithdrawal is HasProxyAdmin {
   /// @dev Emitted when the minimum thresholds are updated
   event MinimumThresholdsUpdated(address[] tokens, uint256[] threshold);
 
-  /// @dev Mapping from ronin token address => minimum thresholds
+  /**
+   * @dev Mapping from ronin token address => minimum thresholds.
+   * Mapping key is `request.tokenAddr` in withdrawal `Request`.
+   */
   mapping(address roninToken => uint256) public minimumThreshold;
 
   /**
