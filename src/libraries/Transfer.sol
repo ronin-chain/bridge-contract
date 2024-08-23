@@ -28,8 +28,8 @@ library Transfer {
     /**
      * Token address of current network to deposit/withdraw
      *
-     * - For deposit request: address(0) for native ETH, otherwise address on Mainchain network
-     * - For withdrawal request: address on Ronin network
+     * - For deposit request on `MainchainGateway`: address(0) for native ETH, otherwise address on Mainchain network
+     * - For withdrawal request on `RoninGateway`: address on Ronin network
      */
     address tokenAddr;
     TokenInfo info;
