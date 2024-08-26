@@ -159,6 +159,10 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
     withdrawReq.info.id = 0;
     withdrawReq.info.quantity = 1 ether;
 
+    if (network() == DefaultNetwork.RoninTestnet.key()) {
+      withdrawReq.info.quantity = 0.00009 ether; // Low tier 0.0001
+    }
+
     deal(address(ronWETH), user, withdrawReq.info.quantity);
     vm.prank(user);
     ronWETH.approve(ronGW, withdrawReq.info.quantity);
@@ -169,6 +173,7 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
     (LibTransfer.Receipt memory receipt, bytes32 receiptHash) = _getReceiptHash(ronGW, IRoninGatewayV3.WithdrawalRequested.selector);
 
     (TNetwork prevNetwork, uint256 prevForkId) = switchTo(companionNetwork);
+    uint256 snapshotId = vm.snapshot();
 
     bytes32 receiptDigest = LibTransfer.receiptDigest(gwDomainHash, receiptHash);
 
@@ -183,6 +188,7 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
 
     assertEq(withdrawReq.recipientAddr.balance, withdrawReq.info.quantity, "Withdraw should be processed");
 
+    vm.revertTo(snapshotId);
     switchBack(prevNetwork, prevForkId);
   }
 
@@ -207,6 +213,7 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
     (LibTransfer.Receipt memory receipt, bytes32 receiptHash) = _getReceiptHash(ronGW, IRoninGatewayV3.WithdrawalRequested.selector);
 
     (TNetwork prevNetwork, uint256 prevForkId) = switchTo(companionNetwork);
+    uint256 snapshotId = vm.snapshot();
 
     bytes32 receiptDigest = LibTransfer.receiptDigest(gwDomainHash, receiptHash);
 
@@ -257,6 +264,7 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
     vm.expectRevert();
     IMainchainGatewayV3(ethGW).submitWithdrawal(receipt, sigs);
 
+    vm.revertTo(snapshotId);
     switchBack(prevNetwork, prevForkId);
   }
 
@@ -272,12 +280,14 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
     depositReq.info.quantity = 1 ether;
 
     (TNetwork prevNetwork, uint256 prevForkId) = switchTo(companionNetwork);
+    uint256 snapshotId = vm.snapshot();
 
     vm.deal(user, depositReq.info.quantity);
     vm.prank(user);
     vm.expectRevert();
     IMainchainGatewayV3(ethGW).requestDepositFor{ value: depositReq.info.quantity - 1 }(depositReq);
 
+    vm.revertTo(snapshotId);
     switchBack(prevNetwork, prevForkId);
   }
 
@@ -289,6 +299,7 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
     depositReq.info.quantity = 1 ether;
 
     (TNetwork prevNetwork, uint256 prevForkId) = switchTo(companionNetwork);
+    uint256 snapshotId = vm.snapshot();
 
     deal(address(ethWETH), user, depositReq.info.quantity);
 
@@ -307,6 +318,7 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
 
     (LibTransfer.Receipt memory receipt,) = _getReceiptHash(ethGW, IMainchainGatewayV3.DepositRequested.selector);
 
+    vm.revertTo(snapshotId);
     switchBack(prevNetwork, prevForkId);
 
     overrideMockBOs(ronBM);
@@ -330,6 +342,7 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
     depositReq.info.quantity = 1 ether;
 
     (TNetwork prevNetwork, uint256 prevForkId) = switchTo(companionNetwork);
+    uint256 snapshotId = vm.snapshot();
 
     vm.deal(user, depositReq.info.quantity);
     vm.prank(user);
@@ -344,6 +357,7 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
 
     (LibTransfer.Receipt memory receipt,) = _getReceiptHash(ethGW, IMainchainGatewayV3.DepositRequested.selector);
 
+    vm.revertTo(snapshotId);
     switchBack(prevNetwork, prevForkId);
 
     overrideMockBOs(ronBM);
@@ -361,9 +375,11 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
 
   function validate_Gateway_WETHAddressUnchanged() private onPostCheck("validate_Gateway_WETHAddressUnchanged") onlyOnRoninNetworkOrLocal {
     (TNetwork prevNetwork, uint256 prevForkId) = switchTo(companionNetwork);
+    uint256 snapshotId = vm.snapshot();
 
     assertEq(address(ethWETH), address(IMainchainGatewayV3(ethGW).wrappedNativeToken()), "WETH address should not change");
 
+    vm.revertTo(snapshotId);
     switchBack(prevNetwork, prevForkId);
   }
 
@@ -388,6 +404,7 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
     (LibTransfer.Receipt memory receipt, bytes32 receiptHash) = _getReceiptHash(ronGW, IRoninGatewayV3.WithdrawalRequested.selector);
 
     (TNetwork prevNetwork, uint256 prevForkId) = switchTo(companionNetwork);
+    uint256 snapshotId = vm.snapshot();
 
     bytes32 receiptDigest = LibTransfer.receiptDigest(gwDomainHash, receiptHash);
 
@@ -398,11 +415,12 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
     bos[0] = mockOps[0];
     bos[1] = mockOps[1];
 
-    Signature[] memory sigs = _bulkSignReceipt(bos, receiptDigest);
+    Signature[] memory sigs = _bulkSignReceipt(bos.concat(mockOps), receiptDigest);
 
     vm.expectRevert();
     IMainchainGatewayV3(ethGW).submitWithdrawal(receipt, sigs);
 
+    vm.revertTo(snapshotId);
     switchBack(prevNetwork, prevForkId);
   }
 
@@ -427,6 +445,7 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
     (LibTransfer.Receipt memory receipt, bytes32 receiptHash) = _getReceiptHash(ronGW, IRoninGatewayV3.WithdrawalRequested.selector);
 
     (TNetwork prevNetwork, uint256 prevForkId) = switchTo(companionNetwork);
+    uint256 snapshotId = vm.snapshot();
 
     bytes32 receiptDigest = LibTransfer.receiptDigest(gwDomainHash, receiptHash);
 
@@ -442,6 +461,7 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
     vm.expectRevert();
     IMainchainGatewayV3(ethGW).submitWithdrawal(receipt, sigs);
 
+    vm.revertTo(snapshotId);
     switchBack(prevNetwork, prevForkId);
   }
 
@@ -453,10 +473,12 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
     assertEq(IHasContracts(brSl).getContract(ContractType.BRIDGE_MANAGER), ronBM, "Invalid RoninBridgeManager in bridgeSlash");
 
     (TNetwork prevNetwork, uint256 prevForkId) = switchTo(companionNetwork);
+    uint256 snapshotId = vm.snapshot();
 
     assertEq(ethBM.getProxyAdmin(), ethBM, "Invalid ProxyAdmin in MainchainBridgeManager, expected self");
     assertEq(IHasContracts(ethGW).getContract(ContractType.BRIDGE_MANAGER), ethBM, "Invalid MainchainBridgeManager in ethGW");
 
+    vm.revertTo(snapshotId);
     switchBack(prevNetwork, prevForkId);
   }
 
@@ -468,6 +490,7 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
     depositReq.info.quantity = 1 ether;
 
     (TNetwork prevNetwork, uint256 prevForkId) = switchTo(companionNetwork);
+    uint256 snapshotId = vm.snapshot();
 
     vm.prank(user);
     ethERC20.approve(ethGW, depositReq.info.quantity);
@@ -478,6 +501,7 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
 
     (LibTransfer.Receipt memory receipt,) = _getReceiptHash(ethGW, IMainchainGatewayV3.DepositRequested.selector);
 
+    vm.revertTo(snapshotId);
     switchBack(prevNetwork, prevForkId);
 
     overrideMockBOs(ronBM);
@@ -505,6 +529,7 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
     depositReq.info.quantity = 1 ether;
 
     (TNetwork prevNetwork, uint256 prevForkId) = switchTo(companionNetwork);
+    uint256 snapshotId = vm.snapshot();
 
     vm.prank(user);
     ethERC20.approve(ethGW, depositReq.info.quantity);
@@ -515,6 +540,7 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
 
     (LibTransfer.Receipt memory receipt,) = _getReceiptHash(ethGW, IMainchainGatewayV3.DepositRequested.selector);
 
+    vm.revertTo(snapshotId);
     switchBack(prevNetwork, prevForkId);
 
     overrideMockBOs(ronBM);
@@ -554,6 +580,7 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
     (LibTransfer.Receipt memory receipt, bytes32 receiptHash) = _getReceiptHash(ronGW, IRoninGatewayV3.WithdrawalRequested.selector);
 
     (TNetwork prevNetwork, uint256 prevForkId) = switchTo(companionNetwork);
+    uint256 snapshotId = vm.snapshot();
 
     bytes32 receiptDigest = LibTransfer.receiptDigest(gwDomainHash, receiptHash);
 
@@ -566,6 +593,7 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
     vm.expectRevert();
     IMainchainGatewayV3(ethGW).submitWithdrawal(receipt, sigs);
 
+    vm.revertTo(snapshotId);
     switchBack(prevNetwork, prevForkId);
   }
 
@@ -592,6 +620,7 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
     bytes32 receiptDigest = LibTransfer.receiptDigest(gwDomainHash, receiptHash);
 
     (TNetwork prevNetwork, uint256 prevForkId) = switchTo(companionNetwork);
+    uint256 snapshotId = vm.snapshot();
 
     overrideMockBOs(ethBM);
 
@@ -608,6 +637,7 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
     vm.expectRevert();
     IMainchainGatewayV3(ethGW).submitWithdrawal(receipt, sigs);
 
+    vm.revertTo(snapshotId);
     switchBack(prevNetwork, prevForkId);
   }
 
@@ -630,6 +660,7 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
     bytes32 receiptDigest = LibTransfer.receiptDigest(gwDomainHash, receiptHash);
 
     (TNetwork prevNetwork, uint256 prevForkId) = switchTo(companionNetwork);
+    uint256 snapshotId = vm.snapshot();
 
     overrideMockBOs(ethBM);
     Signature[] memory sigs = _bulkSignReceipt(mockOps, receiptDigest);
@@ -638,6 +669,7 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
 
     assertEq(ethERC20.balanceOf(withdrawReq.recipientAddr), withdrawReq.info.quantity, "Withdraw should be processed");
 
+    vm.revertTo(snapshotId);
     switchBack(prevNetwork, prevForkId);
   }
 
