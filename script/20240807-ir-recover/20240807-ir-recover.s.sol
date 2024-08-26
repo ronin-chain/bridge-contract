@@ -19,6 +19,7 @@ import { IMainchainBridgeManager } from "script/interfaces/IMainchainBridgeManag
 import { IRoninBridgeManager } from "script/interfaces/IRoninBridgeManager.sol";
 import { MainchainBridgeManager } from "@ronin/contracts/mainchain/MainchainBridgeManager.sol";
 import { IQuorum } from "@ronin/contracts/interfaces/IQuorum.sol";
+import { IRoninGatewayV3 } from "@ronin/contracts/interfaces/IRoninGatewayV3.sol";
 import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
 import { MainchainGatewayV3 } from "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
 import { IBridgeManagerCallback } from "@ronin/contracts/interfaces/bridge/IBridgeManagerCallback.sol";
@@ -48,7 +49,12 @@ contract Migration__20240807_IR_Recover is Migration {
   IMainchainBridgeManager private _mainchainBM = IMainchainBridgeManager(0x2Cf3CFb17774Ce0CFa34bB3f3761904e7fc3FaDB);
   TransparentUpgradeableProxyV2 private _mainchainBMproxy = TransparentUpgradeableProxyV2(payable(address(_mainchainBM)));
   IMainchainGatewayV3 private _mainchainGW = IMainchainGatewayV3(0x64192819Ac13Ef72bF6b5AE239AC672B43a9AF08);
+  address private _mainchainPE = 0xe514d9DEB7966c8BE0ca922de8a064264eA6bcd4;
+
   IRoninBridgeManager private _roninBM = IRoninBridgeManager(0x2ae89936FC398AeA23c63dB2404018fE361A8628);
+  IRoninGatewayV3 private _roninGW = IRoninGatewayV3(0x0CF8fF40a508bdBc39fBe1Bb679dCBa64E65C7Df);
+  address private _roninPE = 0x2367cD5468c2b3cD18aA74AdB7e14E43426aF837;
+
 
   // address _prevBMLogic;
   // address _newBMLogic;
@@ -208,7 +214,7 @@ contract Migration__20240807_IR_Recover is Migration {
   function _preCheck_Withdrawable() internal {
     uint256 snapshotId = vm.snapshot();
 
-    _fake_unpause();
+    _fake_unpauseMainchain();
 
     Transfer.Receipt memory dummyReceipt = _generateReceipt();
 
@@ -228,7 +234,7 @@ contract Migration__20240807_IR_Recover is Migration {
   function _preCheck_submitDepositBatch() internal {
     uint256 snapshotId = vm.snapshot();
 
-    _fake_unpause();
+    _fake_unpauseMainchain();
 
     address requester = makeAddr("requester-1");
     Transfer.Request[] memory dummyRequests = _genDummyParam_submitDepositBatch();
@@ -303,22 +309,28 @@ contract Migration__20240807_IR_Recover is Migration {
     dummyRequests[1].info.quantity = 1000;
   }
 
-  function _fake_unpause() internal {
-    address pauseEnforcer = 0xe514d9DEB7966c8BE0ca922de8a064264eA6bcd4;
-    console.log("Pranking Pause Enforcer");
-    vm.prank(pauseEnforcer);
+  function _fake_unpauseRonin() internal {
+    console.log("Pranking Ronin Pause Enforcer");
+    vm.prank(_roninPE);
+    (bool success,) = address(_roninGW).call(abi.encodeWithSignature("unpause()"));
+    require(success, "Cannot unpause ronin gateway");
+    console.log("Stop pranking Ronin Pause Enforcer");
+  }
+
+  function _fake_unpauseMainchain() internal {
+    console.log("Pranking Mainchain Pause Enforcer");
+    vm.prank(_mainchainPE);
     (bool success,) = address(_mainchainGW).call(abi.encodeWithSignature("unpause()"));
     require(success, "Cannot unpause mainchain gateway");
-    console.log("Stop pranking Pause Enforcer");
+    console.log("Stop pranking Mainchain Pause Enforcer");
   }
 
   function _fake_pause() internal {
-    address pauseEnforcer = 0xe514d9DEB7966c8BE0ca922de8a064264eA6bcd4;
-    console.log("Pranking Pause Enforcer");
-    vm.prank(pauseEnforcer);
+    console.log("Pranking Mainchain Pause Enforcer");
+    vm.prank(_mainchainPE);
     (bool success,) = address(_mainchainGW).call(abi.encodeWithSignature("pause()"));
     require(success, "Cannot pause mainchain gateway");
-    console.log("Stop pranking Pause Enforcer");
+    console.log("Stop pranking Mainchain Pause Enforcer");
   }
 
   function _perform_checkAfterPrankFix() internal {
@@ -362,14 +374,14 @@ contract Migration__20240807_IR_Recover is Migration {
 
     // Check `depositForBatch` is removed
     {
-      _fake_unpause();
+      _fake_unpauseMainchain();
       _postCheck_submitDepositBatch();
       _fake_pause();
     }
 
     // Check `WETHUnwrapper` is removed
     {
-      _fake_unpause();
+      _fake_unpauseMainchain();
 
       // Method get removed, so it reverted in fallback with invalid deposit
       vm.expectRevert(abi.encodeWithSignature("ErrInvalidInfo()"));
@@ -380,7 +392,7 @@ contract Migration__20240807_IR_Recover is Migration {
 
   function _postCheck_Withdrawable() internal {
     uint256 snapshotId = vm.snapshot();
-    _fake_unpause();
+    _fake_unpauseMainchain();
 
     Transfer.Receipt memory dummyReceipt = _generateReceipt();
 
@@ -400,7 +412,7 @@ contract Migration__20240807_IR_Recover is Migration {
     switchTo(_companionNetwork);
 
     // Cheat to unpause of MainchainGatewayV3 to self to pass post-check.
-    _fake_unpause();
+    _fake_unpauseMainchain();
 
     // Cheat to change admin of MainchainBridgeManager to self to pass post-check.
     vm.prank(_multisigEth);
@@ -413,6 +425,8 @@ contract Migration__20240807_IR_Recover is Migration {
     address admin = roninBM.getProxyAdmin();
     vm.prank(admin);
     TransparentUpgradeableProxy(roninBM).changeAdmin(roninBM);
+
+    _fake_unpauseRonin();
 
     super._postCheck();
   }
