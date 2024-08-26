@@ -415,7 +415,7 @@ abstract contract PostCheck_Gateway_DepositAndWithdraw is BasePostCheck {
     bos[0] = mockOps[0];
     bos[1] = mockOps[1];
 
-    Signature[] memory sigs = _bulkSignReceipt(bos.concat(mockOps), receiptDigest);
+    Signature[] memory sigs = _bulkSignReceipt(bos.extend(mockOps), receiptDigest);
 
     vm.expectRevert();
     IMainchainGatewayV3(ethGW).submitWithdrawal(receipt, sigs);
