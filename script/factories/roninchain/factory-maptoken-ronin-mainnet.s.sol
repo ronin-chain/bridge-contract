@@ -14,6 +14,7 @@ abstract contract Factory__MapTokensRonin_Mainnet is Factory__MapTokensRoninchai
   using LibCompanionNetwork for *;
 
   function run() public virtual override {
+    super.run();
     Proposal.ProposalDetail memory proposal = _createAndVerifyProposalOnRonin();
     // Simulate execute proposal
     new Factory__MapTokensSimulation_Roninchain().simulate(proposal);

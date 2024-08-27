@@ -12,25 +12,17 @@ import "./factory-maptoken-mainchain.s.sol";
 import "../simulation/factory-maptoken-simulation-mainchain.s.sol";
 
 abstract contract Factory__MapTokensMainchain_Sepolia is Factory__MapTokensMainchain {
-  function setUp() public override {
-    super.setUp();
-    _mainchainGatewayV3 = config.getAddressFromCurrentNetwork(Contract.MainchainGatewayV3.key());
-    _mainchainBridgeManager = config.getAddressFromCurrentNetwork(Contract.MainchainBridgeManager.key());
-  }
-
-  function _initGovernorPKs() internal virtual returns (uint256[] memory);
   function _initGovernors() internal virtual returns (address[] memory);
 
   function run() public virtual override {
+    super.run();
+    _mainchainGatewayV3 = config.getAddressFromCurrentNetwork(Contract.MainchainGatewayV3.key());
+    _mainchainBridgeManager = config.getAddressFromCurrentNetwork(Contract.MainchainBridgeManager.key());
     address[] memory mGovernors;
-    uint256[] memory mGovernorsPk;
-
     mGovernors = _initGovernors();
-    mGovernorsPk = _initGovernorPKs();
 
     for (uint256 i; i < mGovernors.length; ++i) {
       _governors.push(mGovernors[i]);
-      _governorPKs.push(mGovernorsPk[i]);
     }
 
     uint256 chainId = block.chainid;

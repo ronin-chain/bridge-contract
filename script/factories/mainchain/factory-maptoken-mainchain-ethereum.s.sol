@@ -13,14 +13,12 @@ import "../simulation/factory-maptoken-simulation-mainchain.s.sol";
 abstract contract Factory__MapTokensMainchain_Ethereum is Factory__MapTokensMainchain {
   using LibCompanionNetwork for *;
 
-  function setUp() public override {
-    super.setUp();
+  function run() public virtual override {
+    super.run();
     _roninBridgeManager = RoninBridgeManager(config.getAddressFromCurrentNetwork(Contract.RoninBridgeManager.key()));
     _mainchainGatewayV3 = config.getAddress(network().companionNetwork(), Contract.MainchainGatewayV3.key());
     _mainchainBridgeManager = config.getAddress(network().companionNetwork(), Contract.MainchainBridgeManager.key());
-  }
 
-  function run() public virtual override {
     uint256 chainId = network().companionChainId();
     uint256 nonce = _roninBridgeManager.round(chainId) + 1;
     Proposal.ProposalDetail memory proposal = _createAndVerifyProposalOnMainchain(chainId, nonce);

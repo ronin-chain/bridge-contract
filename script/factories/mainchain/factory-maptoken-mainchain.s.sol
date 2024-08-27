@@ -31,14 +31,11 @@ abstract contract Factory__MapTokensMainchain is Migration {
   address internal _mainchainBridgeManager;
   address internal _specifiedCaller;
   address[] internal _governors;
-  uint256[] internal _governorPKs;
 
-  function setUp() public virtual override {
-    super.setUp();
+  function run() public virtual {
     _specifiedCaller = _initCaller();
   }
 
-  function run() public virtual;
   function _initCaller() internal virtual returns (address);
   function _initTokenList() internal virtual returns (uint256 totalToken, MapTokenInfo[] memory infos);
 
@@ -50,17 +47,14 @@ abstract contract Factory__MapTokensMainchain is Migration {
   }
 
   function _relayProposal(Proposal.ProposalDetail memory proposal) internal {
-    MainchainBridgeAdminUtils mainchainProposalUtils =
-      new MainchainBridgeAdminUtils(2021, _governorPKs, IMainchainBridgeManager(_mainchainBridgeManager), _governors[0]);
-
     Ballot.VoteType[] memory supports_ = new Ballot.VoteType[](_governors.length);
-    require(_governors.length > 0 && _governors.length == _governorPKs.length, "Invalid governors information");
+    require(_governors.length > 0, "Invalid number of governors");
 
     for (uint256 i; i < _governors.length; ++i) {
       supports_[i] = Ballot.VoteType.For;
     }
 
-    Signature[] memory signatures = mainchainProposalUtils.generateSignatures(proposal, _governorPKs);
+    Signature[] memory signatures = LibProposal.generateSignatures(proposal, _governors, Ballot.VoteType.For);
 
     uint256 gasAmounts = 1_000_000;
     for (uint256 i; i < proposal.gasAmounts.length; ++i) {

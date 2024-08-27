@@ -16,6 +16,7 @@ abstract contract Factory__MapTokensRonin_Testnet is Factory__MapTokensRoninchai
   function _initGovernors() internal virtual returns (address[] memory);
 
   function run() public virtual override {
+    super.run();
     address[] memory mGovernors = _initGovernors();
 
     for (uint256 i; i < mGovernors.length; ++i) {

@@ -25,10 +25,6 @@ contract Migration__20242606_MapTokenAnimaMainchain is Base__MapToken, Factory__
     return Base__MapToken._initGovernors();
   }
 
-  function _initGovernorPKs() internal override(Base__MapToken, Factory__MapTokensMainchain_Sepolia) returns (uint256[] memory) {
-    return Base__MapToken._initGovernorPKs();
-  }
-
   function run() public override {
     Factory__MapTokensMainchain_Sepolia.run();
   }
