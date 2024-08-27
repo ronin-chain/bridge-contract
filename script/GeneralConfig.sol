@@ -78,6 +78,9 @@ contract GeneralConfig is BaseGeneralConfig, Utils {
 
     _contractAddrMap[DefaultNetwork.RoninTestnet.key()][Contract.WETH.name()] = 0x29C6F8349A028E1bdfC68BFa08BDee7bC5D47E16;
     _contractAddrMap[DefaultNetwork.RoninTestnet.key()][Contract.WRON.name()] = 0xA959726154953bAe111746E265E6d754F48570E6;
+
+    TNetwork currNetwork = getCurrentNetwork();
+    if (currNetwork == Network.Sepolia.key()) _contractNameMap[Contract.WBTC.key()] = "WBTC_Sepolia";
   }
 
   function _mapContractName(Contract contractEnum) internal {
