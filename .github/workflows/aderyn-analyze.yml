@@ -58,7 +58,7 @@ jobs:
           curl -L https://raw.githubusercontent.com/Cyfrin/aderyn/dev/cyfrinup/install | bash
           export PATH="$HOME/.cyfrin/bin:$PATH" 
           cyfrinup
-          aderyn --no-snippets --highs-only --output report.md
+          aderyn --no-snippets --highs-only --output report.md --path-excludes src/interfaces/,src/libraries/,src/mocks
 
       - name: Find Comment
         uses: peter-evans/find-comment@v2
