@@ -53,12 +53,6 @@ jobs:
           ./update-deps.sh
         id: update-deps
 
-      - name: Run Forge build
-        run: |
-          forge --version
-          # forge build
-        id: build
-
       - name: Install and Run Aderyn
         run: |
           # Install cyfrinup
@@ -67,7 +61,6 @@ jobs:
           # Add cyfrinup and aderyn to PATH
           echo "$HOME/.cyfrin/bin" >> $GITHUB_PATH
           export PATH="$HOME/.cyfrin/bin:$PATH"
-          source /home/runner/.bashrc
           
           # Install Aderyn
           cyfrinup
