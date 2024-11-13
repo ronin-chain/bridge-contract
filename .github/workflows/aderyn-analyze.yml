@@ -62,18 +62,11 @@ jobs:
           echo "$HOME/.cyfrin/bin" >> $GITHUB_PATH
           export PATH="$HOME/.cyfrin/bin:$PATH"
           
-          # Install Aderyn
           cyfrinup
           
           # Ensure aderyn is in PATH
           export PATH="$HOME/.local/bin:$PATH"
-          
-          # Run analysis and generate report
-          $HOME/.cyfrin/bin/aderyn --no-snippets --highs-only --output report.md
-          
-          # Display the report content
-          echo "Aderyn Analysis Report:"
-          cat report.md
+          aderyn --no-snippets --highs-only --output report.md
 
       - name: Find Comment
         uses: peter-evans/find-comment@v2
