@@ -55,14 +55,9 @@ jobs:
 
       - name: Install and Run Aderyn
         run: |
-          # Install cyfrinup
           curl -L https://raw.githubusercontent.com/Cyfrin/aderyn/dev/cyfrinup/install | bash
-          # Add cyfrinup and aderyn to PATH
-          # echo "$HOME/.cyfrin/bin" >> $GITHUB_PATH
           export PATH="$HOME/.cyfrin/bin:$PATH"
           cyfrinup
-          # Ensure aderyn is in PATH
-          # export PATH="$HOME/.local/bin:$PATH"
           aderyn --no-snippets --highs-only --output report.md
 
       - name: Find Comment
