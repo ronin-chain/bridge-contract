@@ -12,7 +12,7 @@ ffi = true
 solc = '0.8.27'
 extra_output = ["devdoc", "userdoc", "storagelayout"]
 fs_permissions = [{ access = "read-write", path = "./" }]
-evm_version = 'shanghai'
+evm_version = 'london'
 verbosity = 4
 use_literal_content = true
 unchecked_cheatcode_artifacts = true

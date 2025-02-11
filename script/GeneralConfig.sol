@@ -57,6 +57,7 @@ contract GeneralConfig is BaseGeneralConfig, Utils {
     _mapContractName(Contract.WBTC);
     _mapContractName(Contract.PostChecker);
     _mapContractName(Contract.WETH);
+    _mapContractName(Contract.LegacyTokenMigrator);
 
     _contractNameMap[Contract.AXS.key()] = "MockERC20";
     _contractNameMap[Contract.SLP.key()] = "MockSLP";
