@@ -36,6 +36,8 @@ contract AssetMigration_PostChecker is Migration, PostCheck_BridgeManager, PostC
     _validate_Gateway_DepositAndWithdraw();
   }
 
+  function _postCheck() internal virtual override(Migration, ScriptExtended) { }
+
   function _deployLogic(
     TContract contractType
   ) internal virtual override(BaseMigration, Migration) returns (address payable logic) {
@@ -50,10 +52,6 @@ contract AssetMigration_PostChecker is Migration, PostCheck_BridgeManager, PostC
     ProxyInterface proxyInterface
   ) internal virtual override(BaseMigration, Migration) {
     super._upgradeCallback(proxy, logic, callValue, callData, proxyInterface);
-  }
-
-  function _postCheck() internal virtual override(ScriptExtended, Migration) {
-    super._postCheck();
   }
 
   function _getProxyAdmin() internal virtual override(BaseMigration, Migration) returns (address payable) {

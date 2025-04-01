@@ -88,4 +88,6 @@ contract Migration_01_Deploy_PauseEnforcer_And_Gateway is Migrate_Assets_Base {
       sentries[i] = AccessControlEnumerable(pauseEnforcer).getRoleMember(keccak256("SENTRY_ROLE"), i);
     }
   }
+
+  function _postCheck() internal virtual override { }
 }

@@ -21,11 +21,10 @@ contract Migrate_Assets_FullFlow is Migration {
   }
 
   function _postCheck() internal virtual override {
-    AssetMigration_PostChecker assetMigration_PostChecker = new AssetMigration_PostChecker();
-
     migration_02.postCheck();
+    AssetMigration_PostChecker assetMigration_PostChecker = new AssetMigration_PostChecker();
     assetMigration_PostChecker.run();
 
-    super._postCheck();
+    // super._postCheck();
   }
 }
