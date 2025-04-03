@@ -58,7 +58,8 @@ jobs:
           source /home/runner/.bashrc
 
       - name: Run Cyfrin Analysis
-        run: /home/runner/.cyfrin/bin/cyfrinup
+        run: |
+          ~/.cyfrin/bin/cyfrinup
 
       - name: Run Aderyn Analysis
         run: aderyn --no-snippets --highs-only --output report.md --path-excludes src/interfaces/,src/libraries/,src/mocks
