@@ -54,7 +54,8 @@ jobs:
       - name: Install Cyfrin Tool Suite
         run: |
           curl -L https://raw.githubusercontent.com/Cyfrin/up/main/install | bash
-          source ~/.bashrc
+          export PATH="$HOME/.cyfrin/bin:$PATH"
+          source /home/runner/.bashrc
 
       - name: Run Cyfrin Analysis
         run: cyfrinup
