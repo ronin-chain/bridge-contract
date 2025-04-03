@@ -48,16 +48,19 @@ jobs:
       - name: Recursively update dependencies
         run: |
           chmod +x ./update-deps.sh
-          echo "set -e" | cat - ./update-deps.sh > temp && mv temp ./update-deps.sh
           ./update-deps.sh
         id: update-deps
 
-      - name: Install and Run Aderyn
+      - name: Install Cyfrin Tool Suite
         run: |
-          curl -L https://raw.githubusercontent.com/Cyfrin/aderyn/dev/cyfrinup/install | bash
-          export PATH="$HOME/.cyfrin/bin:$PATH" 
-          cyfrinup
-          aderyn --no-snippets --highs-only --output report.md --path-excludes src/interfaces/,src/libraries/,src/mocks
+          curl -L https://raw.githubusercontent.com/Cyfrin/up/main/install | bash
+          source ~/.bashrc
+
+      - name: Run Cyfrin Analysis
+        run: cyfrinup
+
+      - name: Run Aderyn Analysis
+        run: aderyn --no-snippets --highs-only --output report.md --path-excludes src/interfaces/,src/libraries/,src/mocks
 
       - name: Find Comment
         uses: peter-evans/find-comment@v2
@@ -65,7 +68,7 @@ jobs:
         id: fc
         with:
           issue-number: ${{ github.event.pull_request.number }}
-          comment-author: 'github-actions[bot]'
+          comment-author: "github-actions[bot]"
           body-includes: Aderyn Analysis Report
 
       - name: Create or Update Comment
