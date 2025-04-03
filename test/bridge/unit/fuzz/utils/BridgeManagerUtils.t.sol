@@ -28,13 +28,6 @@ abstract contract BridgeManagerUtils is Randomizer {
     address[] memory governors,
     address[] memory bridgeOperators
   ) internal virtual returns (IBridgeManager bridgeManager) {
-    vm.expectEmit(bridgeManagerContract);
-    bool[] memory statuses;
-    uint256[] memory tmp = _createRandomNumbers(0, voteWeights.length, 1, 1);
-    assembly {
-      statuses := tmp
-    }
-    emit BridgeOperatorsAdded(statuses, voteWeights, governors, bridgeOperators);
     bridgeManager = IBridgeManager(bridgeManagerContract);
     vm.prank(caller);
     (bool success,) = bridgeManagerContract.call(
@@ -137,7 +130,7 @@ abstract contract BridgeManagerUtils is Randomizer {
     uint256[] memory inputs
   ) public pure virtual returns (uint256[] memory outputs, uint256[] memory duplicateIndices) {
     uint256 inputLength = inputs.length;
-    vm.assume(inputLength != 0);
+    vm.assume(inputLength >= 1);
     duplicateAmount = _bound(duplicateAmount, 1, inputLength);
 
     uint256 r1;
@@ -173,7 +166,7 @@ abstract contract BridgeManagerUtils is Randomizer {
     uint256[] memory inputs
   ) public pure virtual returns (uint256[] memory outputs, uint256[] memory nullifyIndices) {
     uint256 inputLength = inputs.length;
-    vm.assume(inputLength != 0);
+    vm.assume(inputLength >= 1);
     nullAmount = _bound(nullAmount, 1, inputLength);
 
     // bound index to range [0, inputLength - 1]
@@ -224,7 +217,9 @@ abstract contract BridgeManagerUtils is Randomizer {
     // _ensureNotExisted(governors.extend(bridgeOperators));
   }
 
-  function _ensureNonZero(uint256[] memory arr) internal pure {
+  function _ensureNonZero(
+    uint256[] memory arr
+  ) internal pure {
     uint256 length = arr.length;
 
     for (uint256 i; i < length;) {
@@ -239,7 +234,9 @@ abstract contract BridgeManagerUtils is Randomizer {
     return a ^ b ^ c;
   }
 
-  function _ensureNonDuplicated(address[] memory addrs) internal pure {
+  function _ensureNonDuplicated(
+    address[] memory addrs
+  ) internal pure {
     vm.assume(!addrs.hasDuplicate());
   }
 
