@@ -20,7 +20,9 @@ contract GeneralConfig is BaseGeneralConfig, Utils {
     setNetworkInfo(Network.RoninDevnet.data());
   }
 
-  function getCompanionNetwork(TNetwork network) public view virtual returns (TNetwork companionNetwork) {
+  function getCompanionNetwork(
+    TNetwork network
+  ) public view virtual returns (TNetwork companionNetwork) {
     if (network == DefaultNetwork.RoninMainnet.key()) return Network.EthMainnet.key();
     if (network == Network.EthMainnet.key()) return DefaultNetwork.RoninMainnet.key();
     if (network == DefaultNetwork.RoninTestnet.key()) return Network.Sepolia.key();
@@ -34,7 +36,9 @@ contract GeneralConfig is BaseGeneralConfig, Utils {
     return _localNetwork;
   }
 
-  function setLocalNetwork(IGeneralConfigExtended.LocalNetwork network) public virtual {
+  function setLocalNetwork(
+    IGeneralConfigExtended.LocalNetwork network
+  ) public virtual {
     _localNetwork = network;
   }
 
@@ -81,9 +85,13 @@ contract GeneralConfig is BaseGeneralConfig, Utils {
 
     TNetwork currNetwork = getCurrentNetwork();
     if (currNetwork == Network.Sepolia.key()) _contractNameMap[Contract.WBTC.key()] = "WBTC_Sepolia";
+    if (currNetwork == DefaultNetwork.LocalHost.key()) _contractNameMap[Contract.MainchainGatewayV3.key()] = "MainchainGatewayV3_initialize";
+    if (currNetwork == DefaultNetwork.LocalHost.key()) _contractNameMap[Contract.RoninGatewayV3.key()] = "RoninGatewayV3_initialize";
   }
 
-  function _mapContractName(Contract contractEnum) internal {
+  function _mapContractName(
+    Contract contractEnum
+  ) internal {
     _contractNameMap[contractEnum.key()] = contractEnum.name();
   }
 

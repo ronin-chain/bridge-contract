@@ -1,0 +1,82 @@
+{
+  "ethereum": {
+    "executor": "0xe880802580a1fbdeF67ACe39D1B21c5b2C74f059",
+    "migrator": "0xe880802580a1fbdeF67ACe39D1B21c5b2C74f059",
+    "newGatewayLogic": "0x0000000000000000000000000000000000000000",
+    "newPauseEnforcer": "0x0000000000000000000000000000000000000000",
+    "prevPauseEnforcer": "0xe514d9DEB7966c8BE0ca922de8a064264eA6bcd4",
+    "proposer": "0xe880802580a1fbdeF67ACe39D1B21c5b2C74f059",
+    "whitelistInfos": [
+      {
+        "recipient": "0xf33341f2CE329B5DbCa7F9a0986Cff40d050440a",
+        "remoteChainSelector": 0,
+        "token": "0xbb0e17ef65f82ab018d8edd776e8dd940327b28b"
+      },
+      {
+        "recipient": "0x5882D12bbf902ee88d5FCF8793113ae85fFe97b1",
+        "remoteChainSelector": 0,
+        "token": "0x95b4b8cad3567b5d7ef7399c2ae1d7070692ab0d"
+      },
+      {
+        "recipient": "0xe26D9c68cF6d284367C5e90EC834C6Ec0051f73C",
+        "remoteChainSelector": 0,
+        "token": "0x3429d03c6F7521AeC737a0BBF2E5ddcef2C3Ae31"
+      },
+      {
+        "recipient": "0xD27F88501e62D0BDc70B20d6ed06d8E0fF8c3812",
+        "remoteChainSelector": 0,
+        "token": "0x88d100432f98956b16b66df56962fd3e5ccd297a"
+      },
+      {
+        "recipient": "0x5686CCb55ee86BEB1e8A1Cf7C769930f3A5E521c",
+        "remoteChainSelector": 0,
+        "token": "0x540dde0739eefaf90d0ca05aca90513ce89e7e79"
+      },
+      {
+        "recipient": "0x799A356069Ca6D91BBE5d0407De625A969874aE4",
+        "remoteChainSelector": 0,
+        "token": "0x25f8087ead173b73d6e8b84329989a8eea16cf73"
+      },
+      {
+        "recipient": "0xB18eE11849a805651aC5D456034FD6352cfF635d",
+        "remoteChainSelector": 0,
+        "token": "0x94e496474f1725f1c1824cb5bdb92d7691a4f03a"
+      },
+      {
+        "recipient": "0xc2e3A3C18ccb634622B57fF119a1C8C7f12e8C0c",
+        "remoteChainSelector": 6916147374840168594,
+        "token": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+      },
+      {
+        "recipient": "0x011Ef1fe26D20077A59F38e9Ad155b166AD87D40",
+        "remoteChainSelector": 6916147374840168594,
+        "token": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+      },
+      {
+        "recipient": "0xF6698064776D521b0AFE469F30C40B39B4875b93",
+        "remoteChainSelector": 6916147374840168594,
+        "token": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+      }
+    ]
+  },
+  "ronin": {
+    "executor": "0xe880802580a1fbdeF67ACe39D1B21c5b2C74f059",
+    "migrator": "0xe880802580a1fbdeF67ACe39D1B21c5b2C74f059",
+    "newGatewayLogic": "0x0000000000000000000000000000000000000000",
+    "newPauseEnforcer": "0x0000000000000000000000000000000000000000",
+    "prevPauseEnforcer": "0x2367cD5468c2b3cD18aA74AdB7e14E43426aF837",
+    "proposer": "0xe880802580a1fbdeF67ACe39D1B21c5b2C74f059",
+    "whitelistInfos": [
+      {
+        "recipient": "0xd27f88501e62d0bdc70b20d6ed06d8e0ff8c3812",
+        "remoteChainSelector": 0,
+        "token": "0xf80132fc0a86add011bffce3aedd60a86e3d704d"
+      },
+      {
+        "recipient": "0x5686ccb55ee86beb1e8a1cf7c769930f3a5e521c",
+        "remoteChainSelector": 0,
+        "token": "0xa8754b9fa15fc18bb59458815510e40a12cd2014"
+      }
+    ]
+  }
+}

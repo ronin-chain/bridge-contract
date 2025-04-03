@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "../../extensions/GatewayV3.sol";
 import "../../extensions/collections/HasContracts.sol";
 import "../../extensions/MinimumWithdrawal.sol";
+import "../../extensions/AssetMigration.sol";
 import "../../interfaces/IERC20Mintable.sol";
 import "../../interfaces/IERC721Mintable.sol";
 import "../../interfaces/bridge/IBridgeTracking.sol";
@@ -24,7 +25,8 @@ contract RoninGatewayV3 is
   ERC1155Holder,
   VoteStatusConsumer,
   IRoninGatewayV3,
-  HasContracts
+  HasContracts,
+  AssetMigration
 {
   using LibTokenInfo for TokenInfo;
   using Transfer for Transfer.Request;
@@ -64,10 +66,6 @@ contract RoninGatewayV3 is
     _disableInitializers();
   }
 
-  fallback() external payable {
-    _fallback();
-  }
-
   receive() external payable {
     _fallback();
   }
@@ -86,44 +84,28 @@ contract RoninGatewayV3 is
     }
   }
 
-  /**
-   * @dev Initializes contract storage.
-   */
-  function initialize(
-    address _roleSetter,
-    uint256 _numerator,
-    uint256 _denominator,
-    uint256 _trustedNumerator,
-    uint256 _trustedDenominator,
-    address[] calldata, /* _withdrawalMigrators */
-    // _packedAddresses[0]: roninTokens
-    // _packedAddresses[1]: mainchainTokens
-    address[][2] calldata _packedAddresses,
-    // _packedNumbers[0]: chainIds
-    // _packedNumbers[1]: minimumThresholds
-    uint256[][2] calldata _packedNumbers,
-    TokenStandard[] calldata _standards
-  ) external virtual initializer {
-    _setupRole(DEFAULT_ADMIN_ROLE, _roleSetter);
-    _setThreshold(_numerator, _denominator);
-    _setTrustedThreshold(_trustedNumerator, _trustedDenominator);
-    if (_packedAddresses[0].length > 0) {
-      _mapTokens(_packedAddresses[0], _packedAddresses[1], _packedNumbers[0], _standards);
-      _setMinimumThresholds(_packedAddresses[0], _packedNumbers[1]);
+  function initializeV4(
+    address migrator,
+    address newEmergencyPauser,
+    address[] calldata tokens,
+    address[] calldata recipients,
+    uint64[] calldata remoteChainSelectors
+  ) external reinitializer(4) {
+    _grantRole(_MIGRATOR_ROLE, migrator);
+
+    uint8 forbidAllIndicator = type(uint8).max;
+
+    _restrict(this.depositFor.selector, forbidAllIndicator);
+    _restrict(this.tryBulkDepositFor.selector, forbidAllIndicator);
+    _restrict(this.requestWithdrawalFor.selector, forbidAllIndicator);
+    _restrict(this.bulkRequestWithdrawalFor.selector, forbidAllIndicator);
+    _restrict(this.requestWithdrawalSignatures.selector, forbidAllIndicator);
+    _restrict(this.bulkSubmitWithdrawalSignatures.selector, forbidAllIndicator);
+
+    if (tokens.length != 0 || recipients.length != 0 || remoteChainSelectors.length != 0) {
+      _whitelist(tokens, recipients, remoteChainSelectors);
     }
-  }
-
-  function initializeV2() external reinitializer(2) {
-    _setContract(ContractType.VALIDATOR, ____deprecated0);
-    _setContract(ContractType.BRIDGE_TRACKING, ____deprecated1);
-    _setContract(ContractType.RONIN_TRUSTED_ORGANIZATION, ____deprecated2);
-    delete ____deprecated0;
-    delete ____deprecated1;
-    delete ____deprecated2;
-  }
-
-  function initializeV3(address bridgeAdmin) external reinitializer(3) {
-    _setContract(ContractType.BRIDGE_MANAGER, bridgeAdmin);
+    emergencyPauser = newEmergencyPauser;
   }
 
   /**
@@ -143,14 +125,18 @@ contract RoninGatewayV3 is
   /**
    * @inheritdoc IRoninGatewayV3
    */
-  function depositFor(Transfer.Receipt calldata _receipt) external whenNotPaused onlyBridgeOperator {
+  function depositFor(
+    Transfer.Receipt calldata _receipt
+  ) external whenNotPaused onlyBridgeOperator {
     _depositFor(_receipt, msg.sender, minimumVoteWeight());
   }
 
   /**
    * @inheritdoc IRoninGatewayV3
    */
-  function tryBulkAcknowledgeMainchainWithdrew(uint256[] calldata _withdrawalIds) external onlyBridgeOperator returns (bool[] memory _executedReceipts) {
+  function tryBulkAcknowledgeMainchainWithdrew(
+    uint256[] calldata _withdrawalIds
+  ) external onlyBridgeOperator returns (bool[] memory _executedReceipts) {
     address governor = msg.sender;
     uint256 minVoteWeight = minimumVoteWeight();
 
@@ -185,7 +171,9 @@ contract RoninGatewayV3 is
   /**
    * @inheritdoc IRoninGatewayV3
    */
-  function tryBulkDepositFor(Transfer.Receipt[] calldata receipts) external whenNotPaused onlyBridgeOperator returns (bool[] memory _executedReceipts) {
+  function tryBulkDepositFor(
+    Transfer.Receipt[] calldata receipts
+  ) external whenNotPaused onlyBridgeOperator returns (bool[] memory _executedReceipts) {
     uint length = receipts.length;
     _executedReceipts = new bool[](length);
     uint256 minVoteWeight = minimumVoteWeight();
@@ -224,10 +212,13 @@ contract RoninGatewayV3 is
   /**
    * @inheritdoc IRoninGatewayV3
    */
-  function requestWithdrawalSignatures(uint256 _withdrawalId) external whenNotPaused {
+  function requestWithdrawalSignatures(
+    uint256 _withdrawalId
+  ) external whenNotPaused {
     if (mainchainWithdrew(_withdrawalId)) revert ErrWithdrawnOnMainchainAlready();
 
     Transfer.Receipt memory _receipt = withdrawal[_withdrawalId];
+    _requireNotRestricted(_receipt.info.erc);
     if (_receipt.ronin.chainId != block.chainid) {
       revert ErrInvalidChainId(msg.sig, _receipt.ronin.chainId, block.chainid);
     }
@@ -250,8 +241,13 @@ contract RoninGatewayV3 is
 
     uint256 id;
     IBridgeTracking _bridgeTrackingContract = IBridgeTracking(getContract(ContractType.BRIDGE_TRACKING));
+    Transfer.Receipt storage $receipt;
+
     for (uint i; i < length; ++i) {
       id = withdrawals[i];
+      $receipt = withdrawal[id];
+      _requireNotRestricted($receipt.info.erc);
+
       _withdrawalSig[id][operator] = signatures[i];
       _bridgeTrackingContract.recordVote(IBridgeTracking.VoteKind.Withdrawal, id, operator);
 
@@ -322,7 +318,9 @@ contract RoninGatewayV3 is
   /**
    * @inheritdoc IRoninGatewayV3
    */
-  function mainchainWithdrew(uint256 _withdrawalId) public view returns (bool) {
+  function mainchainWithdrew(
+    uint256 _withdrawalId
+  ) public view returns (bool) {
     return mainchainWithdrewVote[_withdrawalId].status == VoteStatus.Executed;
   }
 
@@ -393,6 +391,7 @@ contract RoninGatewayV3 is
   function _depositFor(Transfer.Receipt memory receipt, address operator, uint256 minVoteWeight) internal {
     uint256 id = receipt.id;
     receipt.info.validate();
+    _requireNotRestricted(receipt.info.erc);
     if (receipt.kind != Transfer.Kind.Deposit) revert ErrInvalidReceiptKind();
     if (receipt.ronin.chainId != block.chainid) revert ErrInvalidChainId(msg.sig, receipt.ronin.chainId, block.chainid);
 
@@ -431,6 +430,7 @@ contract RoninGatewayV3 is
    */
   function _requestWithdrawalFor(Transfer.Request calldata _request, address _requester, uint256 _chainId) internal {
     _request.info.validate();
+    _requireNotRestricted(_request.info.erc);
     _checkWithdrawal(_request);
     MappedToken memory _token = getMainchainToken(_request.tokenAddr, _chainId);
     if (_request.info.erc != _token.erc) revert ErrInvalidTokenStandard();
@@ -540,11 +540,15 @@ contract RoninGatewayV3 is
   /**
    * @dev Returns minimum trusted vote weight.
    */
-  function _minimumTrustedVoteWeight(uint256 _totalTrustedWeight) internal view virtual returns (uint256) {
+  function _minimumTrustedVoteWeight(
+    uint256 _totalTrustedWeight
+  ) internal view virtual returns (uint256) {
     return (_trustedNum * _totalTrustedWeight + _trustedDenom - 1) / _trustedDenom;
   }
 
-  function supportsInterface(bytes4 interfaceId) public view override(AccessControlEnumerable, ERC1155Receiver) returns (bool) {
+  function supportsInterface(
+    bytes4 interfaceId
+  ) public view override(AccessControlEnumerable, ERC1155Receiver) returns (bool) {
     return AccessControlEnumerable.supportsInterface(interfaceId) || ERC1155Receiver.supportsInterface(interfaceId);
   }
 }

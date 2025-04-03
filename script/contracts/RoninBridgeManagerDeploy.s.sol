@@ -54,7 +54,7 @@ contract RoninBridgeManagerDeploy is Migration {
       callData: EMPTY_ARGS,
       proxyInterface: ProxyInterface.Transparent,
       shouldPrompt: false,
-      upgradeCallback: this.upgradeCallback,
+      upgradeCallback: _upgradeCallback,
       shouldUseCallback: true
     }).upgrade();
 

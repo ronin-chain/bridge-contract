@@ -1,24 +1,27 @@
-
 [[dependencies]]
 name = "@fdk"
-version = "0.3.1-beta"
-source = "https://github.com/axieinfinity/foundry-deployment-kit/archive/refs/tags/v0.3.1-beta.zip"
-checksum = "53cb5bf15abdc909d177c64e78070387af24ef39b2a4b408651836ac9de059c4"
+version = "0.3.5-rc"
+url = "https://github.com/axieinfinity/foundry-deployment-kit/archive/refs/tags/v0.3.5-rc.zip"
+checksum = "1b2a5c4cb7836463d821d79483d45594fcab2f96f0200641da52d14ccdd6ccbc"
+integrity = "a9a42316943b53d68a2dd135906632a264175585a0d4f9f50927228061a35b82"
 
 [[dependencies]]
 name = "@openzeppelin"
 version = "4.7.3"
-source = "https://github.com/OpenZeppelin/openzeppelin-contracts/archive/refs/tags/v4.7.3.zip"
+url = "https://github.com/OpenZeppelin/openzeppelin-contracts/archive/refs/tags/v4.7.3.zip"
 checksum = "e25b51f352864703de7b35e5030d63b38cbe4e8d61d7858f9ff9f77e18e370dd"
+integrity = "22307e72fcd0d9ba18b894af6b2efdcdb4b4b51c1e7822cb2f0983ef348048d4"
 
 [[dependencies]]
 name = "@prb-math"
 version = "4.0.3"
-source = "https://soldeer-revisions.s3.amazonaws.com/@prb-math/4_0_3_16-06-2024_05:46:20_math.zip"
+url = "https://soldeer-revisions.s3.amazonaws.com/@prb-math/4_0_3_16-06-2024_05:46:20_math.zip"
 checksum = "adb64170354454d3acefa986481f7231af28a329a81484bf96e59523a831960c"
+integrity = "c53ac540d39b9c677764d808c4e14351169157fdf0367933a5f27d530c404164"
 
 [[dependencies]]
 name = "@prb-test"
 version = "0.6.5"
-source = "https://soldeer-revisions.s3.amazonaws.com/@prb-test/0_6_5_22-01-2024_13:22:11_test.zip"
+url = "https://soldeer-revisions.s3.amazonaws.com/@prb-test/0_6_5_22-01-2024_13:22:11_test.zip"
 checksum = "d0b38a301d86f583a3053bfb437d12795cda5709bfe74ea21a27ffa339a2b8e8"
+integrity = "3acca4e1569c805ab7f56cca79f45b413fbfba849bdbab8d41c751823bbb72ee"

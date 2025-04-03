@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import { ISharedArgument } from "script/interfaces/ISharedArgument.sol";
 import { LibSharedAddress } from "@fdk/libraries/LibSharedAddress.sol";
 import { TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
-import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
+import { IMainchainGatewayV3 } from "script/interfaces/IMainchainGatewayV3.sol";
 import { IPauseEnforcer } from "script/interfaces/IPauseEnforcer.sol";
 import { Proposal } from "@ronin/contracts/libraries/Proposal.sol";
 import { Ballot } from "@ronin/contracts/libraries/Ballot.sol";

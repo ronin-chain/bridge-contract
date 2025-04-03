@@ -1,1 +1,1 @@
-dependencies/@fdk-0.3.1-beta/script/configs/MigrationConfig.sol:MigrationConfig:_migrationConfig (storage_slot: 0) (offset: 0) (type: bytes) (numberOfBytes: 32)
+dependencies/@fdk-0.3.5-rc/script/configs/MigrationConfig.sol:MigrationConfig:_migrationConfig (storage_slot: 0) (offset: 0) (type: bytes) (numberOfBytes: 32)
