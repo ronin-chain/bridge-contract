@@ -48,6 +48,7 @@ jobs:
       - name: Recursively update dependencies
         run: |
           chmod +x ./update-deps.sh
+          echo "set -e" | cat - ./update-deps.sh > temp && mv temp ./update-deps.sh
           ./update-deps.sh
         id: update-deps
 
