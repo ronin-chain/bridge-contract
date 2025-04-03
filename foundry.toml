@@ -16,6 +16,7 @@ evm_version = 'shanghai'
 verbosity = 4
 use_literal_content = true
 unchecked_cheatcode_artifacts = true
+allow_internal_expect_revert = true
 
 [profile.ronin]
 evm_version = 'london'
