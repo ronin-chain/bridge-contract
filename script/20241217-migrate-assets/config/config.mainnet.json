@@ -2,8 +2,8 @@
   "ethereum": {
     "executor": "0xe880802580a1fbdeF67ACe39D1B21c5b2C74f059",
     "migrator": "0xe880802580a1fbdeF67ACe39D1B21c5b2C74f059",
-    "newGatewayLogic": "0x0000000000000000000000000000000000000000",
-    "newPauseEnforcer": "0x0000000000000000000000000000000000000000",
+    "newGatewayLogic": "0x450032864C52Cb9210da8e30cE97CEaC8e215953",
+    "newPauseEnforcer": "0xF184a6Cd470Cac2CF5cD4fBa34e20D482D6A6062",
     "prevPauseEnforcer": "0xe514d9DEB7966c8BE0ca922de8a064264eA6bcd4",
     "proposer": "0xe880802580a1fbdeF67ACe39D1B21c5b2C74f059",
     "whitelistInfos": [
@@ -62,8 +62,8 @@
   "ronin": {
     "executor": "0xe880802580a1fbdeF67ACe39D1B21c5b2C74f059",
     "migrator": "0xe880802580a1fbdeF67ACe39D1B21c5b2C74f059",
-    "newGatewayLogic": "0x0000000000000000000000000000000000000000",
-    "newPauseEnforcer": "0x0000000000000000000000000000000000000000",
+    "newGatewayLogic": "0x450032864C52Cb9210da8e30cE97CEaC8e215953",
+    "newPauseEnforcer": "0xF184a6Cd470Cac2CF5cD4fBa34e20D482D6A6062",
     "prevPauseEnforcer": "0x2367cD5468c2b3cD18aA74AdB7e14E43426aF837",
     "proposer": "0xe880802580a1fbdeF67ACe39D1B21c5b2C74f059",
     "whitelistInfos": [
