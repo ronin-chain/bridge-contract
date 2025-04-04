@@ -55,14 +55,22 @@ jobs:
         run: |
           # Install Cyfrin
           curl -L https://raw.githubusercontent.com/Cyfrin/up/main/install | bash
+          source ~/.bashrc
 
-          # Try to run Cyfrin directly
+          # Try to run Cyfrin and continue if it fails
+          if command -v cyfrinup &> /dev/null; then
           cyfrinup || echo "Cyfrin analysis failed, continuing with Aderyn"
+          else
+          # Try the full path as fallback
+          ~/.cyfrin/bin/cyfrinup || echo "Cyfrin analysis failed, continuing with Aderyn"
+          fi
 
-          # Install Rust and Aderyn
+          # Install Rust
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
           source "$HOME/.cargo/env"
-          cargo install aderyn-cli
+
+          # Install Aderyn (correct package name is 'aderyn')
+          cargo install aderyn
 
           # Run Aderyn Analysis
           aderyn --no-snippets --highs-only --output report.md --path-excludes src/interfaces/,src/libraries/,src/mocks
