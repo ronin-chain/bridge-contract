@@ -16,6 +16,7 @@ evm_version = 'shanghai'
 verbosity = 4
 use_literal_content = true
 unchecked_cheatcode_artifacts = true
+allow_internal_expect_revert = true
 
 [profile.ronin]
 evm_version = 'london'
@@ -71,8 +72,8 @@ ronin-testnet = "https://saigon-archive.roninchain.com/rpc"
 [dependencies]
 "@fdk" = { version = "0.3.5-rc", url = "https://github.com/axieinfinity/foundry-deployment-kit/archive/refs/tags/v0.3.5-rc.zip" }
 "@openzeppelin" = { version = "4.7.3", url = "https://github.com/OpenZeppelin/openzeppelin-contracts/archive/refs/tags/v4.7.3.zip" }
-"@prb-math" = "4.0.3"
-"@prb-test" = "0.6.5"
+"@prb-math" = { version = "4.0.3", url = "https://github.com/PaulRBerg/prb-math/archive/refs/tags/v4.0.3.zip" }
+"@prb-test" = { version = "0.6.5", url = "https://github.com/PaulRBerg/prb-test/archive/refs/tags/v0.6.5.zip" }
 
 [soldeer]
 # whether soldeer manages remappings
