@@ -47,6 +47,17 @@ contract Migration_02_Propose_Upgrades is Migrate_Assets_Base {
     _ronBM = IRoninBridgeManager(loadContract(Contract.RoninBridgeManager.key()));
     _ethBM = IMainchainBridgeManager(vme.getAddress(_companionNetwork, Contract.MainchainBridgeManager.key()));
 
+    MigrateConfig memory ronCfg = ronConfig();
+    MigrateConfig memory ethCfg = ethConfig();
+
+    require(ronCfg.prevPauseEnforcer != address(0), "[Ronin] prevPauseEnforcer is required");
+    require(ronCfg.newPauseEnforcer != address(0), "[Ronin] newPauseEnforcer is required");
+    require(ronCfg.newGatewayLogic != address(0), "[Ronin] newGatewayLogic is required");
+
+    require(ethCfg.prevPauseEnforcer != address(0), "[Ethereum] prevPauseEnforcer is required");
+    require(ethCfg.newPauseEnforcer != address(0), "[Ethereum] newPauseEnforcer is required");
+    require(ethCfg.newGatewayLogic != address(0), "[Ethereum] newGatewayLogic is required");
+
     _propose_upgradeAndRestrictERC20_RoninGatewayV3();
     _propose_upgradeAndRestrictERC20_MainchainGatewayV3();
   }
