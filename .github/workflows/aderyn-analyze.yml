@@ -51,17 +51,21 @@ jobs:
           ./update-deps.sh
         id: update-deps
 
-      - name: Install Cyfrin Tool Suite
+      - name: Install and Run Cyfrin & Aderyn Analysis
         run: |
+          # Install Cyfrin
           curl -L https://raw.githubusercontent.com/Cyfrin/up/main/install | bash
-          echo "$HOME/.cyfrin/bin" >> $GITHUB_PATH
 
-      - name: Run Cyfrin Analysis
-        run: |
-          ~/.cyfrin/bin/cyfrinup
+          # Try to run Cyfrin directly
+          cyfrinup || echo "Cyfrin analysis failed, continuing with Aderyn"
 
-      - name: Run Aderyn Analysis
-        run: aderyn --no-snippets --highs-only --output report.md --path-excludes src/interfaces/,src/libraries/,src/mocks
+          # Install Rust and Aderyn
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          source "$HOME/.cargo/env"
+          cargo install aderyn-cli
+
+          # Run Aderyn Analysis
+          aderyn --no-snippets --highs-only --output report.md --path-excludes src/interfaces/,src/libraries/,src/mocks
 
       - name: Find Comment
         uses: peter-evans/find-comment@v2
