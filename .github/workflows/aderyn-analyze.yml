@@ -68,10 +68,7 @@ jobs:
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
           source "$HOME/.cargo/env"
           
-          # Install Aderyn
-          cargo install aderyn
-          
-          # Run Aderyn Analysis
+          # Now run Aderyn analysis (which is already installed by Cyfrin)
           aderyn --no-snippets --highs-only --output report.md --path-excludes src/interfaces/,src/libraries/,src/mocks
 
       - name: Find Comment
