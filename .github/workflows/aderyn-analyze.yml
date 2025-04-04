@@ -51,27 +51,26 @@ jobs:
           ./update-deps.sh
         id: update-deps
 
-      - name: Install and Run Cyfrin & Aderyn Analysis
+      - name: Install and Run Analysis Tools
         run: |
-          # Install Cyfrin
-          curl -L https://raw.githubusercontent.com/Cyfrin/up/main/install | bash
-          source ~/.bashrc
-
-          # Try to run Cyfrin and continue if it fails
-          if command -v cyfrinup &> /dev/null; then
-          cyfrinup || echo "Cyfrin analysis failed, continuing with Aderyn"
-          else
-          # Try the full path as fallback
-          ~/.cyfrin/bin/cyfrinup || echo "Cyfrin analysis failed, continuing with Aderyn"
-          fi
-
+          # Install Cyfrin installer first
+          mkdir -p ~/.cyfrin/bin
+          curl -# -L https://raw.githubusercontent.com/Cyfrin/up/main/cyfrinup -o ~/.cyfrin/bin/cyfrinup
+          chmod +x ~/.cyfrin/bin/cyfrinup
+          
+          # Add to PATH for this session
+          export PATH="$PATH:$HOME/.cyfrin/bin"
+          
+          # Now run the installer to install Cyfrin tools
+          ~/.cyfrin/bin/cyfrinup
+          
           # Install Rust
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
           source "$HOME/.cargo/env"
-
-          # Install Aderyn (correct package name is 'aderyn')
+          
+          # Install Aderyn
           cargo install aderyn
-
+          
           # Run Aderyn Analysis
           aderyn --no-snippets --highs-only --output report.md --path-excludes src/interfaces/,src/libraries/,src/mocks
 
