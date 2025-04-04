@@ -51,18 +51,21 @@ jobs:
           ./update-deps.sh
         id: update-deps
 
-      - name: Install Cyfrin Tool Suite
+      - name: Install and Run Analysis Tools
         run: |
-          curl -L https://raw.githubusercontent.com/Cyfrin/up/main/install | bash
-          export PATH="$HOME/.cyfrin/bin:$PATH"
-          source /home/runner/.bashrc
-
-      - name: Run Cyfrin Analysis
-        run: |
+          # Install Cyfrin installer first
+          mkdir -p ~/.cyfrin/bin
+          curl -# -L https://raw.githubusercontent.com/Cyfrin/up/main/cyfrinup -o ~/.cyfrin/bin/cyfrinup
+          chmod +x ~/.cyfrin/bin/cyfrinup
+          
+          # Add to PATH for this session
+          export PATH="$PATH:$HOME/.cyfrin/bin"
+          
+          # Now run the installer to install Cyfrin tools
           ~/.cyfrin/bin/cyfrinup
-
-      - name: Run Aderyn Analysis
-        run: aderyn --no-snippets --highs-only --output report.md --path-excludes src/interfaces/,src/libraries/,src/mocks
+          
+          # Now run Aderyn analysis (which is already installed by Cyfrin)
+          aderyn --no-snippets --highs-only --output report.md --path-excludes src/interfaces/,src/libraries/,src/mocks
 
       - name: Find Comment
         uses: peter-evans/find-comment@v2
