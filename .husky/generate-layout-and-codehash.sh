@@ -3,7 +3,10 @@
 set -e
 
 # Clear and recreate logs directory
+rm -rf logs/storage
 rm -rf logs/codehash
+
+mkdir -p logs/storage
 mkdir -p logs/codehash
 
 # Find all .sol files in the 'out' directory
@@ -42,6 +45,8 @@ find out -type f -name '*.json' | while read -r fileIn; do
     continue
   fi
 
-  fileOut="logs/codehash/${contractDir}:${jsonFile%.json}.log"
-  echo "$codehash" >"$fileOut"
+  echo "$codehash" >"logs/codehash/${contractDir}:${jsonFile%.json}.log"
+  node .husky/storage-logger.js $fileIn "logs/storage/${contractDir}:${jsonFile%.json}.log" &
 done
+
+wait
