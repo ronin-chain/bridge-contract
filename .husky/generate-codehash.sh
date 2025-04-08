@@ -3,8 +3,8 @@
 set -e
 
 # Clear and recreate logs directory
-rm -rf logs/storage
-mkdir -p logs/storage
+rm -rf logs/codehash
+mkdir -p logs/codehash
 
 # Find all .sol files in the 'out' directory
 find out -type f -name '*.json' | while read -r fileIn; do
@@ -35,8 +35,13 @@ find out -type f -name '*.json' | while read -r fileIn; do
     continue
   fi
 
-  fileOut="logs/storage/${contractDir}:${jsonFile%.json}.log"
-  node .husky/storage-logger.js $fileIn $fileOut &
-done
+  # Calculate codehash and save to file
+  codehash=$(cast keccak "$deployedBytecode" 2>/dev/null || echo "Error")
+  if [ "$codehash" == "Error" ]; then
+    echo "Error: Failed to calculate codehash for $contractDir/$jsonFile"
+    continue
+  fi
 
-wait
+  fileOut="logs/codehash/${contractDir}:${jsonFile%.json}.log"
+  echo "$codehash" >"$fileOut"
+done
