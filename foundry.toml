@@ -1,6 +1,7 @@
 [profile.default]
 src = 'src'
 out = 'out'
+libs = ['lib', 'dependencies']
 script = 'script'
 optimizer = true
 optimizer_runs = 200
@@ -62,10 +63,12 @@ sepolia = { key = "${ETHERSCAN_API_KEY}", chain = 11155111, url = "https://api-s
 
 [rpc_endpoints]
 localhost = "http://localhost:8545"
-ethereum = "https://mainnet.infura.io/v3/${INFURA_API_KEY}"
-sepolia = "https://sepolia.infura.io/v3/${INFURA_API_KEY}"
+# ethereum = "https://mainnet.infura.io/v3/${INFURA_API_KEY}"
+ethereum = "https://eth.llamarpc.com"
+sepolia = "https://eth-sepolia.public.blastapi.io"
+# sepolia = "https://sepolia.infura.io/v3/${INFURA_API_KEY}"
 goerli = "https://ethereum-goerli.publicnode.com"
-ronin-mainnet = "https://api-archived.roninchain.com/rpc"
+ronin-mainnet = "${RONIN_MAINNET_RPC}"
 ronin-testnet = "https://saigon-archive.roninchain.com/rpc"
 
 [dependencies]

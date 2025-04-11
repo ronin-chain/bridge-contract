@@ -13,7 +13,7 @@ mkdir -p logs/codehash
 find out -type f -name '*.json' | while read -r file_in; do
   # Extract contract directory and JSON file name
   contract_dir=$(dirname "$file_in" | sed 's|out/||')
-  json_file=$(basename "$file_in")
+  contract_name=$(basename "$file_in")
 
   # Skip if folder ends with .s.sol or .t.sol and not end with .sol
   if [[ $contract_dir == *".s.sol" ]] || [[ $contract_dir == *".t.sol" ]] || [[ $contract_dir != *".sol" ]]; then
@@ -38,7 +38,8 @@ find out -type f -name '*.json' | while read -r file_in; do
     continue
   fi
 
-  nullified_metadata_deployed_bytecode=$(node -e "
+  (
+    nullified_metadata_deployed_bytecode=$(node -e "
       const deployedBytecode = process.argv[1];
       // Extract the last 2 bytes of the deployed bytecode
       const metadataLength = parseInt(deployedBytecode.slice(-4), 16);
@@ -48,12 +49,11 @@ find out -type f -name '*.json' | while read -r file_in; do
       const nullifiedBytecode = deployedBytecode.slice(0, sliceLength) + '0'.repeat(metadataLength * 2 + 4);
       console.log(nullifiedBytecode);
   " "$deployed_bytecode")
-
-  # Calculate codehash
-  codehash=$(cast keccak256 "$nullified_metadata_deployed_bytecode" 2>/dev/null)
-
-  echo "local: $codehash" >"logs/codehash/${contract_dir}:${json_file%.json}.log"
-  node .husky/storage-logger.js $file_in "logs/storage/${contract_dir}:${json_file%.json}.log" &
+    # Calculate codehash
+    codehash=$(cast keccak256 "$nullified_metadata_deployed_bytecode" 2>/dev/null)
+    echo "local: $codehash" >"logs/codehash/${contract_name%.json}.log"
+  ) &
+  node .husky/storage-logger.js $file_in "logs/storage/${contract_name%.json}.log" &
 done
 
 wait
