@@ -1,10 +1,3 @@
-// verifyContractsPretty.mjs – Optimized & prettier‑logging version (plain JS)
-// ---------------------------------------------------------------
-// • Consolidates async work so logs don't interleave
-// • Uses cli‑table3 + chalk + log‑symbols for tidy output
-// • Pure ECMAScript module, no TypeScript types
-// ---------------------------------------------------------------
-
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
