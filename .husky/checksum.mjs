@@ -1,3 +1,10 @@
+// verifyContractsPretty.mjs – Optimized & prettier‑logging version (plain JS)
+// ---------------------------------------------------------------
+// • Consolidates async work so logs don't interleave
+// • Uses cli‑table3 + chalk + log‑symbols for tidy output
+// • Pure ECMAScript module, no TypeScript types
+// ---------------------------------------------------------------
+
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
@@ -5,8 +12,13 @@ import { promises as fsPromises } from "fs";
 import { ethers } from "ethers";
 import pLimit from "p-limit";
 import chalk from "chalk";
+import symbols from "log-symbols";
+import Table from "cli-table3";
 import * as dotenv from "dotenv";
-import { exit } from "process";
+
+// Node ≥18 has global fetch; for older versions uncomment:
+// import fetch from "node-fetch";
+// globalThis.fetch = globalThis.fetch || fetch;
 
 dotenv.config();
 
@@ -14,17 +26,12 @@ dotenv.config();
  * CONFIG & CONSTANTS            *
  *********************************/
 
-// Read foundry.toml config produced by `forge config --json`
 const config = JSON.parse(execSync("forge config --json", { encoding: "utf-8" }));
 
-// EIP‑1967 slots
-const adminSlot = "0x" + (BigInt(ethers.id("eip1967.proxy.admin")) - 1n).toString(16);
 const implSlot = "0x" + (BigInt(ethers.id("eip1967.proxy.implementation")) - 1n).toString(16);
 
-// Skip networks
 const skipChains = new Set([5, 2022]); // goerli, ronin‑devnet
 
-// Sourcify / Etherscan endpoints
 const sourcifyEndpoints = {
 	2020: "https://sourcify.roninchain.com/server/",
 	2021: "https://sourcify.roninchain.com/server/",
@@ -66,11 +73,12 @@ const fetchJson = async (url, options = {}, allowError = false) => {
 
 const getContractName = (metadata) => Object.values(metadata.settings.compilationTarget)[0];
 
-const time = async (label, fn) => {
-	console.time(chalk.cyan(label));
-	const res = await fn();
-	console.timeEnd(chalk.cyan(label));
-	return res;
+const timed = async (label, fn) => {
+	const start = Date.now();
+	const result = await fn();
+	const ms = Date.now() - start;
+	console.log(chalk.cyan(`✔ ${label} – ${ms}ms`));
+	return result;
 };
 
 /*********************************
@@ -83,12 +91,12 @@ const generateChecksums = (artifacts) =>
 			.map(([p, v]) => ({ path: p, checksum: v.keccak256 }))
 			.sort((a, b) => path.basename(a.path).localeCompare(path.basename(b.path)));
 		const aggregatedChecksum =
-			"0x" + dependencyChecksums.reduce((acc, { checksum }) => acc ^ BigInt(checksum), 0n).toString(16);
-		return {
-			contractName: getContractName(metadata),
-			aggregatedChecksum,
-			dependencyChecksums,
-		};
+			"0x" +
+			dependencyChecksums
+				.reduce((acc, { checksum }) => acc ^ BigInt(checksum), 0n)
+				.toString(16)
+				.padStart(64, "0");
+		return { contractName: getContractName(metadata), aggregatedChecksum, dependencyChecksums };
 	});
 
 const loadLocalChecksums = async () => {
@@ -98,7 +106,7 @@ const loadLocalChecksums = async () => {
 		.filter((d) => d.isDirectory() && filterRegex.test(d.name))
 		.map((d) => path.join(d.path, d.name));
 
-	const artifacts = (
+	const artifactFiles = (
 		await Promise.all(
 			artifactDirs.map((dir) =>
 				fsPromises
@@ -108,7 +116,7 @@ const loadLocalChecksums = async () => {
 		)
 	).flat();
 
-	const contents = await Promise.all(artifacts.map((p) => fsPromises.readFile(p, "utf8").then(JSON.parse)));
+	const contents = await Promise.all(artifactFiles.map((p) => fsPromises.readFile(p, "utf8").then(JSON.parse)));
 
 	const valid = contents.filter(({ metadata, methodIdentifiers, deployedBytecode }) => {
 		const name = getContractName(metadata);
@@ -142,7 +150,7 @@ const discoverRpcs = async () => {
 		endpoints.map(async (ep) => {
 			try {
 				const [cid] = await batchRpc(ep, [{ jsonrpc: "2.0", id: 1, method: "eth_chainId", params: [] }]);
-				if (cid && !skipChains.has(Number(cid))) out[BigInt(cid)] = ep;
+				if (cid && !skipChains.has(Number(cid))) out[Number(cid)] = ep;
 			} catch {
 				/* ignore */
 			}
@@ -171,7 +179,8 @@ const resolveImpls = async (addrByChain, rpcs) => {
 	const limit = pLimit(8);
 	const impls = {};
 	await Promise.all(
-		Object.entries(addrByChain).map(async ([cid, addrs]) => {
+		Object.entries(addrByChain).map(async ([cidStr, addrs]) => {
+			const cid = Number(cidStr);
 			const ep = rpcs[cid];
 			if (!ep) return;
 			const reqs = addrs.map((a, i) => ({
@@ -196,7 +205,7 @@ const getEtherscanStatus = async (cid, addr) => {
 	if (!base) return "NA";
 	const url = `${base}?module=contract&action=getsourcecode&address=${addr}&apikey=${process.env.ETHERSCAN_API_KEY}`;
 	const d = await fetchJson(url, {}, true);
-	return d?.status === "1" ? d.result[0] : null;
+	return d?.status === "1" ? !!d.result[0]?.SourceCode : null;
 };
 
 const getSourcifyStatus = async (cid, addr) => {
@@ -238,100 +247,169 @@ const fetchMetadata = async (cid, addr) => {
 };
 
 /*********************************
- * DIFF UTIL                      *
+ * PRETTY LOGGING HELPERS         *
  *********************************/
 
-const printChecksumDiff = (localDeps, remoteDeps) => {
-	const localMap = new Map(localDeps.map((d) => [d.checksum, d.path]));
-	const remoteMap = new Map(remoteDeps.map((d) => [d.checksum, d.path]));
-	const onlyLocal = [...localMap].filter(([c]) => !remoteMap.has(c));
-	const onlyRemote = [...remoteMap].filter(([c]) => !localMap.has(c));
-	if (onlyLocal.length) {
-		console.log(chalk.yellow("   • Only local"));
-		console.table(onlyLocal.map(([cs, p]) => ({ checksum: cs, path: p })));
-	}
-	if (onlyRemote.length) {
-		console.log(chalk.yellow("   • Only remote"));
-		console.table(onlyRemote.map(([cs, p]) => ({ checksum: cs, path: p })));
+const prettyBool = (ok) => {
+	if (ok === "NA") return chalk.yellow("NA");
+	return ok ? chalk.green(symbols.success) : chalk.red(symbols.error);
+};
+
+const printTable = (rows) => {
+	const table = new Table({
+		head: [
+			chalk.bold("Address"),
+			chalk.bold("Contract"),
+			chalk.bold("Etherscan"),
+			chalk.bold("Sourcify"),
+			chalk.bold("Checksum"),
+			chalk.bold("Notes"),
+		],
+		wordWrap: true,
+		colWidths: [52, 44, 15, 15, 15, 40],
+	});
+	rows.forEach((r) => table.push([r.address, r.contract, r.etherscan, r.sourcify, r.checksum, r.notes]));
+	console.log(table.toString());
+};
+
+const printChecksumDiff = (contractName, addr, localDeps, remoteDeps) => {
+	// Build quick lookup maps by basename for easier side‑by‑side diff
+	const localByFile = Object.fromEntries(localDeps.map((d) => [path.basename(d.path), d]));
+	const remoteByFile = Object.fromEntries(remoteDeps.map((d) => [path.basename(d.path), d]));
+	const allFiles = [...new Set([...Object.keys(localByFile), ...Object.keys(remoteByFile)])];
+
+	// Helper to shorten long hashes
+	const short = (cs) => (cs ? cs.slice(0, 10) + "…" + cs.slice(-8) : "—");
+
+	const table = new Table({
+		head: [chalk.bold("File"), chalk.bold("Local"), chalk.bold("Remote"), chalk.bold("Status")],
+		colWidths: [38, 22, 22, 14],
+		wordWrap: true,
+	});
+
+	allFiles.forEach((file) => {
+		const l = localByFile[file]?.checksum;
+		const r = remoteByFile[file]?.checksum;
+
+		if (l === r) return; // identical – no diff needed
+
+		let status;
+		if (!l) status = chalk.yellow("only remote");
+		else if (!r) status = chalk.yellow("only local");
+		else status = chalk.red("mismatch");
+
+		table.push([file, short(l), short(r), status]);
+	});
+
+	if (table.length) {
+		console.log(chalk.yellow(`   • Checksum diff details, ${contractName} (${addr})`));
+		console.log(table.toString());
 	}
 };
 
 /*********************************
- * MAIN                           *
+ * MAIN LOGIC                     *
  *********************************/
 
-async function main() {
-	const localChecksums = await time("Local checksums", loadLocalChecksums);
-	const rpcs = await time("RPC discovery", discoverRpcs);
-	const deployed = await time("Load deployments", loadDeploymentAddresses);
-	const impls = await time("Resolve impls", () => resolveImpls(deployed, rpcs));
+const verifyChain = async (cid, addrs, localChecksums) => {
+	const limit = pLimit(2);
+	const rows = [];
 
-	// merge proxy + impl
+	await Promise.all(
+		addrs.map((addr) =>
+			limit(async () => {
+				try {
+					let [verifiedEtherscan, sour] = await Promise.all([
+						getEtherscanStatus(cid, addr),
+						getSourcifyStatus(cid, addr),
+					]);
+					let meta = sour?.metadata;
+					const sourStatus = sour?.status;
+
+					const verifiedSourcify = ["perfect", "partial", "exact_match", "match"].includes(sourStatus);
+
+					if (!verifiedSourcify && verifiedEtherscan) await importFromEtherscan(cid, addr);
+					if (!meta) meta = await fetchMetadata(cid, addr);
+
+					if (!meta) {
+						rows.push({
+							address: addr,
+							contract: "?",
+							etherscan: prettyBool(verifiedEtherscan),
+							sourcify: prettyBool(false),
+							checksum: prettyBool(false),
+							notes: chalk.red("No metadata found"),
+						});
+						return;
+					}
+
+					const contractName = getContractName(meta);
+					const local = localChecksums[contractName];
+
+					if (!local) {
+						rows.push({
+							address: addr,
+							contract: contractName,
+							etherscan: prettyBool(verifiedEtherscan),
+							sourcify: prettyBool(verifiedSourcify),
+							checksum: prettyBool(false),
+							notes: chalk.yellow("No local artifact"),
+						});
+						return;
+					}
+
+					const [{ aggregatedChecksum: remoteAgg, dependencyChecksums: remoteDeps }] = generateChecksums([
+						{ metadata: meta },
+					]);
+					const checksumMatch = local.aggregatedChecksum.toLowerCase() === remoteAgg.toLowerCase();
+
+					rows.push({
+						address: addr,
+						contract: contractName,
+						etherscan: prettyBool(verifiedEtherscan),
+						sourcify: prettyBool(verifiedSourcify),
+						checksum: prettyBool(checksumMatch),
+						notes: checksumMatch ? chalk.green("Checksum full match") : chalk.red("Checksum mismatch"),
+					});
+
+					if (!checksumMatch) printChecksumDiff(contractName, addr, local.dependencyChecksums, remoteDeps);
+				} catch (e) {
+					rows.push({
+						address: addr,
+						contract: "?",
+						etherscan: prettyBool(false),
+						sourcify: prettyBool(false),
+						checksum: prettyBool(false),
+						notes: chalk.red(e.message || e.toString()),
+					});
+				}
+			})
+		)
+	);
+
+	printTable(rows);
+};
+
+const main = async () => {
+	const localChecksums = await timed("Local checksums", loadLocalChecksums);
+	const rpcs = await timed("RPC discovery", discoverRpcs);
+	const deployed = await timed("Load deployments", loadDeploymentAddresses);
+	const impls = await timed("Resolve impls", () => resolveImpls(deployed, rpcs));
+
 	const addrByChain = {};
 	for (const [cid, proxies] of Object.entries(deployed)) {
 		addrByChain[cid] = [...new Set([...(proxies || []), ...(impls[cid] || [])])];
 	}
 
-	const limit = pLimit(4);
-
 	for (const [cidStr, addrs] of Object.entries(addrByChain)) {
-		const cid = Number(cidStr);
-		console.log(chalk.magenta.bold(`\n=== Chain ${cid} ===`));
-
-		await Promise.all(
-			addrs.map((addr) =>
-				limit(async () => {
-					try {
-						let [eth, { meta, status: sourcifyStatus }] = await Promise.all([
-							getEtherscanStatus(cid, addr),
-							getSourcifyStatus(cid, addr),
-						]);
-						const verifiedSourcify = ["perfect", "partial", "exact_match", "match"].includes(sourcifyStatus);
-						const verifiedEtherscan = !!eth?.SourceCode;
-						console.log(
-							`Checking Verification: ${addr} | Etherscan:${
-								verifiedEtherscan ? chalk.green("✔") : eth === "NA" ? chalk.yellow("⚠ NA") : chalk.red("✘")
-							} | Sourcify:${verifiedSourcify ? chalk.green("✔") : chalk.red("✘")}`
-						);
-
-						if (!verifiedSourcify && verifiedEtherscan) {
-							console.log(chalk.yellow("  ⚠ importing from etherscan..."));
-							await importFromEtherscan(cid, addr);
-						}
-
-						if (!meta) meta = await fetchMetadata(cid, addr);
-						if (!meta) {
-							console.log(chalk.red("  ✘ no onchain metadata found"), addr);
-							exit(1);
-						}
-
-						const local = localChecksums[getContractName(meta)];
-						if (!local) {
-							console.log(chalk.yellow("  ⚠ no local checksum"), `(${getContractName(meta)})`, addr);
-							return;
-						}
-
-						const [{ aggregatedChecksum: remoteAgg, dependencyChecksums: remoteDeps }] = generateChecksums([
-							{ metadata: meta },
-						]);
-						if (local.aggregatedChecksum.toLowerCase() === remoteAgg.toLowerCase()) {
-							console.log(chalk.green(`  ✔ checksum match (${getContractName(meta)})`));
-						} else {
-							console.log(chalk.red(`  ✘ checksum mismatch (${getContractName(meta)})`, addr));
-							printChecksumDiff(local.dependencyChecksums, remoteDeps);
-						}
-					} catch (e) {
-						console.error(chalk.red("Error for"), addr, e.message);
-					}
-				})
-			)
-		);
+		console.log(chalk.magenta.bold(`\n=== Chain ${cidStr} (${addrs.length} contracts) ===`));
+		await verifyChain(Number(cidStr), addrs, localChecksums);
 	}
-}
+};
 
 if (import.meta.url === `file://${process.argv[1]}`) {
 	main().catch((e) => {
-		console.error(e);
+		console.error(chalk.red(e));
 		process.exit(1);
 	});
 }
