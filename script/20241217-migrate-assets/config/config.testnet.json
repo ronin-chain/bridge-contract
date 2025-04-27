@@ -1,0 +1,37 @@
+{
+  "ethereum": {
+    "executor": "0xd24D87DDc1917165435b306aAC68D99e0F49A3Fa",
+    "migrator": "0x0597db786f6aB39634aAe2B33cE0AA556C1D54e5",
+    "newGatewayLogic": "0x9dd1B885ECef3Aa1F0b820aAC94faF32b338e4c9",
+    "newPauseEnforcer": "0xe91Ab627c8465F6F3C2278Af01e950Df761f8173",
+    "prevPauseEnforcer": "0x61eC0ebf966AE84C414BDA715E17CeF657e039DF",
+    "proposer": "0xd24D87DDc1917165435b306aAC68D99e0F49A3Fa",
+    "whitelistInfos": [
+      {
+        "recipient": "0x0000000000000000000000000000000000000000",
+        "remoteChainSelector": 13116810400804392105,
+        "token": "0x1Aa1BC6BaEFCF09D6Fd0139B828b5E764D050F08"
+      },
+      {
+        "recipient": "0x0000000000000000000000000000000000000000",
+        "remoteChainSelector": 13116810400804392105,
+        "token": "0xc65DEC9c627e636E32E0c84BC08C30395f2dc4AD"
+      }
+    ]
+  },
+  "ronin": {
+    "executor": "0xd24D87DDc1917165435b306aAC68D99e0F49A3Fa",
+    "migrator": "0x0597db786f6aB39634aAe2B33cE0AA556C1D54e5",
+    "newGatewayLogic": "0x2387b3383E89c164781d173B7Aa14d9c46eD2642",
+    "newPauseEnforcer": "0x9B137463d4E7986D7f535f9B79e28b4EF1938E9b",
+    "prevPauseEnforcer": "0x1aD54D61F47acBcBA99fb6540A1694EB2F47AB95",
+    "proposer": "0xd24D87DDc1917165435b306aAC68D99e0F49A3Fa",
+    "whitelistInfos": [
+      {
+        "recipient": "0x0000000000000000000000000000000000000000",
+        "remoteChainSelector": 16015286601757825753,
+        "token": "0x82f5483623d636bc3deba8ae67e1751b6cf2bad2"
+      }
+    ]
+  }
+}

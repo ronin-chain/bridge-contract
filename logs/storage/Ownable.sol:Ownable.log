@@ -1,1 +1,1 @@
-dependencies/@fdk-0.3.5-rc/dependencies/openzeppelin-v5-5.1.0/contracts/access/Ownable.sol:Ownable:_owner (storage_slot: 0) (offset: 0) (type: address) (numberOfBytes: 20)
+dependencies/@openzeppelin-4.7.3/contracts/access/Ownable.sol:Ownable:_owner (storage_slot: 0) (offset: 0) (type: address) (numberOfBytes: 20)

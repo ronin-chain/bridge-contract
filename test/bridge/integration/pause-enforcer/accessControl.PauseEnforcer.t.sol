@@ -12,7 +12,7 @@ contract AccessControl_PauseEnforcer_Test is BaseIntegration_Test {
   function test_changeAdmin_OfPauseEnforcer() public {
     address newEnforcerAdmin = makeAddr("new-enforcer-admin");
 
-    vm.prank(_param.roninPauseEnforcer.admin);
+    vm.prank(_param.roninPauseEnforcer.admin[0]);
     _roninPauseEnforcer.grantRole(0x0, newEnforcerAdmin);
 
     assertEq(_roninPauseEnforcer.hasRole(0x0, newEnforcerAdmin), true);
@@ -22,11 +22,11 @@ contract AccessControl_PauseEnforcer_Test is BaseIntegration_Test {
   function test_renounceAdminRole_PreviousAdmin() public {
     test_changeAdmin_OfPauseEnforcer();
 
-    assertEq(_roninPauseEnforcer.hasRole(0x0, _param.roninPauseEnforcer.admin), true);
+    assertEq(_roninPauseEnforcer.hasRole(0x0, _param.roninPauseEnforcer.admin[0]), true);
 
-    vm.prank(_param.roninPauseEnforcer.admin);
-    _roninPauseEnforcer.renounceRole(0x0, _param.roninPauseEnforcer.admin);
+    vm.prank(_param.roninPauseEnforcer.admin[0]);
+    _roninPauseEnforcer.renounceRole(0x0, _param.roninPauseEnforcer.admin[0]);
 
-    assertEq(_roninPauseEnforcer.hasRole(0x0, _param.roninPauseEnforcer.admin), false);
+    assertEq(_roninPauseEnforcer.hasRole(0x0, _param.roninPauseEnforcer.admin[0]), false);
   }
 }
