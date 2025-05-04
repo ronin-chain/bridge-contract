@@ -1,0 +1,5 @@
+src/ronin/migration/LegacyTokenMigrator.sol:LegacyTokenMigrator:_initialized (storage_slot: 0) (offset: 0) (type: uint8) (numberOfBytes: 1)
+src/ronin/migration/LegacyTokenMigrator.sol:LegacyTokenMigrator:_initializing (storage_slot: 0) (offset: 1) (type: bool) (numberOfBytes: 1)
+src/ronin/migration/LegacyTokenMigrator.sol:LegacyTokenMigrator:_roles (storage_slot: 1) (offset: 0) (type: mapping(bytes32 => struct AccessControl.RoleData)) (numberOfBytes: 32)
+src/ronin/migration/LegacyTokenMigrator.sol:LegacyTokenMigrator:_roleMembers (storage_slot: 2) (offset: 0) (type: mapping(bytes32 => struct EnumerableSet.AddressSet)) (numberOfBytes: 32)
+src/ronin/migration/LegacyTokenMigrator.sol:LegacyTokenMigrator:_tokenMap (storage_slot: 3) (offset: 0) (type: mapping(address => address)) (numberOfBytes: 32)

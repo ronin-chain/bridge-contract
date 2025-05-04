@@ -8,9 +8,13 @@ import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import { IBridgeManager } from "../interfaces/bridge/IBridgeManager.sol";
 import { IBridgeManagerCallback } from "../interfaces/bridge/IBridgeManagerCallback.sol";
 import { HasContracts, ContractType } from "../extensions/collections/HasContracts.sol";
+import { ErrInvalidRequest } from "src/utils/CommonErrors.sol";
+import { AssetMigration } from "src/extensions/AssetMigration.sol";
 import "../extensions/WethUnwrapper.sol";
 import "../extensions/WithdrawalLimitation.sol";
+import "../extensions/AssetMigration.sol";
 import "../libraries/Transfer.sol";
+import { TokenStandard } from "../libraries/LibTokenInfo.sol";
 import "../interfaces/IMainchainGatewayV3.sol";
 
 contract MainchainGatewayV3 is
@@ -20,6 +24,7 @@ contract MainchainGatewayV3 is
   ERC1155Holder,
   IMainchainGatewayV3,
   HasContracts,
+  AssetMigration,
   IBridgeManagerCallback
 {
   using LibTokenInfo for TokenInfo;
@@ -30,7 +35,7 @@ contract MainchainGatewayV3 is
   bytes32 public constant WITHDRAWAL_UNLOCKER_ROLE = keccak256("WITHDRAWAL_UNLOCKER_ROLE");
 
   /// @dev Wrapped native token address
-  IWETH public wrappedNativeToken;
+  IWETH public override(AssetMigration, IMainchainGatewayV3) wrappedNativeToken;
   /// @dev Ronin network id
   uint256 public roninChainId;
   /// @dev Total deposit
@@ -49,8 +54,8 @@ contract MainchainGatewayV3 is
   /// @custom:deprecated Previously `_bridgeOperators` (uint256[])
   uint256 private ______deprecatedBridgeOperators;
 
-  uint96 private _totalOperatorWeight;
-  mapping(address operator => uint96 weight) private _operatorWeight;
+  uint96 internal _totalOperatorWeight;
+  mapping(address operator => uint96 weight) internal _operatorWeight;
   /// @custom:deprecated Previously `_wethUnwrapper` (address)
   uint256 private ______deprecatedWethUnwrapper;
 
@@ -58,87 +63,29 @@ contract MainchainGatewayV3 is
     _disableInitializers();
   }
 
-  fallback() external payable {
-    _fallback();
-  }
-
   receive() external payable {
     _fallback();
   }
 
-  /**
-   * @dev Initializes contract storage.
-   */
-  function initialize(
-    address _roleSetter,
-    IWETH _wrappedToken,
-    uint256 _roninChainId,
-    uint256 _numerator,
-    uint256 _highTierVWNumerator,
-    uint256 _denominator,
-    // _addresses[0]: mainchainTokens
-    // _addresses[1]: roninTokens
-    // _addresses[2]: withdrawalUnlockers
-    address[][3] calldata _addresses,
-    // _thresholds[0]: highTierThreshold
-    // _thresholds[1]: lockedThreshold
-    // _thresholds[2]: unlockFeePercentages
-    // _thresholds[3]: dailyWithdrawalLimit
-    uint256[][4] calldata _thresholds,
-    TokenStandard[] calldata _standards
-  ) external payable virtual initializer {
-    _setupRole(DEFAULT_ADMIN_ROLE, _roleSetter);
-    roninChainId = _roninChainId;
+  function initializeV5(
+    address migrator,
+    address newEmergencyPauser,
+    address[] calldata tokens,
+    address[] calldata recipients,
+    uint64[] calldata remoteChainSelectors
+  ) external reinitializer(5) {
+    _grantRole(_MIGRATOR_ROLE, migrator);
 
-    _setWrappedNativeTokenContract(_wrappedToken);
-    _updateDomainSeparator();
-    _setThreshold(_numerator, _denominator);
-    _setHighTierVoteWeightThreshold(_highTierVWNumerator, _denominator);
-    _verifyThresholds();
+    uint8 forbidAllIndicator = type(uint8).max;
 
-    if (_addresses[0].length > 0) {
-      // Map mainchain tokens to ronin tokens
-      _mapTokens(_addresses[0], _addresses[1], _standards);
-      // Sets thresholds based on the mainchain tokens
-      _setHighTierThresholds(_addresses[0], _thresholds[0]);
-      _setLockedThresholds(_addresses[0], _thresholds[1]);
-      _setUnlockFeePercentages(_addresses[0], _thresholds[2]);
-      _setDailyWithdrawalLimits(_addresses[0], _thresholds[3]);
+    _restrict(this.requestDepositFor.selector, forbidAllIndicator);
+    _restrict(this.submitWithdrawal.selector, forbidAllIndicator);
+
+    if (tokens.length != 0 || recipients.length != 0 || remoteChainSelectors.length != 0) {
+      _whitelist(tokens, recipients, remoteChainSelectors);
     }
-
-    // Grant role for withdrawal unlocker
-    for (uint256 i; i < _addresses[2].length; i++) {
-      _grantRole(WITHDRAWAL_UNLOCKER_ROLE, _addresses[2][i]);
-    }
+    emergencyPauser = newEmergencyPauser;
   }
-
-  function initializeV2(address bridgeManagerContract) external reinitializer(2) {
-    _setContract(ContractType.BRIDGE_MANAGER, bridgeManagerContract);
-  }
-
-  function initializeV3() external reinitializer(3) {
-    IBridgeManager mainchainBridgeManager = IBridgeManager(getContract(ContractType.BRIDGE_MANAGER));
-    (, address[] memory operators, uint96[] memory weights) = mainchainBridgeManager.getFullBridgeOperatorInfos();
-
-    uint96 totalWeight;
-    for (uint i; i < operators.length; i++) {
-      _operatorWeight[operators[i]] = weights[i];
-      totalWeight += weights[i];
-    }
-    _totalOperatorWeight = totalWeight;
-  }
-
-  function initializeV4(address payable /* wethUnwrapper_ */) external reinitializer(4) {
-    /** @deprecated
-     *
-     * wethUnwrapper = WethUnwrapper(wethUnwrapper_);
-     */
-  }
-
-  /**
-   * @dev Receives ether without doing anything. Use this function to topup native token.
-   */
-  function receiveEther() external payable { }
 
   /**
    * @inheritdoc IMainchainGatewayV3
@@ -150,14 +97,18 @@ contract MainchainGatewayV3 is
   /**
    * @inheritdoc IMainchainGatewayV3
    */
-  function setWrappedNativeTokenContract(IWETH _wrappedToken) external virtual onlyProxyAdmin {
+  function setWrappedNativeTokenContract(
+    IWETH _wrappedToken
+  ) external virtual onlyProxyAdmin {
     _setWrappedNativeTokenContract(_wrappedToken);
   }
 
   /**
    * @inheritdoc IMainchainGatewayV3
    */
-  function requestDepositFor(Transfer.Request calldata _request) external payable virtual whenNotPaused {
+  function requestDepositFor(
+    Transfer.Request calldata _request
+  ) external payable virtual whenNotPaused {
     _requestDepositFor(_request, msg.sender);
   }
 
@@ -171,7 +122,9 @@ contract MainchainGatewayV3 is
   /**
    * @inheritdoc IMainchainGatewayV3
    */
-  function unlockWithdrawal(Transfer.Receipt calldata receipt) external onlyRole(WITHDRAWAL_UNLOCKER_ROLE) {
+  function unlockWithdrawal(
+    Transfer.Receipt calldata receipt
+  ) external onlyRole(WITHDRAWAL_UNLOCKER_ROLE) {
     bytes32 _receiptHash = receipt.hash();
     if (withdrawalHash[receipt.id] != receipt.hash()) {
       revert ErrInvalidReceipt();
@@ -230,7 +183,9 @@ contract MainchainGatewayV3 is
   /**
    * @inheritdoc IMainchainGatewayV3
    */
-  function getRoninToken(address mainchainToken) public view returns (MappedToken memory token) {
+  function getRoninToken(
+    address mainchainToken
+  ) public view returns (MappedToken memory token) {
     token = _roninToken[mainchainToken];
     if (token.tokenAddr == address(0)) revert ErrUnsupportedToken();
   }
@@ -275,6 +230,7 @@ contract MainchainGatewayV3 is
     address tokenAddr = receipt.mainchain.tokenAddr;
 
     receipt.info.validate();
+    _requireNotRestricted(receipt.info.erc);
     if (receipt.kind != Transfer.Kind.Withdrawal) revert ErrInvalidReceiptKind();
 
     if (receipt.mainchain.chainId != block.chainid) {
@@ -353,6 +309,7 @@ contract MainchainGatewayV3 is
     address mainchainWeth = address(wrappedNativeToken);
 
     _request.info.validate();
+    _requireNotRestricted(_request.info.erc);
     if (_request.tokenAddr == address(0)) {
       if (_request.info.quantity != msg.value) revert ErrInvalidRequest();
 
@@ -435,30 +392,18 @@ contract MainchainGatewayV3 is
    * Emits the `WrappedNativeTokenContractUpdated` event.
    *
    */
-  function _setWrappedNativeTokenContract(IWETH _wrappedToken) internal {
+  function _setWrappedNativeTokenContract(
+    IWETH _wrappedToken
+  ) internal {
     wrappedNativeToken = _wrappedToken;
     emit WrappedNativeTokenContractUpdated(_wrappedToken);
   }
 
   /**
-   * @dev Receives ETH from WETH or creates deposit request if sender is not WETH.
+   * @dev Receives ETH from WETH or revert if sender is not WETH.
    */
   function _fallback() internal virtual {
-    if (msg.sender == address(wrappedNativeToken)) {
-      return;
-    }
-
-    _createDepositOnFallback();
-  }
-
-  /**
-   * @dev Creates deposit request.
-   */
-  function _createDepositOnFallback() internal virtual whenNotPaused {
-    Transfer.Request memory _request;
-    _request.recipientAddr = msg.sender;
-    _request.info.quantity = msg.value;
-    _requestDepositFor(_request, _request.recipientAddr);
+    if (msg.sender != address(wrappedNativeToken)) revert ErrInvalidRequest();
   }
 
   /**
@@ -472,7 +417,9 @@ contract MainchainGatewayV3 is
   /**
    * @dev Returns the weight of an address.
    */
-  function _getWeight(address addr) internal view returns (uint256) {
+  function _getWeight(
+    address addr
+  ) internal view returns (uint256) {
     return _operatorWeight[addr];
   }
 
@@ -531,7 +478,9 @@ contract MainchainGatewayV3 is
     return IBridgeManagerCallback.onBridgeOperatorsRemoved.selector;
   }
 
-  function supportsInterface(bytes4 interfaceId) public view override(AccessControlEnumerable, IERC165, ERC1155Receiver) returns (bool) {
+  function supportsInterface(
+    bytes4 interfaceId
+  ) public view override(AccessControlEnumerable, IERC165, ERC1155Receiver) returns (bool) {
     return
       interfaceId == type(IMainchainGatewayV3).interfaceId || interfaceId == type(IBridgeManagerCallback).interfaceId || super.supportsInterface(interfaceId);
   }

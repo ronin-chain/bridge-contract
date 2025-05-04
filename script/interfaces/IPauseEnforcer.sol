@@ -16,20 +16,33 @@ interface IPauseEnforcer {
 
   function DEFAULT_ADMIN_ROLE() external view returns (bytes32);
   function SENTRY_ROLE() external view returns (bytes32);
-  function changeTarget(address _target) external;
+  function changeTarget(
+    address _target
+  ) external;
   function emergency() external view returns (bool);
-  function getRoleAdmin(bytes32 role) external view returns (bytes32);
+  function getRoleAdmin(
+    bytes32 role
+  ) external view returns (bytes32);
   function getRoleMember(bytes32 role, uint256 index) external view returns (address);
-  function getRoleMemberCount(bytes32 role) external view returns (uint256);
+  function getRoleMemberCount(
+    bytes32 role
+  ) external view returns (uint256);
   function grantRole(bytes32 role, address account) external;
-  function grantSentry(address _sentry) external;
+  function grantSentry(
+    address _sentry
+  ) external;
   function hasRole(bytes32 role, address account) external view returns (bool);
   function initialize(address _target, address _admin, address[] memory _sentries) external;
   function renounceRole(bytes32 role, address account) external;
   function revokeRole(bytes32 role, address account) external;
-  function revokeSentry(address _sentry) external;
-  function supportsInterface(bytes4 interfaceId) external view returns (bool);
+  function revokeSentry(
+    address _sentry
+  ) external;
+  function supportsInterface(
+    bytes4 interfaceId
+  ) external view returns (bool);
   function target() external view returns (address);
   function triggerPause() external;
   function triggerUnpause() external;
+  function triggerRestrict(bytes4 fnSig, uint8 enumBitmap) external;
 }

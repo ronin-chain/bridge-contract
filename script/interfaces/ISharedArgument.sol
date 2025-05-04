@@ -80,7 +80,7 @@ interface ISharedArgument is IGeneralConfigExtended {
 
   struct PauseEnforcerParam {
     address target;
-    address admin;
+    address[] admin;
     address[] sentries;
   }
 

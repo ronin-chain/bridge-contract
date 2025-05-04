@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/security/Pausable.sol";
+import { Pausable } from "@openzeppelin/contracts/security/Pausable.sol";
+import { FunctionRestrictable } from "src/extensions/FunctionRestrictable.sol";
 import "../interfaces/IQuorum.sol";
 import "./collections/HasProxyAdmin.sol";
 
-abstract contract GatewayV3 is HasProxyAdmin, Pausable, IQuorum {
+abstract contract GatewayV3 is HasProxyAdmin, Pausable, FunctionRestrictable, IQuorum {
   /**
    * @dev Error indicating that `_minimumVoteWeight` is returning 0.
    */
@@ -28,7 +29,9 @@ abstract contract GatewayV3 is HasProxyAdmin, Pausable, IQuorum {
   /**
    * @dev Grant emergency pauser role for `_addr`.
    */
-  function setEmergencyPauser(address _addr) external onlyProxyAdmin {
+  function setEmergencyPauser(
+    address _addr
+  ) external onlyProxyAdmin {
     emergencyPauser = _addr;
   }
 
@@ -42,7 +45,9 @@ abstract contract GatewayV3 is HasProxyAdmin, Pausable, IQuorum {
   /**
    * @inheritdoc IQuorum
    */
-  function checkThreshold(uint256 _voteWeight) external view virtual returns (bool) {
+  function checkThreshold(
+    uint256 _voteWeight
+  ) external view virtual returns (bool) {
     return _voteWeight * _denom >= _num * _getTotalWeight();
   }
 
@@ -99,7 +104,9 @@ abstract contract GatewayV3 is HasProxyAdmin, Pausable, IQuorum {
   /**
    * @dev Returns minimum vote weight.
    */
-  function _minimumVoteWeight(uint256 _totalWeight) internal view virtual returns (uint256 minVoteWeight) {
+  function _minimumVoteWeight(
+    uint256 _totalWeight
+  ) internal view virtual returns (uint256 minVoteWeight) {
     minVoteWeight = (_num * _totalWeight + _denom - 1) / _denom;
     if (minVoteWeight == 0) revert ErrNullMinVoteWeightProvided(msg.sig);
   }
@@ -112,7 +119,7 @@ abstract contract GatewayV3 is HasProxyAdmin, Pausable, IQuorum {
    * - The method caller must be admin or pauser.
    *
    */
-  function _requireAuth() private view {
+  function _requireAuth() internal view override {
     if (!(msg.sender == _getProxyAdmin() || msg.sender == emergencyPauser)) {
       revert ErrUnauthorized(msg.sig, RoleAccess.ADMIN);
     }

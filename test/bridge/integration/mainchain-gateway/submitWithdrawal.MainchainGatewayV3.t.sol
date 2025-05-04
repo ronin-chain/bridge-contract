@@ -5,7 +5,7 @@ import { console } from "forge-std/console.sol";
 import { Transfer as LibTransfer } from "@ronin/contracts/libraries/Transfer.sol";
 import { LibTokenInfo, TokenInfo, TokenStandard } from "@ronin/contracts/libraries/LibTokenInfo.sol";
 import { SignatureConsumer } from "@ronin/contracts/interfaces/consumers/SignatureConsumer.sol";
-import { IMainchainGatewayV3 } from "@ronin/contracts/interfaces/IMainchainGatewayV3.sol";
+import { IMainchainGatewayV3 } from "script/interfaces/IMainchainGatewayV3.sol";
 import "../BaseIntegration.t.sol";
 
 interface IERC721 {

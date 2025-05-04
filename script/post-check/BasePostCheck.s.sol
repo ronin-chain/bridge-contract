@@ -38,7 +38,9 @@ abstract contract BasePostCheck is BaseMigration, SignatureConsumer {
 
   bytes32 internal gwDomainHash;
 
-  modifier onPostCheck(string memory postCheckLabel) {
+  modifier onPostCheck(
+    string memory postCheckLabel
+  ) {
     uint256 snapshotId = _beforePostCheck(postCheckLabel);
     _;
     _afterPostCheck(postCheckLabel, snapshotId);
@@ -53,7 +55,9 @@ abstract contract BasePostCheck is BaseMigration, SignatureConsumer {
     _;
   }
 
-  function cheatAddOverWeightedGovernor(address bm) internal {
+  function cheatAddOverWeightedGovernor(
+    address bm
+  ) internal {
     uint256 totalWeight;
     try IBridgeManager(bm).getTotalWeight() returns (uint256 res) {
       totalWeight = res;
@@ -88,7 +92,9 @@ abstract contract BasePostCheck is BaseMigration, SignatureConsumer {
     }
   }
 
-  function overrideMockBOs(address bm) internal {
+  function overrideMockBOs(
+    address bm
+  ) internal {
     uint256 boCount = IBridgeManager(bm).totalBridgeOperator();
     address[] memory bos = IBridgeManager(bm).getBridgeOperators();
     uint96[] memory vws = new uint96[](boCount);
@@ -133,6 +139,27 @@ abstract contract BasePostCheck is BaseMigration, SignatureConsumer {
     deal(token, to, give, false);
   }
 
+  function dealERC721(address token, address to, uint256 id) internal virtual {
+    // check if token id is already minted and the actual owner.
+    (bool successMinted, bytes memory ownerData) = token.staticcall(abi.encodeWithSelector(0x6352211e, id));
+    require(successMinted, "StdCheats deal(address,address,uint,bool): id not minted.");
+
+    // get owner current balance
+    (, bytes memory fromBalData) = token.staticcall(abi.encodeWithSelector(0x70a08231, abi.decode(ownerData, (address))));
+    uint256 fromPrevBal = abi.decode(fromBalData, (uint256));
+
+    // get new user current balance
+    (, bytes memory toBalData) = token.staticcall(abi.encodeWithSelector(0x70a08231, to));
+    uint256 toPrevBal = abi.decode(toBalData, (uint256));
+
+    // update balances
+    stdstore.target(token).sig(0x70a08231).with_key(abi.decode(ownerData, (address))).checked_write(--fromPrevBal);
+    stdstore.target(token).sig(0x70a08231).with_key(to).checked_write(++toPrevBal);
+
+    // update owner
+    stdstore.target(token).sig(0x6352211e).with_key(id).checked_write(to);
+  }
+
   function deal(address token, address to, uint256 give, bool adjust) internal virtual {
     // get current balance
     (, bytes memory balData) = token.staticcall(abi.encodeWithSelector(0x70a08231, to));
@@ -154,7 +181,9 @@ abstract contract BasePostCheck is BaseMigration, SignatureConsumer {
     }
   }
 
-  function _beforePostCheck(string memory postCheckLabel) private returns (uint256 snapshotId) {
+  function _beforePostCheck(
+    string memory postCheckLabel
+  ) private returns (uint256 snapshotId) {
     snapshotId = vm.snapshot();
     console.log("\n> ".cyan(), postCheckLabel.blue().italic(), "...");
   }

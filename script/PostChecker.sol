@@ -28,18 +28,20 @@ contract PostChecker is Migration, PostCheck_BridgeManager, PostCheck_Gateway {
     _validate_BridgeManager();
   }
 
-  function _deployLogic(TContract contractType) internal virtual override(BaseMigration, Migration) returns (address payable logic) {
+  function _deployLogic(
+    TContract contractType
+  ) internal virtual override(BaseMigration, Migration) returns (address payable logic) {
     return super._deployLogic(contractType);
   }
 
-  function upgradeCallback(
+  function _upgradeCallback(
     address proxy,
     address logic,
     uint256 callValue,
     bytes memory callData,
     ProxyInterface proxyInterface
-  ) public virtual override(BaseMigration, Migration) {
-    super.upgradeCallback(proxy, logic, callValue, callData, proxyInterface);
+  ) internal virtual override(BaseMigration, Migration) {
+    super._upgradeCallback(proxy, logic, callValue, callData, proxyInterface);
   }
 
   function _postCheck() internal virtual override(ScriptExtended, Migration) {

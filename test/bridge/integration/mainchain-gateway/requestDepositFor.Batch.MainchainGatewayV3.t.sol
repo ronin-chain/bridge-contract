@@ -3,8 +3,8 @@ pragma solidity ^0.8.19;
 
 import { console } from "forge-std/console.sol";
 import { Transfer as LibTransfer } from "@ronin/contracts/libraries/Transfer.sol";
-import "@ronin/contracts/libraries/LibRequestBatch.sol";
-import "@ronin/contracts/libraries/LibTokenInfoBatch.sol";
+import { RequestBatch, LibRequestBatch } from "@ronin/contracts/libraries/LibRequestBatch.sol";
+import { LibTokenInfoBatch } from "@ronin/contracts/libraries/LibTokenInfoBatch.sol";
 
 import "../BaseIntegration.t.sol";
 

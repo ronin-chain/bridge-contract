@@ -1,0 +1,1 @@
+test/mocks/MockCCIPPoolMultiLane.sol:MockCCIPPoolMultiLane:s_lockedTokensByChainSelector (storage_slot: 0) (offset: 0) (type: mapping(uint64 => uint256)) (numberOfBytes: 32)
