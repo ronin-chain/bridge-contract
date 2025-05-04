@@ -8,6 +8,6 @@ import { Migration } from "../Migration.s.sol";
 
 contract MainchainPauseEnforcerDeploy is Migration {
   function run() public virtual returns (IPauseEnforcer) {
-    return IPauseEnforcer(_deployProxy(Contract.MainchainPauseEnforcer.key(), EMPTY_ARGS));
+    return IPauseEnforcer(_deployImmutable(Contract.MainchainPauseEnforcer.key()));
   }
 }

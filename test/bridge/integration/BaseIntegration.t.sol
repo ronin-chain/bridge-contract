@@ -10,11 +10,11 @@ import { GeneralConfig } from "script/GeneralConfig.sol";
 import { Network } from "script/utils/Network.sol";
 
 import { IRoninBridgeManager } from "script/interfaces/IRoninBridgeManager.sol";
-import { IRoninGatewayV3 } from "@ronin/contracts/ronin/gateway/RoninGatewayV3.sol";
+import { IRoninGatewayV3 } from "script/interfaces/IRoninGatewayV3.sol";
 import { IBridgeTracking } from "@ronin/contracts/ronin/gateway/BridgeTracking.sol";
 import { IBridgeSlash } from "@ronin/contracts/ronin/gateway/BridgeSlash.sol";
 import { IBridgeReward } from "@ronin/contracts/ronin/gateway/BridgeReward.sol";
-import { IMainchainGatewayV3 } from "@ronin/contracts/mainchain/MainchainGatewayV3.sol";
+import { IMainchainGatewayV3 } from "script/interfaces/IMainchainGatewayV3.sol";
 import { IMainchainGatewayBatcher } from "script/interfaces/IMainchainGatewayBatcher.sol";
 
 import { IMainchainBridgeManager } from "script/interfaces/IMainchainBridgeManager.sol";
@@ -37,6 +37,7 @@ import { GlobalCoreGovernance } from "@ronin/contracts/extensions/sequential-gov
 import { IBridgeManager } from "@ronin/contracts/interfaces/bridge/IBridgeManager.sol";
 import { IHasContracts } from "@ronin/contracts/interfaces/collections/IHasContracts.sol";
 import { IBridgeManagerCallbackRegister } from "@ronin/contracts/interfaces/bridge/IBridgeManagerCallbackRegister.sol";
+import { IPauseEnforcer } from "script/interfaces/IPauseEnforcer.sol";
 import { ContractType } from "@ronin/contracts/utils/ContractType.sol";
 import { TransparentUpgradeableProxyV2 } from "@ronin/contracts/extensions/TransparentUpgradeableProxyV2.sol";
 import { MockValidatorContract_OnlyTiming_ForHardhatTest } from "@ronin/contracts/mocks/ronin/MockValidatorContract_OnlyTiming_ForHardhatTest.sol";
@@ -150,7 +151,9 @@ contract BaseIntegration_Test is Base_Test {
     _bridgeTracking = new BridgeTrackingDeploy().run();
     _bridgeSlash = new BridgeSlashDeploy().run();
     _bridgeReward = new BridgeRewardDeploy().run();
-    _roninPauseEnforcer = new RoninPauseEnforcerDeploy().run();
+    _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
+    ISharedArgument.PauseEnforcerParam memory param = _param.roninPauseEnforcer;
+    _roninPauseEnforcer = IPauseEnforcer(new RoninPauseEnforcerDeploy().overrideArgs(abi.encode(address(_roninGatewayV3), param.admin, param.sentries)).run());
     _roninBridgeManager = new RoninBridgeManagerDeploy().run();
 
     _roninWeth = new WETHDeploy().run();
@@ -163,7 +166,6 @@ contract BaseIntegration_Test is Base_Test {
     _roninMockERC20 = new MockERC20("MockERC20", "ME2");
     _roninMockPoisonERC20 = new MockPoisonERC20("MockPoisonERC20", "MPE2");
 
-    _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
     _roninProposalUtils = new RoninBridgeAdminUtils(block.chainid, _param.test.governorPKs, _roninBridgeManager, _param.roninBridgeManager.governors[0]);
     _validatorSet = new MockValidatorContract_OnlyTiming_ForHardhatTest(_param.test.numberOfBlocksInEpoch);
 
@@ -173,9 +175,12 @@ contract BaseIntegration_Test is Base_Test {
   }
 
   function _deployContractsOnMainchain() internal {
-    _mainchainPauseEnforcer = new MainchainPauseEnforcerDeploy().run();
     _mainchainGatewayV3 = new MainchainGatewayV3Deploy().run();
     _mainchainBridgeManager = new MainchainBridgeManagerDeploy().run();
+
+    ISharedArgument.PauseEnforcerParam memory param = _param.mainchainPauseEnforcer;
+    _mainchainPauseEnforcer =
+      IPauseEnforcer(new MainchainPauseEnforcerDeploy().overrideArgs(abi.encode(address(_mainchainGatewayV3), param.admin, param.sentries)).run());
 
     _mainchainWeth = new WETHDeploy().run();
     _mainchainAxs = new AXSDeploy().run();
@@ -189,7 +194,6 @@ contract BaseIntegration_Test is Base_Test {
     bytes memory args = abi.encode(_mainchainWeth);
     _mainchainWethUnwrapper = new MainchainWethUnwrapperDeploy().runWithArgs(args);
 
-    _param = ISharedArgument(LibSharedAddress.CONFIG).sharedArguments();
     _mainchainProposalUtils =
       new MainchainBridgeAdminUtils(block.chainid, _param.test.governorPKs, _mainchainBridgeManager, _param.mainchainBridgeManager.governors[0]);
 
@@ -208,13 +212,13 @@ contract BaseIntegration_Test is Base_Test {
     _bridgeTrackingInitialize();
     _bridgeSlashInitialize();
 
-    _roninPauseEnforcerInitialize();
+    // _roninPauseEnforcerInitialize();
     _roninGatewayV3Initialize();
     _constructForRoninBridgeManager();
   }
 
   function _initializeMainchain() internal {
-    _mainchainPauseEnforcerInitialize();
+    // _mainchainPauseEnforcerInitialize();
     _mainchainBridgeManagerInitialize();
     _constructForMainchainBridgeManager();
     _mainchainGatewayV3Initialize();
@@ -322,23 +326,25 @@ contract BaseIntegration_Test is Base_Test {
 
     (bool success,) = address(_roninGatewayV3).call(
       abi.encodeWithSignature(
-        "initialize(address,uint256,uint256,uint256,uint256,address[],address[][2],uint256[][2],uint8[])",
+        "initialize(address,uint256,uint256,uint256,uint256,address[][2],uint256[][2],uint8[],address,address)",
         param.roleSetter,
         param.numerator,
         param.denominator,
         param.trustedNumerator,
         param.trustedDenominator,
-        param.withdrawalMigrators,
         param.packedAddresses,
         param.packedNumbers,
-        param.standards
+        param.standards,
+        _roninBridgeManager,
+        _bridgeTracking
       )
     );
     require(success, "RoninGatewayV3 initialize failed");
-    (success,) = address(_roninGatewayV3).call(abi.encodeWithSignature("initializeV2()"));
-    require(success, "RoninGatewayV3 initializeV2 failed");
-    (success,) = address(_roninGatewayV3).call(abi.encodeWithSignature("initializeV3(address)", _roninBridgeManager));
-    require(success, "RoninGatewayV3 initializeV3 failed");
+    // (success,) =
+    //   address(_roninGatewayV3).call(abi.encodeWithSignature("initializeV4(address,address,address)", _roninWron, makeAddr("migrator"), _roninPauseEnforcer));
+    // require(success, "RoninGatewayV3 initializeV4 failed");
+    // (success,) = address(_roninGatewayV3).call(abi.encodeWithSignature("initializeV3(address)", _roninBridgeManager));
+    // require(success, "RoninGatewayV3 initializeV3 failed");
   }
 
   function _constructForRoninBridgeManager() internal {
@@ -602,7 +608,7 @@ contract BaseIntegration_Test is Base_Test {
 
     (bool success,) = address(_mainchainGatewayV3).call(
       abi.encodeWithSignature(
-        "initialize(address,address,uint256,uint256,uint256,uint256,address[][3],uint256[][4],uint8[])",
+        "initialize(address,address,uint256,uint256,uint256,uint256,address[][3],uint256[][4],uint8[],address)",
         param.roleSetter,
         IWETH(param.wrappedToken),
         block.chainid,
@@ -611,16 +617,17 @@ contract BaseIntegration_Test is Base_Test {
         param.denominator,
         param.addresses,
         param.thresholds,
-        param.standards
+        param.standards,
+        _mainchainBridgeManager
       )
     );
     require(success, "MainchainGatewayV3 initialize failed");
-    (success,) = address(_mainchainGatewayV3).call(abi.encodeWithSignature("initializeV2(address)", _mainchainBridgeManager));
-    require(success, "MainchainGatewayV3 initializeV2 failed");
-    (success,) = address(_mainchainGatewayV3).call(abi.encodeWithSignature("initializeV3()"));
-    require(success, "MainchainGatewayV3 initializeV3 failed");
-    (success,) = address(_mainchainGatewayV3).call(abi.encodeWithSignature("initializeV4(address)", _mainchainWethUnwrapper));
-    require(success, "MainchainGatewayV3 initializeV4 failed");
+    // (success,) = address(_mainchainGatewayV3).call(abi.encodeWithSignature("initializeV5(address,address)", makeAddr("migrator"), _mainchainPauseEnforcer));
+    // require(success, "MainchainGatewayV3 initializeV2 failed");
+    // (success,) = address(_mainchainGatewayV3).call(abi.encodeWithSignature("initializeV3()"));
+    // require(success, "MainchainGatewayV3 initializeV5 failed");
+    // (success,) = address(_mainchainGatewayV3).call(abi.encodeWithSignature("initializeV4(address)", _mainchainWethUnwrapper));
+    // require(success, "MainchainGatewayV3 initializeV4 failed");
   }
 
   function _mainchainPauseEnforcerInitialize() internal {

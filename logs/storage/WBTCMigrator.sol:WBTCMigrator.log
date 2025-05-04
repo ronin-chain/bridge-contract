@@ -1,2 +1,0 @@
-src/ronin/migration/WBTCMigrator.sol:WBTCMigrator:_legacyWBTC (storage_slot: 0) (offset: 0) (type: contract IWBTC) (numberOfBytes: 20)
-src/ronin/migration/WBTCMigrator.sol:WBTCMigrator:_newWBTC (storage_slot: 1) (offset: 0) (type: contract IWBTC) (numberOfBytes: 20)

@@ -2,10 +2,9 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "../../interfaces/IPauseTarget.sol";
 
-contract PauseEnforcer is AccessControlEnumerable, Initializable {
+contract PauseEnforcer is AccessControlEnumerable {
   /**
    * @dev Error thrown when the target is already on paused state.
    */
@@ -28,7 +27,7 @@ contract PauseEnforcer is AccessControlEnumerable, Initializable {
   /// @dev Indicating whether or not the target contract is paused in emergency mode.
   bool public emergency;
 
-  /// @dev Emitted when the emergency ppause is triggered by `account`.
+  /// @dev Emitted when the emergency pause is triggered by `account`.
   event EmergencyPaused(address account);
   /// @dev Emitted when the emergency unpause is triggered by `account`.
   event EmergencyUnpaused(address account);
@@ -53,36 +52,33 @@ contract PauseEnforcer is AccessControlEnumerable, Initializable {
     _;
   }
 
-  constructor() {
-    _disableInitializers();
-  }
+  constructor(IPauseTarget target_, address[] memory admins, address[] memory sentries) {
+    _changeTarget(target_);
 
-  /**
-   * @dev Initializes the contract storage.
-   */
-  function initialize(IPauseTarget _target, address _admin, address[] memory _sentries) external initializer {
-    _changeTarget(_target);
-    _setupRole(DEFAULT_ADMIN_ROLE, _admin);
-    for (uint _i; _i < _sentries.length;) {
-      _grantRole(SENTRY_ROLE, _sentries[_i]);
+    for (uint256 i; i < sentries.length; ++i) {
+      _grantRole(SENTRY_ROLE, sentries[i]);
+    }
 
-      unchecked {
-        ++_i;
-      }
+    for (uint256 i; i < admins.length; ++i) {
+      _grantRole(DEFAULT_ADMIN_ROLE, admins[i]);
     }
   }
 
   /**
    * @dev Grants the SENTRY_ROLE to the specified address.
    */
-  function grantSentry(address _sentry) external onlyRole(DEFAULT_ADMIN_ROLE) {
+  function grantSentry(
+    address _sentry
+  ) external onlyRole(DEFAULT_ADMIN_ROLE) {
     _grantRole(SENTRY_ROLE, _sentry);
   }
 
   /**
    * @dev Revokes the SENTRY_ROLE from the specified address.
    */
-  function revokeSentry(address _sentry) external onlyRole(DEFAULT_ADMIN_ROLE) {
+  function revokeSentry(
+    address _sentry
+  ) external onlyRole(DEFAULT_ADMIN_ROLE) {
     _revokeRole(SENTRY_ROLE, _sentry);
   }
 
@@ -114,19 +110,36 @@ contract PauseEnforcer is AccessControlEnumerable, Initializable {
   }
 
   /**
+   * @dev Triggers a restrict a function with one or more standards represented by the bitmap.
+   *
+   * Requirements:
+   * - Only be called by accounts with the SENTRY_ROLE.
+   *
+   * @param fnSig The function signature to restrict.
+   * @param enumBitmap The bitmap of the standard to restrict.
+   */
+  function triggerRestrict(bytes4 fnSig, uint8 enumBitmap) external onlyRole(SENTRY_ROLE) {
+    target.restrict(fnSig, enumBitmap);
+  }
+
+  /**
    * @dev Setter for `target`.
    *
    * Requirements:
    * - Only admin can call this method.
    */
-  function changeTarget(IPauseTarget _target) external onlyRole(DEFAULT_ADMIN_ROLE) {
+  function changeTarget(
+    IPauseTarget _target
+  ) external onlyRole(DEFAULT_ADMIN_ROLE) {
     _changeTarget(_target);
   }
 
   /**
    * @dev Internal helper for setting value to `target`.
    */
-  function _changeTarget(IPauseTarget _target) internal {
+  function _changeTarget(
+    IPauseTarget _target
+  ) internal {
     target = _target;
     emit TargetChanged(_target);
   }
