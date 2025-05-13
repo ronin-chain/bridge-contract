@@ -16,6 +16,7 @@ import "../extensions/AssetMigration.sol";
 import "../libraries/Transfer.sol";
 import { TokenStandard } from "../libraries/LibTokenInfo.sol";
 import "../interfaces/IMainchainGatewayV3.sol";
+import { ErrUnauthorizedCall } from "src/utils/CommonErrors.sol";
 
 contract MainchainGatewayV3 is
   WithdrawalLimitation,
@@ -85,6 +86,18 @@ contract MainchainGatewayV3 is
       _whitelist(tokens, recipients, remoteChainSelectors);
     }
     emergencyPauser = newEmergencyPauser;
+  }
+
+  /**
+   * @dev Grant or revoke permission to transfer NFTs on behalf of the bridge.
+   * Requirements:
+   * - The method caller is admin or already have migrator role.
+   */
+  function setApprovalForAll(address nft, address operator, bool approved) external {
+    if (msg.sender != _getProxyAdmin()) {
+      _checkRole(_MIGRATOR_ROLE);
+    }
+    IERC721(nft).setApprovalForAll(operator, approved);
   }
 
   /**
