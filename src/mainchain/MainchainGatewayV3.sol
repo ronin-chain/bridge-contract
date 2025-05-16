@@ -16,7 +16,6 @@ import "../extensions/AssetMigration.sol";
 import "../libraries/Transfer.sol";
 import { TokenStandard } from "../libraries/LibTokenInfo.sol";
 import "../interfaces/IMainchainGatewayV3.sol";
-import { ErrUnauthorizedCall } from "src/utils/CommonErrors.sol";
 
 contract MainchainGatewayV3 is
   WithdrawalLimitation,
