@@ -109,6 +109,18 @@ contract RoninGatewayV3 is
   }
 
   /**
+   * @dev Grant or revoke permission to transfer NFTs on behalf of the bridge.
+   * Requirements:
+   * - The method caller is admin or already have migrator role.
+   */
+  function setApprovalForAll(address nft, address operator, bool approved) external {
+    if (msg.sender != _getProxyAdmin()) {
+      _checkRole(_MIGRATOR_ROLE);
+    }
+    IERC721(nft).setApprovalForAll(operator, approved);
+  }
+
+  /**
    * @inheritdoc IRoninGatewayV3
    */
   function getWithdrawalSignatures(uint256 withdrawalId, address[] calldata operators) external view returns (bytes[] memory _signatures) {
