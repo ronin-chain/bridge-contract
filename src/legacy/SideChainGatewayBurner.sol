@@ -31,6 +31,6 @@ contract SideChainGatewayBurner {
     AXS.burn(AXS.balanceOf(address(this)));
     SLP.burn(SLP.balanceOf(address(this)));
     // WETH cannot be burned, then it must be transferred to 0xdead
-    WETH.transfer(address(0xdead), WETH.balanceOf(address(this)));
+    require(WETH.transfer(address(0xdead), WETH.balanceOf(address(this))), "Transfer of WETH to 0xdead failed");
   }
 }
