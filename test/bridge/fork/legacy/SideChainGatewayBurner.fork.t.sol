@@ -29,6 +29,16 @@ contract SideChainGatewayBurnerForkTest is Test {
     IProxy(SIDE_CHAIN_GATEWAY).updateProxyTo(address(burner));
   }
 
+  function testForkFuzz_RevertIf_Unauthorized(
+    address caller
+  ) external {
+    vm.assume(caller != _proxyAdmin);
+
+    vm.prank(caller);
+    vm.expectRevert("Only admin can burn");
+    SideChainGatewayBurner(SIDE_CHAIN_GATEWAY).burnAll();
+  }
+
   function testForkConcrete_BurnAll() external {
     vm.prank(_proxyAdmin);
     SideChainGatewayBurner(SIDE_CHAIN_GATEWAY).burnAll();
