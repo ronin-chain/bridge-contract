@@ -10,14 +10,15 @@ if [[ $output == *"No local changes to save"* ]]; then
   stashed=false
 fi
 forge build --skip test --skip script --sizes 2>&1 | sed -n '/Contract/,$p' >logs/contract-code-sizes.log
-.husky/generate-layout.sh
+node .husky/checksum.mjs | sed 's/\x1b\[[0-9;]*m//g' >logs/checksum.log
 
 git add logs
 
 output=$(git status -s)
 line_count=$(echo "$output" | wc -l)
 if [ "$line_count" -gt 1 ]; then
-  git commit -m "chore: storage layout"
+  git commit -m "chore: storage layout and checksums"
+  git push
 fi
 
 if $stashed; then
