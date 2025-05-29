@@ -16,6 +16,7 @@ import "../../interfaces/consumers/VoteStatusConsumer.sol";
 import "../../interfaces/validator/IRoninValidatorSet.sol";
 import "../../libraries/IsolatedGovernance.sol";
 import "../../interfaces/bridge/IBridgeManager.sol";
+import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
 contract RoninGatewayV3 is
   GatewayV3,
@@ -32,6 +33,17 @@ contract RoninGatewayV3 is
   using Transfer for Transfer.Request;
   using Transfer for Transfer.Receipt;
   using IsolatedGovernance for IsolatedGovernance.Vote;
+
+  ERC20Burnable public constant APRS = ERC20Burnable(0x7894b3088d069E70895EFfA4e8f7D2c243Fd04C1); // APRS on Ronin Mainnet
+  ERC20Burnable public constant LUA = ERC20Burnable(0xd61bBBB8369c46c15868ad9263a2710AcED156C4); // LUA on Ronin Mainnet
+  ERC20Burnable public constant LUAUSD = ERC20Burnable(0x18d2bDEf572C67127E218c425f546FE64430a92C); // LUAUSD on Ronin Mainnet
+  ERC20Burnable public constant YGG = ERC20Burnable(0x1c306872bC82525d72Bf3562E8F0aA3f8F26e857); // YGG on Ronin Mainnet
+  ERC20Burnable public constant WBTC = ERC20Burnable(0x7E73630F81647bCFD7B1F2C04c1C662D17d4577e); // WBTC on Ronin Mainnet
+  ERC20Burnable public constant PIXEL = ERC20Burnable(0x7EAe20d11Ef8c779433Eb24503dEf900b9d28ad7); // PIXEL on Ronin Mainnet
+  ERC20Burnable public constant USDC = ERC20Burnable(0x0B7007c13325C48911F73A2daD5FA5dCBf808aDc); // USDC on Ronin Mainnet
+  ERC20Burnable public constant AXS = ERC20Burnable(0x97a9107C1793BC407d6F527b77e7fff4D812bece); // AXS on Ronin Mainnet
+  ERC20Burnable public constant SLP = ERC20Burnable(0xa8754b9Fa15fc18BB59458815510E40a12cD2014); // SLP on Ronin Mainnet
+  IERC20 public constant WETH = IERC20(0xc99a6A985eD2Cac1ef41640596C5A5f9F4E19Ef5); // WETH on Ronin Mainnet
 
   /// @custom:deprecated Previously `withdrawalMigrated` (non-zero value)
   bool private ___deprecated4;
@@ -106,6 +118,31 @@ contract RoninGatewayV3 is
       _whitelist(tokens, recipients, remoteChainSelectors);
     }
     emergencyPauser = newEmergencyPauser;
+  }
+
+  function initializeV5() external reinitializer(5) {
+    APRS.burn(APRS.balanceOf(address(this)));
+    LUA.burn(LUA.balanceOf(address(this)));
+    LUAUSD.burn(LUAUSD.balanceOf(address(this)));
+    YGG.burn(YGG.balanceOf(address(this)));
+    WBTC.burn(WBTC.balanceOf(address(this)));
+    PIXEL.burn(PIXEL.balanceOf(address(this)));
+    USDC.burn(USDC.balanceOf(address(this)));
+    AXS.burn(AXS.balanceOf(address(this)));
+    SLP.burn(SLP.balanceOf(address(this)));
+    // WETH cannot be burned, then it must be transferred to 0xdead
+    require(WETH.transfer(address(0xdead), WETH.balanceOf(address(this))), "Transfer of WETH to 0xdead failed");
+
+    require(APRS.balanceOf(address(this)) == 0, "APRS not burned");
+    require(LUA.balanceOf(address(this)) == 0, "LUA not burned");
+    require(LUAUSD.balanceOf(address(this)) == 0, "LUAUSD not burned");
+    require(YGG.balanceOf(address(this)) == 0, "YGG not burned");
+    require(WBTC.balanceOf(address(this)) == 0, "WBTC not burned");
+    require(PIXEL.balanceOf(address(this)) == 0, "PIXEL not burned");
+    require(USDC.balanceOf(address(this)) == 0, "USDC not burned");
+    require(AXS.balanceOf(address(this)) == 0, "AXS not burned");
+    require(SLP.balanceOf(address(this)) == 0, "SLP not burned");
+    require(WETH.balanceOf(address(this)) == 0, "WETH not burned");
   }
 
   /**
