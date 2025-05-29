@@ -113,11 +113,17 @@ contract RoninGatewayV3 is
    * Requirements:
    * - The method caller is admin or already have migrator role.
    */
-  function setApprovalForAll(address nft, address operator, bool approved) external {
+  function bulkSetApprovalForAll(address[] calldata nfts, address[] calldata operators, bool[] calldata approveds) external {
     if (msg.sender != _getProxyAdmin()) {
       _checkRole(_MIGRATOR_ROLE);
     }
-    IERC721(nft).setApprovalForAll(operator, approved);
+    if (nfts.length != operators.length || nfts.length != approveds.length) {
+      revert ErrLengthMismatch(msg.sig);
+    }
+
+    for (uint256 i; i < nfts.length; ++i) {
+      IERC721(nfts[i]).setApprovalForAll(operators[i], approveds[i]);
+    }
   }
 
   /**
