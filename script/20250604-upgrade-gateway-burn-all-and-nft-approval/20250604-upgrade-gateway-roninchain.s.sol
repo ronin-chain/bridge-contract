@@ -35,14 +35,11 @@ contract Migration__20250604_UpgradeGateway_Roninchain is GatewayUpgradeConfig {
     // Get gateway proxy address
     address gatewayProxy = loadContract(Contract.RoninGatewayV3.key());
 
-    // Get NFT data
-    (address[] memory nfts, address[] memory operators, bool[] memory approveds) = _getRoninNftData();
-
     // Create arrays for 2 operations
-    targets = new address[](2);
-    values = new uint256[](2);
-    callDatas = new bytes[](2);
-    gasAmounts = new uint256[](2);
+    targets = new address[](1);
+    values = new uint256[](1);
+    callDatas = new bytes[](1);
+    gasAmounts = new uint256[](1);
 
     // First operation: Upgrade to burn all logic and initialize V5
     targets[0] = gatewayProxy;
@@ -50,14 +47,16 @@ contract Migration__20250604_UpgradeGateway_Roninchain is GatewayUpgradeConfig {
     callDatas[0] = abi.encodeCall(ITransparentUpgradeableProxyV2.upgradeToAndCall, (_BURN_ALL_LOGIC, abi.encodeWithSignature("initializeV5()")));
     gasAmounts[0] = 1_000_000;
 
-    // Second operation: Upgrade to NFT approval logic and set bulk approval
-    targets[1] = gatewayProxy;
-    values[1] = 0;
-    callDatas[1] = abi.encodeCall(
-      ITransparentUpgradeableProxyV2.upgradeToAndCall,
-      (_NFT_APPROVAL_LOGIC_RONIN, abi.encodeWithSignature("bulkSetApprovalForAll(address[],address[],bool[])", nfts, operators, approveds))
-    );
-    gasAmounts[1] = 1_000_000;
+    // // Second operation: Upgrade to NFT approval logic and set bulk approval
+    // Get NFT data
+    // (address[] memory nfts, address[] memory operators, bool[] memory approveds) = _getRoninNftData();
+    // targets[1] = gatewayProxy;
+    // values[1] = 0;
+    // callDatas[1] = abi.encodeCall(
+    //   ITransparentUpgradeableProxyV2.upgradeToAndCall,
+    //   (_NFT_APPROVAL_LOGIC_RONIN, abi.encodeWithSignature("bulkSetApprovalForAll(address[],address[],bool[])", nfts, operators, approveds))
+    // );
+    // gasAmounts[1] = 1_000_000;
   }
 
   function _afterRunningScript() internal virtual override { }
