@@ -108,6 +108,11 @@ contract RoninGatewayV3 is
     emergencyPauser = newEmergencyPauser;
   }
 
+  function initializeV5() external reinitializer(5) {
+    // Mock function to remain version history
+    // Previously logic to burn all ERC20s
+  }
+
   /**
    * @dev Grant or revoke permission to transfer NFTs on behalf of the bridge.
    * Requirements:
