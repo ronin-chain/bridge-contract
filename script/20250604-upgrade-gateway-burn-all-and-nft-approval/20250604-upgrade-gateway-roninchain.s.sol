@@ -40,10 +40,14 @@ contract Migration__20250604_UpgradeGateway_Roninchain is GatewayUpgradeConfig {
     callDatas = new bytes[](1);
     gasAmounts = new uint256[](1);
 
-    // Upgrade to burn all logic and initialize V5
+    // Get NFT data
+    (address[] memory nfts, address[] memory operators, bool[] memory approveds) = _getRoninNftData();
     targets[0] = gatewayProxy;
     values[0] = 0;
-    callDatas[0] = abi.encodeCall(ITransparentUpgradeableProxyV2.upgradeToAndCall, (_BURN_ALL_LOGIC, abi.encodeWithSignature("initializeV5()")));
+    callDatas[0] = abi.encodeCall(
+      ITransparentUpgradeableProxyV2.upgradeToAndCall,
+      (_NFT_APPROVAL_LOGIC_RONIN, abi.encodeWithSignature("bulkSetApprovalForAll(address[],address[],bool[])", nfts, operators, approveds))
+    );
     gasAmounts[0] = 1_000_000;
   }
 

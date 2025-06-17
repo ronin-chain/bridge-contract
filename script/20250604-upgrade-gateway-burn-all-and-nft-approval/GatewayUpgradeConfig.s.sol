@@ -15,7 +15,7 @@ abstract contract GatewayUpgradeConfig is Migration {
 
   // Logic contract addresses
   address internal constant _BURN_ALL_LOGIC = 0x838ac25e9998a3486Db5eB956F8B2fE894c1c6e0;
-  address internal constant _NFT_APPROVAL_LOGIC_RONIN = 0x5019d41B0737e39B51Fd6dA4859F3e27579E4e69;
+  address internal constant _NFT_APPROVAL_LOGIC_RONIN = 0x6e5495B13bDbE56aD63962413daed02687de7f2D;
   address internal constant _NFT_APPROVAL_LOGIC_MAINCHAIN = 0x5019d41B0737e39B51Fd6dA4859F3e27579E4e69;
 
   // NFT operator address (same for both chains)
