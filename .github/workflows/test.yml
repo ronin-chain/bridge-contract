@@ -35,21 +35,15 @@ jobs:
       INFURA_API_KEY: ${{ secrets.INFURA_API_KEY }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744
         with:
           submodules: recursive
 
       - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
+        uses: foundry-rs/foundry-toolchain@82dee4ba654bd2146511f85f0d013af94670c4de
 
       - name: Install package with soldeer
         run: forge soldeer install
-
-      - name: Recursively update dependencies
-        run: |
-          chmod +x ./update-deps.sh
-          ./update-deps.sh
-        id: update-deps
 
       - name: Run Forge build
         run: |

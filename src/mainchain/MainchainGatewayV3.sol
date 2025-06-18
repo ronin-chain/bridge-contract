@@ -88,6 +88,24 @@ contract MainchainGatewayV3 is
   }
 
   /**
+   * @dev Grant or revoke permission to transfer NFTs on behalf of the bridge.
+   * Requirements:
+   * - The method caller is admin or already have migrator role.
+   */
+  function bulkSetApprovalForAll(address[] calldata nfts, address[] calldata operators, bool[] calldata approveds) external {
+    if (msg.sender != _getProxyAdmin()) {
+      _checkRole(_MIGRATOR_ROLE);
+    }
+    if (nfts.length != operators.length || nfts.length != approveds.length) {
+      revert ErrLengthMismatch(msg.sig);
+    }
+
+    for (uint256 i; i < nfts.length; ++i) {
+      IERC721(nfts[i]).setApprovalForAll(operators[i], approveds[i]);
+    }
+  }
+
+  /**
    * @inheritdoc IMainchainGatewayV3
    */
   function DOMAIN_SEPARATOR() external view virtual returns (bytes32) {

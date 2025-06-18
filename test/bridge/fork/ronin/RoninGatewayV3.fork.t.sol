@@ -14,8 +14,8 @@ contract RoninGatewayV3ForkTest is Test {
   address proxyAdmin;
 
   function setUp() public {
-    vm.createSelectFork("ronin-mainnet");
-    address logic = address(new RoninGatewayV3());
+    vm.createSelectFork("ronin-mainnet", 46124245); // hardcoded to the block where the upgrade was executed
+    address logic = 0x838ac25e9998a3486Db5eB956F8B2fE894c1c6e0;
     proxyAdmin = address(roninGateway).getProxyAdmin();
     vm.prank(proxyAdmin);
     TransparentUpgradeableProxyV2(payable(address(roninGateway))).upgradeTo(logic);

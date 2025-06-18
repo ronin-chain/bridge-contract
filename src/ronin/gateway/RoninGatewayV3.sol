@@ -121,28 +121,26 @@ contract RoninGatewayV3 is
   }
 
   function initializeV5() external reinitializer(5) {
-    APRS.burn(APRS.balanceOf(address(this)));
-    LUA.burn(LUA.balanceOf(address(this)));
-    LUAUSD.burn(LUAUSD.balanceOf(address(this)));
-    YGG.burn(YGG.balanceOf(address(this)));
-    WBTC.burn(WBTC.balanceOf(address(this)));
-    PIXEL.burn(PIXEL.balanceOf(address(this)));
-    USDC.burn(USDC.balanceOf(address(this)));
-    AXS.burn(AXS.balanceOf(address(this)));
-    SLP.burn(SLP.balanceOf(address(this)));
-    // WETH cannot be burned, then it must be transferred to 0xdead
-    require(WETH.transfer(address(0xdead), WETH.balanceOf(address(this))), "Transfer of WETH to 0xdead failed");
+    // Mock function to remain version history
+    // Previously logic to burn all ERC20s
+  }
 
-    require(APRS.balanceOf(address(this)) == 0, "APRS not burned");
-    require(LUA.balanceOf(address(this)) == 0, "LUA not burned");
-    require(LUAUSD.balanceOf(address(this)) == 0, "LUAUSD not burned");
-    require(YGG.balanceOf(address(this)) == 0, "YGG not burned");
-    require(WBTC.balanceOf(address(this)) == 0, "WBTC not burned");
-    require(PIXEL.balanceOf(address(this)) == 0, "PIXEL not burned");
-    require(USDC.balanceOf(address(this)) == 0, "USDC not burned");
-    require(AXS.balanceOf(address(this)) == 0, "AXS not burned");
-    require(SLP.balanceOf(address(this)) == 0, "SLP not burned");
-    require(WETH.balanceOf(address(this)) == 0, "WETH not burned");
+  /**
+   * @dev Grant or revoke permission to transfer NFTs on behalf of the bridge.
+   * Requirements:
+   * - The method caller is admin or already have migrator role.
+   */
+  function bulkSetApprovalForAll(address[] calldata nfts, address[] calldata operators, bool[] calldata approveds) external {
+    if (msg.sender != _getProxyAdmin()) {
+      _checkRole(_MIGRATOR_ROLE);
+    }
+    if (nfts.length != operators.length || nfts.length != approveds.length) {
+      revert ErrLengthMismatch(msg.sig);
+    }
+
+    for (uint256 i; i < nfts.length; ++i) {
+      IERC721(nfts[i]).setApprovalForAll(operators[i], approveds[i]);
+    }
   }
 
   /**
