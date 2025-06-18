@@ -5,7 +5,7 @@ import { Migration } from "../Migration.s.sol";
 
 abstract contract GatewayUpgradeConfig is Migration {
   // DEFAULT EXPIRY DURATION
-  uint256 internal constant _DEFAULT_EXPIRY_DURATION = 14 days;
+  uint256 internal constant _DEFAULT_EXPIRY_DURATION = 9 days;
 
   // SM Governor (same for both chains)
   address internal constant _SM_GOVERNOR = 0xe880802580a1fbdeF67ACe39D1B21c5b2C74f059;
